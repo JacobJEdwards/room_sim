@@ -1,0 +1,48 @@
+using Interfaces;
+using UnityEngine;
+
+public class LightSwitch : MonoBehaviour, IInteractable
+{
+    [SerializeField] private Light lght;
+    [SerializeField] private GameObject switchObject;
+    [SerializeField] private Vector3 switchOnRotation;
+    [SerializeField] private Vector3 switchOffRotation;
+
+    private bool _on = true;
+
+    public void OnInteract(GameObject interactor)
+    {
+        if (_on)
+        {
+            TurnOff();
+        }
+        else
+        {
+            TurnOn();
+        }
+    }
+
+    private void TurnOn()
+    {
+        lght.enabled = true;
+        _on = true;
+        switchObject.transform.localRotation = Quaternion.Euler(switchOnRotation);
+    }
+
+    private void TurnOff()
+    {
+        lght.enabled = false;
+        _on = false;
+        switchObject.transform.localRotation = Quaternion.Euler(switchOffRotation);
+    }
+
+    public bool CanInteract(GameObject interactor)
+    {
+        return true;
+    }
+
+    public string GetInteractionPrompt(GameObject interactor)
+    {
+        return "Press I to Turn On/Off Light";
+    }
+}
