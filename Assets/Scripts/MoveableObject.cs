@@ -4,7 +4,7 @@ using Managers; // Assuming this namespace exists and contains IInteractable
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
-[RequireComponent(typeof(Collider))] // Needed for OnMouse events
+[RequireComponent(typeof(Collider))]
 public class MoveableObject : MonoBehaviour, IInteractable
 {
     [Header("Movement Settings")]
@@ -13,7 +13,7 @@ public class MoveableObject : MonoBehaviour, IInteractable
     private float rotationSpeed = 100f;
     [SerializeField]
     [Tooltip("How smoothly the object follows the mouse position (lower values are smoother but lag more).")]
-    private float moveSmoothTime = 0.05f; // Time in seconds to reach the target position
+    private float moveSmoothTime = 0.05f;
 
     [Header("Interaction")]
     [SerializeField]
@@ -25,7 +25,7 @@ public class MoveableObject : MonoBehaviour, IInteractable
 
     private Rigidbody _rigidbody;
     private Camera _mainCamera;
-    private bool _isHeld = false;
+    private bool _isHeld;
     private Vector3 _targetPosition;
     private Vector3 _velocity = Vector3.zero;
     private float _heldDistance;
@@ -195,7 +195,6 @@ public class MoveableObject : MonoBehaviour, IInteractable
         if (Mathf.Abs(scrollInput) > 0.01f)
         {
             transform.Rotate(Vector3.up, scrollInput * rotationSpeed * Time.deltaTime, Space.Self);
-            //transform.Rotate(Vector3.up, scrollInput * rotationSpeed * Time.deltaTime, Space.World);
         }
 
         var ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
@@ -224,7 +223,6 @@ public class MoveableObject : MonoBehaviour, IInteractable
         _rigidbody.useGravity = true;
         _rigidbody.isKinematic = false;
 
-        // Optional: Snap to grid or surface here before releasing physics control
     }
 
 
