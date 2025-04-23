@@ -28,6 +28,6 @@ public class Poster : MonoBehaviour, IInteractable
 
     public string GetInteractionPrompt(GameObject interactor)
     {
-        return "Press I to upload image";
+        return "Press E to upload image";
     }
 }

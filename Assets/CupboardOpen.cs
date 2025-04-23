@@ -42,6 +42,6 @@ public class CupboardOpen : MonoBehaviour, IInteractable
 
     public string GetInteractionPrompt(GameObject interactor)
     {
-        return open ? "Press I to Close Cupboard" : "Press I to Open Cupboard";
+        return open ? "Press E to Close Cupboard" : "Press E to Open Cupboard";
     }
 }
