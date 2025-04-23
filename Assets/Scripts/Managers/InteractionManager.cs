@@ -50,6 +50,7 @@ namespace Managers
 
             if (Physics.Raycast(ray, out var hit, interactionRange, interactionLayer))
             {
+                Debug.Log($"Interaction ray hit: {hit.collider.gameObject.name} on layer {LayerMask.LayerToName(hit.collider.gameObject.layer)}"); // Log what was hit
                 var interactable = hit.collider.GetComponent<IInteractable>();
 
                 if (interactable != null)
