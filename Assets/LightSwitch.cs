@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class LightSwitch : MonoBehaviour, IInteractable
 {
-    [SerializeField] private Light lght;
+    [SerializeField] private Light[] lights;
     [SerializeField] private GameObject switchObject;
     [SerializeField] private Vector3 switchOnRotation;
     [SerializeField] private Vector3 switchOffRotation;
@@ -24,14 +24,21 @@ public class LightSwitch : MonoBehaviour, IInteractable
 
     private void TurnOn()
     {
-        lght.enabled = true;
+        foreach (var lght in lights)
+        {
+            lght.enabled = true;
+        }
         _on = true;
         switchObject.transform.localRotation = Quaternion.Euler(switchOnRotation);
     }
 
     private void TurnOff()
     {
-        lght.enabled = false;
+        foreach (var lght in lights)
+        {
+            lght.enabled = false;
+        }
+
         _on = false;
         switchObject.transform.localRotation = Quaternion.Euler(switchOffRotation);
     }
