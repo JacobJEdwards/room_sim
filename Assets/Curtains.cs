@@ -5,6 +5,8 @@ using UnityEngine;
 public class Curtains : MonoBehaviour, IInteractable
 {
     private bool _open = true;
+    [SerializeField]
+    private float maxScale = 9.5f;
     [SerializeField] private GameObject curtain;
 
     public void OnInteract(GameObject interactor)
@@ -27,7 +29,7 @@ public class Curtains : MonoBehaviour, IInteractable
 
     private void Close()
     {
-        curtain.transform.DOScaleY(9.5f, 1f);
+        curtain.transform.DOScaleY(maxScale, 1f);
         _open = false;
     }
 

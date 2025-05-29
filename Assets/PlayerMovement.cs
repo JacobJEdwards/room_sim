@@ -133,6 +133,21 @@ public class PlayerMovement : MonoBehaviour
         _jumpRequested = true;
     }
 
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        var body = hit.collider.attachedRigidbody;
+
+        if (!body || body.isKinematic)
+            return;
+
+        if (hit.moveDirection.y < -0.3f)
+            return;
+
+        var pushDir = new Vector3(hit.moveDirection.x, 0, hit.moveDirection.z);
+
+        body.linearVelocity = pushDir * 2.0f;
+    }
+
 
     private void OnDrawGizmosSelected()
     {

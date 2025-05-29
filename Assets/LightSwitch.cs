@@ -1,3 +1,4 @@
+using DG.Tweening;
 using Interfaces;
 using UnityEngine;
 
@@ -29,7 +30,8 @@ public class LightSwitch : MonoBehaviour, IInteractable
             lght.enabled = true;
         }
         _on = true;
-        switchObject.transform.localRotation = Quaternion.Euler(switchOnRotation);
+        switchObject.transform.DOLocalRotateQuaternion(Quaternion.Euler(switchOnRotation), 0.5f);
+        // switchObject.transform.localRotation = Quaternion.Euler(switchOnRotation);
     }
 
     private void TurnOff()
@@ -40,7 +42,8 @@ public class LightSwitch : MonoBehaviour, IInteractable
         }
 
         _on = false;
-        switchObject.transform.localRotation = Quaternion.Euler(switchOffRotation);
+        switchObject.transform.DOLocalRotateQuaternion(Quaternion.Euler(switchOffRotation), 0.5f);
+        // switchObject.transform.localRotation = Quaternion.Euler(switchOffRotation);
     }
 
     public bool CanInteract(GameObject interactor)
