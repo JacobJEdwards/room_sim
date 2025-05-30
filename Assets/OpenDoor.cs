@@ -9,6 +9,11 @@ public class OpenDoor : MonoBehaviour, IInteractable
 
     public void OnInteract(GameObject interactor)
     {
+        Toggle();
+    }
+
+    public void Toggle()
+    {
         if (open)
         {
             Close();
