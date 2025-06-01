@@ -25,6 +25,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float groundDistance = 0.2f;
     [SerializeField] private LayerMask groundLayer;
 
+    [SerializeField] private float lookSensitivity = 0.5f;
+
     private CharacterController _characterController;
     private InputManager _inputManager = null!;
     private Vector2 _moveInput;
@@ -83,8 +85,6 @@ public class PlayerMovement : MonoBehaviour
         var pitchYaw = _inputActions.Player.Look.ReadValue<Vector2>();
 
         // pitchYaw *= lookSensitivity * Time.deltaTime;
-        const float lookSensitivity = 1.0f;
-
         _currentRotationX -= pitchYaw.y * lookSensitivity;
         _currentRotationX = Mathf.Clamp(_currentRotationX, -90f, 90f);
 
