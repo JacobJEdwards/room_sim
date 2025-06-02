@@ -14,10 +14,6 @@ public class ObjectPlacementManager : MonoBehaviour
     private List<GameObject> placeablePrefabs = new List<GameObject>();
 
     [SerializeField]
-    [Tooltip("The display names corresponding to the prefabs above (ensure same order and size!).")]
-    private List<string> placeableObjectNames = new List<string>();
-
-    [SerializeField]
     [Tooltip("The layer(s) the object can be placed upon.")]
     private LayerMask placementLayerMask;
 
@@ -34,10 +30,11 @@ public class ObjectPlacementManager : MonoBehaviour
     [Tooltip("How far from the camera the object floats when not over a valid surface.")]
     private float defaultPlacementDistance = 1f;
 
-    [Header("UI Display")]
+    [Header("UI")]
     [SerializeField]
-    [Tooltip("Assign the TextMeshPro UI element here to display the selected object name.")]
-    private TextMeshProUGUI? selectionTextDisplay;
+    [Tooltip("Assign the panel that contains the placeable object buttons.")]
+    private GameObject? placementPanel;
+
 
     private InputManager? _inputManager;
     private Camera? _mainCamera;
@@ -57,7 +54,6 @@ public class ObjectPlacementManager : MonoBehaviour
         {
             Debug.LogError("ObjectPlacementManager requires a Camera tagged 'MainCamera' in the scene.", this);
             enabled = false;
-            return;
         }
     }
 
@@ -71,26 +67,24 @@ public class ObjectPlacementManager : MonoBehaviour
              return;
         }
 
-        if (selectionTextDisplay != null)
+        if (placementPanel != null)
         {
-            selectionTextDisplay.gameObject.SetActive(false);
-            selectionTextDisplay.text = "";
+            placementPanel.SetActive(false);
         } else {
-             Debug.LogWarning($"[{nameof(ObjectPlacementManager)}]: Selection Text Display is not assigned in the Inspector. Selection text will not be shown.", this);
+             Debug.LogWarning($"[{nameof(ObjectPlacementManager)}]: Placement Panel is not assigned in the Inspector. UI will not function.", this);
         }
 
-
-        if(placeablePrefabs.Count != placeableObjectNames.Count)
-        {
-            Debug.LogWarning($"[{nameof(ObjectPlacementManager)}]: Mismatch between placeablePrefabs list ({placeablePrefabs.Count}) and placeableObjectNames list ({placeableObjectNames.Count}). UI names might be incorrect.", this);
-        }
+        // Start with the cursor locked for first-person controls
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     private void Update()
     {
-        if (!_isPlacing)
+        // Check for 'P' key press to open the placement panel if not already placing.
+        if (!_isPlacing && Keyboard.current != null && Keyboard.current.pKey.wasPressedThisFrame)
         {
-             HandleSelectionInput();
+            ShowPlacementPanel();
         }
 
         if (_isPlacing)
@@ -101,45 +95,47 @@ public class ObjectPlacementManager : MonoBehaviour
         }
     }
 
-    private void HandleSelectionInput()
+    public void ShowPlacementPanel()
     {
-         if (Keyboard.current == null) return;
+        if (placementPanel != null)
+        {
+            bool isPanelBeingOpened = !placementPanel.activeSelf;
+            placementPanel.SetActive(isPanelBeingOpened);
 
-        if (Keyboard.current.digit1Key.wasPressedThisFrame)
-        {
-            SelectPrefabAndStartPlacing(0);
-        }
-        else if (Keyboard.current.digit2Key.wasPressedThisFrame)
-        {
-             SelectPrefabAndStartPlacing(1);
+            if (isPanelBeingOpened)
+            {
+                // Show and unlock cursor to use the UI panel
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+            else if (!_isPlacing) // Only lock if we are just closing the panel, not starting placement
+            {
+                // Hide and lock cursor when returning to gameplay
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
         }
     }
 
-    private void SelectPrefabAndStartPlacing(int index)
+    public void SelectPrefabAndStartPlacing(int index)
     {
         if (index >= 0 && index < placeablePrefabs.Count)
         {
              if (placeablePrefabs[index] != null)
              {
                 _selectedPrefabIndex = index;
-                string displayObjectName = $"Prefab {index+1}";
+                Debug.Log($"Selected: {placeablePrefabs[index].name}");
 
-                if (index < placeableObjectNames.Count && !string.IsNullOrEmpty(placeableObjectNames[index]))
+                if (placementPanel != null)
                 {
-                    displayObjectName = placeableObjectNames[index];
-                } else {
-                    displayObjectName = placeablePrefabs[index].name;
-                    Debug.LogWarning($"[{nameof(ObjectPlacementManager)}]: Using prefab name for index {index} due to missing/invalid entry in placeableObjectNames list.", this);
+                    placementPanel.SetActive(false);
                 }
 
-                Debug.Log($"Selected: {displayObjectName}");
-
-                if (selectionTextDisplay != null)
-                {
-                    selectionTextDisplay.text = $"Selected: {displayObjectName}";
-                    selectionTextDisplay.gameObject.SetActive(true);
-                }
-
+                // --- MODIFIED BEHAVIOR ---
+                // Deactivate mouse immediately after clicking the button in the panel.
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+                
                 StartPlacing();
              }
              else { Debug.LogWarning($"[{nameof(ObjectPlacementManager)}]: Prefab at index {index} is not assigned.", this); }
@@ -147,12 +143,15 @@ public class ObjectPlacementManager : MonoBehaviour
         else { Debug.LogWarning($"[{nameof(ObjectPlacementManager)}]: Invalid prefab index: {index}. List size is {placeablePrefabs.Count}.", this); }
     }
 
+
     private void HandlePlacementMovement()
     {
          if (_currentPlacingObject == null || _mainCamera == null || Mouse.current == null) return;
 
-        Vector2 mouseScreenPosition = Mouse.current.position.ReadValue();
-        Ray ray = _mainCamera.ScreenPointToRay(mouseScreenPosition);
+        // With a locked cursor, the "mouse position" is effectively the center of the screen.
+        // This will now cast a ray from the center of the camera's view.
+        Vector2 screenCenter = new Vector2(Screen.width / 2f, Screen.height / 2f);
+        Ray ray = _mainCamera.ScreenPointToRay(screenCenter);
         float currentPlacementDistance = defaultPlacementDistance;
 
         if (Physics.Raycast(ray, out RaycastHit hit, 1000f, placementLayerMask))
@@ -219,15 +218,13 @@ public class ObjectPlacementManager : MonoBehaviour
          if (_currentPlacingObject.TryGetComponent<Rigidbody>(out var rb)) { rb.isKinematic = false; }
          if (_currentPlacingObject.TryGetComponent<Collider>(out var col)) { col.enabled = true; }
 
-        if (selectionTextDisplay != null)
-        {
-             selectionTextDisplay.text = "";
-             selectionTextDisplay.gameObject.SetActive(false);
-        }
-
         _currentPlacingObject = null;
         _isPlacing = false;
         _selectedPrefabIndex = -1;
+
+        // Ensure cursor is locked (it should be already, but this is safe)
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     private void CancelPlacing()
@@ -239,15 +236,18 @@ public class ObjectPlacementManager : MonoBehaviour
 
         _cachedMaterials.Clear(); _originalColors.Clear();
 
-        if (selectionTextDisplay != null)
+        if (placementPanel != null)
         {
-            selectionTextDisplay.text = "";
-            selectionTextDisplay.gameObject.SetActive(false);
+            placementPanel.SetActive(false);
         }
 
         _currentPlacingObject = null;
         _isPlacing = false;
         _selectedPrefabIndex = -1;
+
+        // Ensure cursor is locked
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     private void ApplyPlacementTint(GameObject targetObject)
