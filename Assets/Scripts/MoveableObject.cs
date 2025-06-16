@@ -179,11 +179,9 @@ public class MoveableObject : MonoBehaviour, IInteractable
             _heldDistance = Mathf.Clamp(_heldDistance, 0.5f, 10f);
         }
 
-        if (_dotPressed)
-        {
-            _heldDistance += Time.deltaTime;
-            _heldDistance = Mathf.Clamp(_heldDistance, 0.5f, 10f);
-        }
+        if (!_dotPressed) return;
+        _heldDistance += Time.deltaTime;
+        _heldDistance = Mathf.Clamp(_heldDistance, 0.5f, 10f);
     }
 
     private void Update()
@@ -201,7 +199,6 @@ public class MoveableObject : MonoBehaviour, IInteractable
 
         _targetPosition = ray.GetPoint(_heldDistance);
 
-        // Optional: Add collision checks here to prevent dragging through walls
     }
 
     private void Pickup()
