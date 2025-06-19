@@ -7,7 +7,11 @@ namespace Managers
     {
         public static UIManager Instance { get; private set; } = null!;
 
-        [SerializeField] private TMP_Text hintText;
+        [SerializeField] private TMP_Text hintTextDesktop;
+        [SerializeField] private TMP_Text hintTextMobile;
+
+        private TMP_Text HintText =>
+            Application.isMobilePlatform ? hintTextMobile : hintTextDesktop;
 
         private void Awake()
         {
@@ -24,14 +28,14 @@ namespace Managers
 
         public void SetHint(string text)
         {
-            hintText.gameObject.SetActive(true);
-            hintText.text = text;
+            HintText.gameObject.SetActive(true);
+            HintText.text = text;
         }
 
         public void ClearHint()
         {
-            hintText.gameObject.SetActive(false);
-            hintText.text = string.Empty;
+            HintText.gameObject.SetActive(false);
+            HintText.text = string.Empty;
         }
 
     }

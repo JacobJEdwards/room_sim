@@ -18,8 +18,13 @@ public class DoorButton : MonoBehaviour, IInteractable
         return !door.open;
     }
 
-    public string GetInteractionPrompt(GameObject interactor)
+    public string GetInteractionPromptDesktop(GameObject interactor)
     {
         return door.open ? "Door is already open" : "Press E to Open Door";
+    }
+
+    public string GetInteractionPromptMobile(GameObject interactor)
+    {
+        return door.open ? "Door is already open" : "Tap to Open Door";
     }
 }

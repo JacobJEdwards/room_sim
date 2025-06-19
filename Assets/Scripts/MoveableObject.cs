@@ -23,6 +23,12 @@ public class MoveableObject : MonoBehaviour, IInteractable
     [Tooltip("Text displayed when the object is being held.")]
     private string dropPrompt = "Click to drop | Scroll to rotate";
 
+    [SerializeField]
+    [Tooltip("Text displayed when the object can be picked up on mobile.")]
+    private string pickupPromptMobile = "Tap to pick up";
+    [SerializeField]
+    private string dropPromptMobile = "Tap to drop | Swipe to rotate";
+
     private Rigidbody _rigidbody;
     private Camera _mainCamera;
     private bool _isHeld;
@@ -234,9 +240,13 @@ public class MoveableObject : MonoBehaviour, IInteractable
         return true;
     }
 
-    public string GetInteractionPrompt(GameObject interactor)
+    public string GetInteractionPromptMobile(GameObject interactor)
+    {
+        return _isHeld ? dropPromptMobile : pickupPromptMobile;
+    }
+
+    public string GetInteractionPromptDesktop(GameObject interactor)
     {
         return _isHeld ? dropPrompt : pickupPrompt;
     }
-
 }

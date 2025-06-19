@@ -7,6 +7,7 @@ namespace Interfaces
     {
         void OnInteract(GameObject interactor);
         bool CanInteract(GameObject interactor);
-        string GetInteractionPrompt(GameObject interactor);
+        string GetInteractionPromptMobile(GameObject interactor);
+        string GetInteractionPromptDesktop(GameObject interactor);
     }
 }

@@ -40,8 +40,13 @@ public class Plug : MonoBehaviour, IInteractable
         return true;
     }
 
-    public string GetInteractionPrompt(GameObject interactor)
+    public string GetInteractionPromptDesktop(GameObject interactor)
     {
         return "Press E to toggle switch";
+    }
+
+    public string GetInteractionPromptMobile(GameObject interactor)
+    {
+        return "Tap to toggle switch";
     }
 }

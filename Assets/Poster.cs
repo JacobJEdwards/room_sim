@@ -5,16 +5,6 @@ public class Poster : MonoBehaviour, IInteractable
 {
     [SerializeField]
     private ImageUploader imageUploader;
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 
     public void OnInteract(GameObject interactor)
     {
@@ -26,8 +16,13 @@ public class Poster : MonoBehaviour, IInteractable
         return true;
     }
 
-    public string GetInteractionPrompt(GameObject interactor)
+    public string GetInteractionPromptDesktop(GameObject interactor)
     {
         return "Press E to upload image";
+    }
+
+    public string GetInteractionPromptMobile(GameObject interactor)
+    {
+        return "Tap to upload image";
     }
 }

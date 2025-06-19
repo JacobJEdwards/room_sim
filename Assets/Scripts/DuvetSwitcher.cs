@@ -52,8 +52,13 @@ public class DuvetSwitcher : MonoBehaviour, IInteractable
         return true;
     }
 
-    public string GetInteractionPrompt(GameObject interactor)
+    public string GetInteractionPromptDesktop(GameObject interactor)
     {
         return "Press E to change duvet texture";
+    }
+
+    public string GetInteractionPromptMobile(GameObject interactor)
+    {
+        return "Tap to change duvet texture";
     }
 }

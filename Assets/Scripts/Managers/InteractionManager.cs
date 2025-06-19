@@ -64,8 +64,11 @@ namespace Managers
                         HighLightCurrentTarget();
                     }
 
+                    var prompt = Application.isMobilePlatform
+                        ? interactable.GetInteractionPromptMobile(gameObject)
+                        : interactable.GetInteractionPromptDesktop(gameObject);
 
-                    _uiManager.SetHint(interactable.GetInteractionPrompt(gameObject));
+                    _uiManager.SetHint(prompt);
 
                 }
                 else
@@ -107,9 +110,8 @@ namespace Managers
                 _oldColors.Add(mat.color);
             }
 
-            for (var i = 0; i < renderer.materials.Length; i++)
+            foreach (var mat in renderer.materials)
             {
-                var mat = renderer.materials[i];
                 mat.color = new Color(mat.color.r * highlightIntensity, mat.color.g * highlightIntensity,
                     mat.color.b * highlightIntensity);
             }
@@ -121,19 +123,17 @@ namespace Managers
             if (!_currentTargetObject) return;
 
             var renderer = _currentTargetObject.GetComponentInChildren<Renderer>();
-            if (renderer)
+            if (!renderer) return;
+            var materials = renderer.materials;
+            for (var i = 0; i < materials.Length; i++)
             {
-                var materials = renderer.materials;
-                for (var i = 0; i < materials.Length; i++)
-                {
-                    materials[i].color = _oldColors[i];
-                }
-
-                renderer.materials = materials;
-                _oldColors.Clear();
-                _currentTargetObject = null;
-                _currentTarget = null;
+                materials[i].color = _oldColors[i];
             }
+
+            renderer.materials = materials;
+            _oldColors.Clear();
+            _currentTargetObject = null;
+            _currentTarget = null;
         }
     }
 }

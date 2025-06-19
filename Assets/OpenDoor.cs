@@ -41,8 +41,13 @@ public class OpenDoor : MonoBehaviour, IInteractable
         return true;
     }
 
-    public string GetInteractionPrompt(GameObject interactor)
+    public string GetInteractionPromptDesktop(GameObject interactor)
     {
         return open ? "Press E to Close Door" : "Press E to Open Door";
+    }
+
+    public string GetInteractionPromptMobile(GameObject interactor)
+    {
+        return open ? "Tap to Close Door" : "Tap to Open Door";
     }
 }
