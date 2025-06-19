@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 
@@ -9,6 +10,9 @@ namespace Managers
 
         [SerializeField] private TMP_Text hintTextDesktop;
         [SerializeField] private TMP_Text hintTextMobile;
+
+        [SerializeField] private GameObject leftThumbstick;
+        [SerializeField] private GameObject rightThumbstick;
 
         private TMP_Text HintText =>
             Application.isMobilePlatform ? hintTextMobile : hintTextDesktop;
@@ -24,6 +28,26 @@ namespace Managers
             {
                 Destroy(gameObject);
             }
+        }
+
+        private void Start()
+        {
+            if (Application.isMobilePlatform)
+            {
+                leftThumbstick.SetActive(true);
+                rightThumbstick.SetActive(true);
+                hintTextDesktop.gameObject.SetActive(false);
+                hintTextMobile.gameObject.SetActive(true);
+            }
+            else
+            {
+                leftThumbstick.SetActive(false);
+                rightThumbstick.SetActive(false);
+                hintTextDesktop.gameObject.SetActive(true);
+                hintTextMobile.gameObject.SetActive(false);
+            }
+
+            ClearHint();
         }
 
         public void SetHint(string text)
