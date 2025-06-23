@@ -8,6 +8,8 @@ namespace Managers
 {
     public class RoomManager : MonoBehaviour
     {
+        
+        public GameManager gameManager;
         [Header("Player Settings")] [SerializeField] [Tooltip("The player GameObject that will be moved.")]
         private GameObject? player;
 
@@ -38,6 +40,7 @@ namespace Managers
             if (player) return;
             Debug.LogError("Player object is not assigned and could not be found by tag 'Player'.", this);
             enabled = false;
+            gameManager = GameManager.Instance;
         }
 
         private void Update()
@@ -61,15 +64,14 @@ namespace Managers
 
             if (isPanelActive)
             {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
+                gameManager.SetMode(GameManager.ControlMode.Menu);
             }
             else
             {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
+                gameManager.SetMode(GameManager.ControlMode.Camera);
             }
         }
+
 
         /// <summary>
         /// Moves the player to the selected room's destination. Called by UI buttons.

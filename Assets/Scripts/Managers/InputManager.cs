@@ -26,6 +26,20 @@ namespace Managers
             PlayerControls.Enable();
         }
 
+        public void SetOnTabPressed(UnityAction action)
+        {
+            PlayerControls.Player.Previous.performed += _ => action.Invoke();
+        }
+
+        public void SetOnPKeyPressed(UnityAction action)
+        {
+        }
+
+        public void SetOnRKeyPressed(UnityAction action)
+        {
+            PlayerControls.Player.Next.performed += _ => action.Invoke();
+        }
+
         public float GetForward()
         {
             return PlayerControls.Player.Move.ReadValue<Vector2>().y;

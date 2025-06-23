@@ -8,6 +8,8 @@ namespace Managers
 {
     public class ObjectPlacementManager : MonoBehaviour
     {
+        public GameManager gameManager;
+
         [Header("Placement Settings")]
         [SerializeField]
         [Tooltip("The list of prefabs that can be instantiated and placed.")]
@@ -47,6 +49,7 @@ namespace Managers
 
             Debug.LogError("ObjectPlacementManager requires a Camera tagged 'MainCamera' in the scene.", this);
             enabled = false;
+            gameManager = GameManager.Instance;
         }
 
         private void Start()
@@ -99,13 +102,11 @@ namespace Managers
 
             if (isPanelBeingOpened)
             {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
+                gameManager.SetMode(GameManager.ControlMode.Menu);
             }
             else if (!_isPlacing)
             {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
+                gameManager.SetMode(GameManager.ControlMode.Camera);
             }
         }
 
@@ -184,6 +185,8 @@ namespace Managers
 
         private void StartPlacing()
         {
+            
+            gameManager.SetMode(GameManager.ControlMode.Placement);
             if (_selectedPrefabIndex < 0 || _selectedPrefabIndex >= placeablePrefabs.Count ||
                 !placeablePrefabs[_selectedPrefabIndex])
             {
@@ -198,6 +201,7 @@ namespace Managers
                 _originalColors.Clear();
                 _currentPlacingObject = null;
             }
+
 
             _isPlacing = true;
             _currentPlacingObject = Instantiate(placeablePrefabs[_selectedPrefabIndex]);
@@ -239,6 +243,7 @@ namespace Managers
 
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
+            gameManager.SetMode(GameManager.ControlMode.Camera);
         }
 
         private void CancelPlacing()
@@ -247,7 +252,6 @@ namespace Managers
 
             Debug.Log("Placement cancelled.");
             Destroy(_currentPlacingObject);
-
             _cachedMaterials.Clear();
             _originalColors.Clear();
 
@@ -262,6 +266,7 @@ namespace Managers
 
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
+            gameManager.SetMode(GameManager.ControlMode.Camera);
         }
 
         private void ApplyPlacementTint(GameObject targetObject)
