@@ -8,12 +8,12 @@ namespace Managers
 {
     public class ObjectPlacementManager : MonoBehaviour
     {
-        public GameManager gameManager;
+        public GameManager GameManager;
 
         [Header("Placement Settings")]
         [SerializeField]
         [Tooltip("The list of prefabs that can be instantiated and placed.")]
-        private List<GameObject> placeablePrefabs = new List<GameObject>();
+        private List<GameObject> placeablePrefabs = new ();
 
         [SerializeField] [Tooltip("The layer(s) the object can be placed upon.")]
         private LayerMask placementLayerMask;
@@ -22,7 +22,7 @@ namespace Managers
         private float placementOffset = 0.05f;
 
         [Header("Visuals")] [SerializeField] [Tooltip("Color tint to apply while placing the object.")]
-        private Color placementTint = new Color(1f, 0.5f, 0.5f, 0.75f);
+        private Color placementTint = new(1f, 0.5f, 0.5f, 0.75f);
 
         [SerializeField] [Tooltip("How far from the camera the object floats when not over a valid surface.")]
         private float defaultPlacementDistance = 1f;
@@ -49,7 +49,7 @@ namespace Managers
 
             Debug.LogError("ObjectPlacementManager requires a Camera tagged 'MainCamera' in the scene.", this);
             enabled = false;
-            gameManager = GameManager.Instance;
+            GameManager = GameManager.Instance;
         }
 
         private void Start()
@@ -102,11 +102,11 @@ namespace Managers
 
             if (isPanelBeingOpened)
             {
-                gameManager.SetMode(GameManager.ControlMode.Menu);
+                GameManager.SetMode(GameManager.ControlMode.Menu);
             }
             else if (!_isPlacing)
             {
-                gameManager.SetMode(GameManager.ControlMode.Camera);
+                GameManager.SetMode(GameManager.ControlMode.Camera);
             }
         }
 
@@ -117,7 +117,6 @@ namespace Managers
                 if (placeablePrefabs[index])
                 {
                     _selectedPrefabIndex = index;
-                    Debug.Log($"Selected: {placeablePrefabs[index].name}");
 
                     if (placementPanel)
                     {
@@ -186,7 +185,7 @@ namespace Managers
         private void StartPlacing()
         {
             
-            gameManager.SetMode(GameManager.ControlMode.Placement);
+            GameManager.SetMode(GameManager.ControlMode.Placement);
             if (_selectedPrefabIndex < 0 || _selectedPrefabIndex >= placeablePrefabs.Count ||
                 !placeablePrefabs[_selectedPrefabIndex])
             {
@@ -205,7 +204,6 @@ namespace Managers
 
             _isPlacing = true;
             _currentPlacingObject = Instantiate(placeablePrefabs[_selectedPrefabIndex]);
-            Debug.Log($"Started placing object: {_currentPlacingObject.name}");
 
             if (_currentPlacingObject.TryGetComponent<Rigidbody>(out var rb))
             {
@@ -225,7 +223,6 @@ namespace Managers
             if (!_isPlacing || !_currentPlacingObject) return;
 
             RemovePlacementTint();
-            Debug.Log($"Placed object '{_currentPlacingObject.name}' at {_currentPlacingObject.transform.position}");
 
             if (_currentPlacingObject.TryGetComponent<Rigidbody>(out var rb))
             {
@@ -243,14 +240,13 @@ namespace Managers
 
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
-            gameManager.SetMode(GameManager.ControlMode.Camera);
+            GameManager.SetMode(GameManager.ControlMode.Camera);
         }
 
         private void CancelPlacing()
         {
             if (!_isPlacing || !_currentPlacingObject) return;
 
-            Debug.Log("Placement cancelled.");
             Destroy(_currentPlacingObject);
             _cachedMaterials.Clear();
             _originalColors.Clear();
@@ -266,7 +262,7 @@ namespace Managers
 
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
-            gameManager.SetMode(GameManager.ControlMode.Camera);
+            GameManager.SetMode(GameManager.ControlMode.Camera);
         }
 
         private void ApplyPlacementTint(GameObject targetObject)

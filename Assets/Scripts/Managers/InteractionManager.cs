@@ -7,6 +7,8 @@ using UnityEngine;
 
 namespace Managers
 {
+    using Application = UnityEngine.Device.Application;
+
     public class InteractionManager : MonoBehaviour
     {
         [SerializeField] private LayerMask interactionLayer;
@@ -50,7 +52,6 @@ namespace Managers
 
             if (Physics.Raycast(ray, out var hit, interactionRange, interactionLayer))
             {
-                Debug.Log($"Interaction ray hit: {hit.collider.gameObject.name} on layer {LayerMask.LayerToName(hit.collider.gameObject.layer)}"); // Log what was hit
                 var interactable = hit.collider.GetComponent<IInteractable>();
 
                 if (interactable != null)
@@ -67,6 +68,7 @@ namespace Managers
                     var prompt = Application.isMobilePlatform
                         ? interactable.GetInteractionPromptMobile(gameObject)
                         : interactable.GetInteractionPromptDesktop(gameObject);
+                    print(prompt);
 
                     _uiManager.SetHint(prompt);
 

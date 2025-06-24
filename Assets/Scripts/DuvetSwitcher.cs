@@ -20,7 +20,7 @@ public class DuvetSwitcher : MonoBehaviour, IInteractable
         }
     }
 
-    public void ChangeDuvetTexture(int textureIndex)
+    private void ChangeDuvetTexture(int textureIndex)
     {
         if (textureIndex < 0 || textureIndex >= duvetTextures.Length)
         {

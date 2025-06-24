@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,6 +8,8 @@ using DG.Tweening;
 
 namespace Managers
 {
+    using Application = UnityEngine.Device.Application;
+
     public class UIManager : MonoBehaviour
     {
         public static UIManager Instance { get; private set; } = null!;
@@ -23,9 +26,9 @@ namespace Managers
         [SerializeField] private GameObject modeIndicatorPanel;
         [SerializeField] private TMP_Text modeText;
         [SerializeField] private Image modeIndicatorBackground;
-        [SerializeField] private Color cameraColor = new Color(0.2f, 0.8f, 0.4f, 0.8f);
-        [SerializeField] private Color menuColor = new Color(0.2f, 0.4f, 0.8f, 0.8f);
-        [SerializeField] private Color placementColor = new Color(0.8f, 0.4f, 0.2f, 0.8f);
+        [SerializeField] private Color cameraColor = new (0.2f, 0.8f, 0.4f, 0.8f);
+        [SerializeField] private Color menuColor = new (0.2f, 0.4f, 0.8f, 0.8f);
+        [SerializeField] private Color placementColor = new (0.8f, 0.4f, 0.2f, 0.8f);
 
         [Header("Panels")]
         [SerializeField] private RectTransform roomPanel;
@@ -46,9 +49,9 @@ namespace Managers
 
         // Private fields
         private TMP_Text HintText => Application.isMobilePlatform ? hintTextMobile : hintTextDesktop;
-        private GameManager gameManager;
-        private InputManager inputManager;
-        private List<RectTransform> allPanels = new List<RectTransform>();
+        private GameManager _gameManager;
+        private InputManager _inputManager;
+        private readonly List<RectTransform> _allPanels = new ();
 
         private void Awake()
         {
@@ -66,8 +69,8 @@ namespace Managers
         private void Start()
         {
             // Get manager references
-            gameManager = GameManager.Instance;
-            inputManager = InputManager.Instance;
+            _gameManager = GameManager.Instance;
+            _inputManager = InputManager.Instance;
 
             // Setup mobile/desktop UI
             SetupPlatformSpecificUI();
@@ -92,105 +95,101 @@ namespace Managers
         {
             if (Application.isMobilePlatform)
             {
-                if (leftThumbstick != null) leftThumbstick.SetActive(true);
-                if (rightThumbstick != null) rightThumbstick.SetActive(true);
-                if (hintTextDesktop != null) hintTextDesktop.gameObject.SetActive(false);
-                if (hintTextMobile != null) hintTextMobile.gameObject.SetActive(true);
+                if (leftThumbstick) leftThumbstick.SetActive(true);
+                if (rightThumbstick) rightThumbstick.SetActive(true);
+                if (hintTextDesktop) hintTextDesktop.gameObject.SetActive(false);
+                if (hintTextMobile) hintTextMobile.gameObject.SetActive(true);
             }
             else
             {
-                if (leftThumbstick != null) leftThumbstick.SetActive(false);
-                if (rightThumbstick != null) rightThumbstick.SetActive(false);
-                if (hintTextDesktop != null) hintTextDesktop.gameObject.SetActive(true);
-                if (hintTextMobile != null) hintTextMobile.gameObject.SetActive(false);
+                if (leftThumbstick) leftThumbstick.SetActive(false);
+                if (rightThumbstick) rightThumbstick.SetActive(false);
+                if (hintTextDesktop) hintTextDesktop.gameObject.SetActive(true);
+                if (hintTextMobile) hintTextMobile.gameObject.SetActive(false);
             }
         }
 
         private void CollectPanels()
         {
-            allPanels.Clear();
-            if (roomPanel != null) allPanels.Add(roomPanel);
-            if (inventoryPanel != null) allPanels.Add(inventoryPanel);
-            if (controlsPanel != null) allPanels.Add(controlsPanel);
+            _allPanels.Clear();
+            if (roomPanel) _allPanels.Add(roomPanel);
+            if (inventoryPanel) _allPanels.Add(inventoryPanel);
+            if (controlsPanel) _allPanels.Add(controlsPanel);
         }
 
         private void InitializePanels()
         {
             // Position panels off-screen
-            if (roomPanel != null)
+            if (roomPanel)
             {
                 roomPanel.anchoredPosition = new Vector2(-panelOffscreenOffset, 0);
                 roomPanel.gameObject.SetActive(false);
             }
 
-            if (inventoryPanel != null)
+            if (inventoryPanel)
             {
                 inventoryPanel.anchoredPosition = new Vector2(panelOffscreenOffset, 0);
                 inventoryPanel.gameObject.SetActive(false);
             }
 
-            if (controlsPanel != null)
+            if (controlsPanel)
             {
                 controlsPanel.anchoredPosition = new Vector2(0, -panelOffscreenOffset);
-                controlsPanel.gameObject.SetActive(true); // Always visible
+                controlsPanel.gameObject.SetActive(true);
             }
         }
 
         private void SetupButtons()
         {
-            if (roomsButton != null)
+            if (roomsButton)
                 roomsButton.onClick.AddListener(ToggleRoomPanel);
 
-            if (inventoryButton != null)
+            if (inventoryButton)
                 inventoryButton.onClick.AddListener(ToggleInventoryPanel);
 
-            if (placementButton != null)
+            if (placementButton)
                 placementButton.onClick.AddListener(StartPlacementMode);
         }
 
         private void SubscribeToInput()
         {
-            if (inputManager == null) return;
+            if (!_inputManager) return;
 
             // R key for rooms
-            inputManager.SetOnRKeyPressed(ToggleRoomPanel);
+            _inputManager.SetOnRKeyPressed(ToggleRoomPanel);
 
-            // Tab for inventory (you might need to add this to InputManager)
             // inputManager.SetOnTabPressed(ToggleInventoryPanel);
 
-            // P for placement (you might need to add this to InputManager)
             // inputManager.SetOnPKeyPressed(StartPlacementMode);
         }
 
         // ========== HINT SYSTEM ==========
         public void SetHint(string text)
         {
-            if (HintText != null)
+            if (HintText)
             {
                 HintText.gameObject.SetActive(true);
                 HintText.text = text;
             }
 
-            // Also show interaction prompt if available
             ShowInteractionPrompt(text);
         }
 
         public void ClearHint()
         {
-            if (HintText != null)
+            if (HintText)
             {
                 HintText.gameObject.SetActive(false);
                 HintText.text = string.Empty;
             }
 
-            // Also hide interaction prompt
             HideInteractionPrompt();
         }
 
         // ========== MODE INDICATOR ==========
         public void UpdateModeDisplay(GameManager.ControlMode mode)
         {
-            if (modeIndicatorPanel == null || modeText == null || modeIndicatorBackground == null) 
+            if (!modeIndicatorPanel || !modeText || !modeIndicatorBackground)
                 return;
 
             modeIndicatorPanel.SetActive(true);
@@ -217,52 +216,52 @@ namespace Managers
         // ========== PANEL MANAGEMENT ==========
         public void ToggleRoomPanel()
         {
-            if (roomPanel == null || gameManager == null) return;
+            if (!roomPanel || _gameManager == null) return;
 
-            bool isActive = roomPanel.gameObject.activeSelf;
+            var isActive = roomPanel.gameObject.activeSelf;
             CloseAllPanels();
 
             if (!isActive)
             {
-                ShowPanel(roomPanel, true);
-                gameManager.SetMode(GameManager.ControlMode.Menu);
+                ShowPanel(roomPanel);
+                _gameManager.SetMode(GameManager.ControlMode.Menu);
             }
             else
             {
-                gameManager.SetMode(GameManager.ControlMode.Camera);
+                _gameManager.SetMode(GameManager.ControlMode.Camera);
             }
         }
 
         public void ToggleInventoryPanel()
         {
-            if (inventoryPanel == null || gameManager == null) return;
+            if (!inventoryPanel || _gameManager == null) return;
 
-            bool isActive = inventoryPanel.gameObject.activeSelf;
+            var isActive = inventoryPanel.gameObject.activeSelf;
             CloseAllPanels();
 
             if (!isActive)
             {
-                ShowPanel(inventoryPanel, false);
-                gameManager.SetMode(GameManager.ControlMode.Menu);
+                ShowPanel(inventoryPanel);
+                _gameManager.SetMode(GameManager.ControlMode.Menu);
             }
             else
             {
-                gameManager.SetMode(GameManager.ControlMode.Camera);
+                _gameManager.SetMode(GameManager.ControlMode.Camera);
             }
         }
 
-        private void ShowPanel(RectTransform panel, bool fromLeft)
+        private void ShowPanel(RectTransform panel)
         {
             panel.gameObject.SetActive(true);
-            float targetX = 0;
+            const float targetX = 0;
             panel.DOAnchorPosX(targetX, panelAnimationDuration).SetEase(Ease.OutCubic);
         }
 
         private void HidePanel(RectTransform panel)
         {
-            if (panel == null) return;
+            if (!panel) return;
 
-            float targetX = panel == roomPanel ? -panelOffscreenOffset : panelOffscreenOffset;
+            var targetX = panel == roomPanel ? -panelOffscreenOffset : panelOffscreenOffset;
             panel.DOAnchorPosX(targetX, panelAnimationDuration)
                 .SetEase(Ease.InCubic)
                 .OnComplete(() => panel.gameObject.SetActive(false));
@@ -270,34 +269,29 @@ namespace Managers
 
         public void CloseAllPanels()
         {
-            foreach (var panel in allPanels)
+            foreach (var panel in _allPanels.Where(panel => panel && panel != controlsPanel && panel.gameObject.activeSelf))
             {
-                if (panel != null && panel != controlsPanel && panel.gameObject.activeSelf)
-                {
-                    HidePanel(panel);
-                }
+                HidePanel(panel);
             }
         }
 
         // ========== INTERACTION PROMPT ==========
         public void ShowInteractionPrompt(string text)
         {
-            if (interactionPrompt != null && interactionText != null && interactionCanvasGroup != null)
-            {
-                interactionPrompt.SetActive(true);
-                interactionText.text = text;
-                interactionCanvasGroup.DOFade(1f, 0.2f);
-            }
+            if (!interactionPrompt || !interactionText || !interactionCanvasGroup) return;
+            interactionPrompt.SetActive(true);
+            interactionText.text = text;
+            interactionCanvasGroup.DOFade(1f, 0.2f);
         }
 
         public void HideInteractionPrompt()
         {
-            if (interactionPrompt != null && interactionCanvasGroup != null)
+            if (interactionPrompt && interactionCanvasGroup)
             {
                 interactionCanvasGroup.DOFade(0f, 0.2f)
                     .OnComplete(() => 
                     {
-                        if (interactionPrompt != null)
+                        if (interactionPrompt)
                             interactionPrompt.SetActive(false);
                     });
             }
@@ -307,32 +301,23 @@ namespace Managers
         private void StartPlacementMode()
         {
             CloseAllPanels();
-            if (gameManager != null)
+            if (_gameManager != null)
             {
-                gameManager.EnterPlacementMode();
+                _gameManager.EnterPlacementMode();
             }
         }
 
         // ========== UTILITY METHODS ==========
         public bool IsAnyPanelOpen()
         {
-            foreach (var panel in allPanels)
-            {
-                if (panel != controlsPanel && panel != null && panel.gameObject.activeSelf)
-                {
-                    return true;
-                }
-            }
-            return false;
+            return _allPanels.Any(panel => panel != controlsPanel && panel && panel.gameObject.activeSelf);
         }
 
         public void ShowNotification(string message, float duration = 2f)
         {
-            // You can implement a notification system here
             Debug.Log($"Notification: {message}");
         }
 
-        // Called by GameManager when mode changes
         public void OnModeChanged(GameManager.ControlMode newMode)
         {
             UpdateModeDisplay(newMode);

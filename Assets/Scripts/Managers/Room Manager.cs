@@ -9,7 +9,7 @@ namespace Managers
     public class RoomManager : MonoBehaviour
     {
         
-        public GameManager gameManager;
+        public GameManager GameManager;
         [Header("Player Settings")] [SerializeField] [Tooltip("The player GameObject that will be moved.")]
         private GameObject? player;
 
@@ -40,7 +40,7 @@ namespace Managers
             if (player) return;
             Debug.LogError("Player object is not assigned and could not be found by tag 'Player'.", this);
             enabled = false;
-            gameManager = GameManager.Instance;
+            GameManager = GameManager.Instance;
         }
 
         private void Update()
@@ -64,11 +64,11 @@ namespace Managers
 
             if (isPanelActive)
             {
-                gameManager.SetMode(GameManager.ControlMode.Menu);
+                GameManager.SetMode(GameManager.ControlMode.Menu);
             }
             else
             {
-                gameManager.SetMode(GameManager.ControlMode.Camera);
+                GameManager.SetMode(GameManager.ControlMode.Camera);
             }
         }
 
@@ -102,9 +102,6 @@ namespace Managers
                         player.transform.position = destination.position;
                     }
 
-                    Debug.Log($"Player moved to room '{destination.name}' at {destination.position}");
-
-                    // Hide panel and lock cursor to return to gameplay
                     if (roomSelectionPanel)
                     {
                         roomSelectionPanel.SetActive(false);

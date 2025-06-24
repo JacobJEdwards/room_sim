@@ -27,8 +27,8 @@ public class ImageUploader : MonoBehaviour
 
     public void OnImageUploaded(string base64Image)
     {
-        byte[] imageBytes = System.Convert.FromBase64String(base64Image);
-        Texture2D texture = new Texture2D(2, 2);
+        var imageBytes = System.Convert.FromBase64String(base64Image);
+        var texture = new Texture2D(2, 2);
         texture.LoadImage(imageBytes);
         texture.Apply();
 
