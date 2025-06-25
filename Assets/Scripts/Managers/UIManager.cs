@@ -1,8 +1,11 @@
+// Scripts/Managers/UIManager.cs
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using DG.Tweening;
 
@@ -26,16 +29,16 @@ namespace Managers
         [SerializeField] private GameObject modeIndicatorPanel;
         [SerializeField] private TMP_Text modeText;
         [SerializeField] private Image modeIndicatorBackground;
-        [SerializeField] private Color cameraColor = new (0.2f, 0.8f, 0.4f, 0.8f);
-        [SerializeField] private Color menuColor = new (0.2f, 0.4f, 0.8f, 0.8f);
-        [SerializeField] private Color placementColor = new (0.8f, 0.4f, 0.2f, 0.8f);
+        [SerializeField] private Color cameraColor = new(0.2f, 0.8f, 0.4f, 0.8f);
+        [SerializeField] private Color menuColor = new(0.2f, 0.4f, 0.8f, 0.8f);
+        [SerializeField] private Color placementColor = new(0.8f, 0.4f, 0.2f, 0.8f);
 
-        [Header("Panels")]
-        [SerializeField] private RectTransform roomPanel;
-        [SerializeField] private RectTransform inventoryPanel;
-        [SerializeField] private RectTransform controlsPanel;
+        [Header("Panels To Fade (Assign in Inspector)")]
+        [SerializeField] private GameObject roomPanel;
+        [SerializeField] private GameObject inventoryPanel;
+        [SerializeField] private GameObject controlsPanel; // Assign if you want this to be managed
+        [SerializeField] private GameObject placementPanel;
         [SerializeField] private float panelAnimationDuration = 0.3f;
-        [SerializeField] private float panelOffscreenOffset = 400f;
 
         [Header("Action Buttons")]
         [SerializeField] private Button roomsButton;
@@ -47,11 +50,11 @@ namespace Managers
         [SerializeField] private TMP_Text interactionText;
         [SerializeField] private CanvasGroup interactionCanvasGroup;
 
-        // Private fields
+        // --- Private Fields ---
         private TMP_Text HintText => Application.isMobilePlatform ? hintTextMobile : hintTextDesktop;
         private GameManager _gameManager;
-        private InputManager _inputManager;
-        private readonly List<RectTransform> _allPanels = new ();
+        // This dictionary will hold the CanvasGroup for each panel, which is needed for fading.
+        private readonly Dictionary<GameObject, CanvasGroup> _panelCanvasGroups = new();
 
         private void Awake()
         {
@@ -68,29 +71,129 @@ namespace Managers
 
         private void Start()
         {
-            // Get manager references
             _gameManager = GameManager.Instance;
-            _inputManager = InputManager.Instance;
 
-            // Setup mobile/desktop UI
+            // Prepare all panels for fading
+            PreparePanelForFading(roomPanel);
+            PreparePanelForFading(inventoryPanel);
+            PreparePanelForFading(placementPanel);
+            // You can also prepare the controlsPanel if you want to fade it
+            // PreparePanelForFading(controlsPanel); 
+
             SetupPlatformSpecificUI();
-
-            // Collect all panels
-            CollectPanels();
-
-            // Initialize panels
             InitializePanels();
-
-            // Setup button listeners
             SetupButtons();
-
-            // Subscribe to input
-            SubscribeToInput();
-
-            // Clear any initial hints
             ClearHint();
         }
 
+        private void Update()
+        {
+            // Direct key checks for simplicity and reliability
+            if (Keyboard.current.rKey.wasPressedThisFrame)
+            {
+                ToggleRoomPanel();
+            }
+
+            if (Keyboard.current.pKey.wasPressedThisFrame)
+            {
+                TogglePlacementPanel();
+            }
+        }
+
+        // Helper method to get or add a CanvasGroup to a panel
+        private void PreparePanelForFading(GameObject panel)
+        {
+            if (panel != null && !_panelCanvasGroups.ContainsKey(panel))
+            {
+                var canvasGroup = panel.GetComponent<CanvasGroup>() ?? panel.AddComponent<CanvasGroup>();
+                _panelCanvasGroups.Add(panel, canvasGroup);
+            }
+        }
+
+        private void InitializePanels()
+        {
+            // Set the initial state for all managed panels
+            foreach (var entry in _panelCanvasGroups)
+            {
+                var panel = entry.Key;
+                var canvasGroup = entry.Value;
+                canvasGroup.alpha = 0; // Start fully transparent
+                panel.SetActive(false); // Start inactive
+            }
+        }
+
+        private void SetupButtons()
+        {
+            if (roomsButton) roomsButton.onClick.AddListener(ToggleRoomPanel);
+            if (inventoryButton) inventoryButton.onClick.AddListener(ToggleInventoryPanel);
+            if (placementButton) placementButton.onClick.AddListener(TogglePlacementPanel);
+        }
+
+        // --- Public Toggle Methods ---
+        public void ToggleRoomPanel() => TogglePanel(roomPanel);
+        public void TogglePlacementPanel() => TogglePanel(placementPanel);
+        public void ToggleInventoryPanel() => TogglePanel(inventoryPanel);
+
+        // --- Core Panel Logic ---
+        private void TogglePanel(GameObject panelToToggle)
+        {
+            if (panelToToggle == null) return;
+
+            var wasActive = panelToToggle.activeSelf;
+            
+            // Always close any currently open panel first
+            CloseAllPanels();
+
+            // If the panel was closed, open it now.
+            if (!wasActive)
+            {
+                var canvasGroup = _panelCanvasGroups[panelToToggle];
+                panelToToggle.SetActive(true);
+                canvasGroup.DOFade(1, panelAnimationDuration);
+                _gameManager?.SetMode(GameManager.ControlMode.Menu);
+            }
+            else
+            {
+                // If it was already open, CloseAllPanels handled it. Just set the mode.
+                _gameManager?.SetMode(GameManager.ControlMode.Camera);
+            }
+        }
+
+        public void CloseAllPanels()
+        {
+            foreach (var entry in _panelCanvasGroups)
+            {
+                var panel = entry.Key;
+                if (panel.activeSelf)
+                {
+                    var canvasGroup = entry.Value;
+                    canvasGroup.DOFade(0, panelAnimationDuration)
+                        .OnComplete(() => panel.SetActive(false));
+                }
+            }
+        }
+
+        // --- Hint System and Other UI Methods ---
+        public void SetHint(string text)
+        {
+            if (HintText)
+            {
+                HintText.gameObject.SetActive(true);
+                HintText.text = text;
+            }
+            ShowInteractionPrompt(text);
+        }
+
+        public void ClearHint()
+        {
+            if (HintText)
+            {
+                HintText.gameObject.SetActive(false);
+                HintText.text = string.Empty;
+            }
+            HideInteractionPrompt();
+        }
+        
         private void SetupPlatformSpecificUI()
         {
             if (Application.isMobilePlatform)
@@ -108,104 +211,22 @@ namespace Managers
                 if (hintTextMobile) hintTextMobile.gameObject.SetActive(false);
             }
         }
-
-        private void CollectPanels()
-        {
-            _allPanels.Clear();
-            if (roomPanel) _allPanels.Add(roomPanel);
-            if (inventoryPanel) _allPanels.Add(inventoryPanel);
-            if (controlsPanel) _allPanels.Add(controlsPanel);
-        }
-
-        private void InitializePanels()
-        {
-            // Position panels off-screen
-            if (roomPanel)
-            {
-                roomPanel.anchoredPosition = new Vector2(-panelOffscreenOffset, 0);
-                roomPanel.gameObject.SetActive(false);
-            }
-
-            if (inventoryPanel)
-            {
-                inventoryPanel.anchoredPosition = new Vector2(panelOffscreenOffset, 0);
-                inventoryPanel.gameObject.SetActive(false);
-            }
-
-            if (controlsPanel)
-            {
-                controlsPanel.anchoredPosition = new Vector2(0, -panelOffscreenOffset);
-                controlsPanel.gameObject.SetActive(true);
-            }
-        }
-
-        private void SetupButtons()
-        {
-            if (roomsButton)
-                roomsButton.onClick.AddListener(ToggleRoomPanel);
-
-            if (inventoryButton)
-                inventoryButton.onClick.AddListener(ToggleInventoryPanel);
-
-            if (placementButton)
-                placementButton.onClick.AddListener(StartPlacementMode);
-        }
-
-        private void SubscribeToInput()
-        {
-            if (!_inputManager) return;
-
-            // R key for rooms
-            _inputManager.SetOnRKeyPressed(ToggleRoomPanel);
-
-            // inputManager.SetOnTabPressed(ToggleInventoryPanel);
-
-            // inputManager.SetOnPKeyPressed(StartPlacementMode);
-        }
-
-        // ========== HINT SYSTEM ==========
-        public void SetHint(string text)
-        {
-            if (HintText)
-            {
-                HintText.gameObject.SetActive(true);
-                HintText.text = text;
-            }
-
-            ShowInteractionPrompt(text);
-        }
-
-        public void ClearHint()
-        {
-            if (HintText)
-            {
-                HintText.gameObject.SetActive(false);
-                HintText.text = string.Empty;
-            }
-
-            HideInteractionPrompt();
-        }
-
-        // ========== MODE INDICATOR ==========
+        
         public void UpdateModeDisplay(GameManager.ControlMode mode)
         {
-            if (!modeIndicatorPanel || !modeText || !modeIndicatorBackground)
-                return;
+            if (!modeIndicatorPanel || !modeText || !modeIndicatorBackground) return;
 
             modeIndicatorPanel.SetActive(true);
-
             switch (mode)
             {
                 case GameManager.ControlMode.Camera:
                     modeText.text = "Camera Mode";
                     modeIndicatorBackground.DOColor(cameraColor, 0.3f);
                     break;
-
                 case GameManager.ControlMode.Menu:
                     modeText.text = "Menu Mode";
                     modeIndicatorBackground.DOColor(menuColor, 0.3f);
                     break;
-
                 case GameManager.ControlMode.Placement:
                     modeText.text = "Placement Mode";
                     modeIndicatorBackground.DOColor(placementColor, 0.3f);
@@ -213,69 +234,6 @@ namespace Managers
             }
         }
 
-        // ========== PANEL MANAGEMENT ==========
-        public void ToggleRoomPanel()
-        {
-            if (!roomPanel || _gameManager == null) return;
-
-            var isActive = roomPanel.gameObject.activeSelf;
-            CloseAllPanels();
-
-            if (!isActive)
-            {
-                ShowPanel(roomPanel);
-                _gameManager.SetMode(GameManager.ControlMode.Menu);
-            }
-            else
-            {
-                _gameManager.SetMode(GameManager.ControlMode.Camera);
-            }
-        }
-
-        public void ToggleInventoryPanel()
-        {
-            if (!inventoryPanel || _gameManager == null) return;
-
-            var isActive = inventoryPanel.gameObject.activeSelf;
-            CloseAllPanels();
-
-            if (!isActive)
-            {
-                ShowPanel(inventoryPanel);
-                _gameManager.SetMode(GameManager.ControlMode.Menu);
-            }
-            else
-            {
-                _gameManager.SetMode(GameManager.ControlMode.Camera);
-            }
-        }
-
-        private void ShowPanel(RectTransform panel)
-        {
-            panel.gameObject.SetActive(true);
-            const float targetX = 0;
-            panel.DOAnchorPosX(targetX, panelAnimationDuration).SetEase(Ease.OutCubic);
-        }
-
-        private void HidePanel(RectTransform panel)
-        {
-            if (!panel) return;
-
-            var targetX = panel == roomPanel ? -panelOffscreenOffset : panelOffscreenOffset;
-            panel.DOAnchorPosX(targetX, panelAnimationDuration)
-                .SetEase(Ease.InCubic)
-                .OnComplete(() => panel.gameObject.SetActive(false));
-        }
-
-        public void CloseAllPanels()
-        {
-            foreach (var panel in _allPanels.Where(panel => panel && panel != controlsPanel && panel.gameObject.activeSelf))
-            {
-                HidePanel(panel);
-            }
-        }
-
-        // ========== INTERACTION PROMPT ==========
         public void ShowInteractionPrompt(string text)
         {
             if (!interactionPrompt || !interactionText || !interactionCanvasGroup) return;
@@ -288,41 +246,26 @@ namespace Managers
         {
             if (interactionPrompt && interactionCanvasGroup)
             {
-                interactionCanvasGroup.DOFade(0f, 0.2f)
-                    .OnComplete(() => 
-                    {
-                        if (interactionPrompt)
-                            interactionPrompt.SetActive(false);
-                    });
+                interactionCanvasGroup.DOFade(0f, 0.2f).OnComplete(() =>
+                {
+                    if (interactionPrompt) interactionPrompt.SetActive(false);
+                });
             }
         }
 
-        // ========== PLACEMENT MODE ==========
-        private void StartPlacementMode()
-        {
-            CloseAllPanels();
-            if (_gameManager != null)
-            {
-                _gameManager.EnterPlacementMode();
-            }
-        }
-
-        // ========== UTILITY METHODS ==========
         public bool IsAnyPanelOpen()
         {
-            return _allPanels.Any(panel => panel != controlsPanel && panel && panel.gameObject.activeSelf);
-        }
-
-        public void ShowNotification(string message, float duration = 2f)
-        {
-            Debug.Log($"Notification: {message}");
+            // A panel is open if its CanvasGroup is visible.
+            return _panelCanvasGroups.Values.Any(cg => cg.alpha > 0);
         }
 
         public void OnModeChanged(GameManager.ControlMode newMode)
         {
             UpdateModeDisplay(newMode);
-
-            // Clear hints when entering menu mode
+            if (newMode != GameManager.ControlMode.Menu)
+            {
+                CloseAllPanels();
+            }
             if (newMode == GameManager.ControlMode.Menu)
             {
                 ClearHint();

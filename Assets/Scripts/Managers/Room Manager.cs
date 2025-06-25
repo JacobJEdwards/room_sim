@@ -1,3 +1,5 @@
+// Scripts/Managers/Room Manager.cs
+
 #nullable enable
 
 using UnityEngine;
@@ -10,6 +12,7 @@ namespace Managers
     {
         
         public GameManager GameManager;
+        private UIManager _uiManager;
         [Header("Player Settings")] [SerializeField] [Tooltip("The player GameObject that will be moved.")]
         private GameObject? player;
 
@@ -17,23 +20,11 @@ namespace Managers
         [SerializeField]
         [Tooltip("A list of Transforms representing the teleport destination for each room.")]
         private List<Transform> roomDestinations = new();
-
-        [Header("UI Settings")] [SerializeField] [Tooltip("The UI panel that contains the buttons to select a room.")]
-        private GameObject? roomSelectionPanel;
-
-
+        
         private void Start()
         {
-            if (roomSelectionPanel)
-            {
-                roomSelectionPanel.SetActive(false);
-            }
-            else
-            {
-                Debug.LogError("Room Selection Panel is not assigned in the RoomManager.", this);
-                enabled = false;
-            }
-
+            _uiManager = UIManager.Instance;
+            
             if (player) return;
             // Try to find the player by tag if not assigned
             player = GameObject.FindGameObjectWithTag("Player");
@@ -42,37 +33,7 @@ namespace Managers
             enabled = false;
             GameManager = GameManager.Instance;
         }
-
-        private void Update()
-        {
-            // Toggle the room selection panel when 'R' is pressed.
-            if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
-            {
-                ToggleRoomPanel();
-            }
-        }
-
-        /// <summary>
-        /// Opens or closes the room selection panel and manages the cursor state.
-        /// </summary>
-        private void ToggleRoomPanel()
-        {
-            if (!roomSelectionPanel) return;
-
-            var isPanelActive = !roomSelectionPanel.activeSelf;
-            roomSelectionPanel.SetActive(isPanelActive);
-
-            if (isPanelActive)
-            {
-                GameManager.SetMode(GameManager.ControlMode.Menu);
-            }
-            else
-            {
-                GameManager.SetMode(GameManager.ControlMode.Camera);
-            }
-        }
-
-
+        
         /// <summary>
         /// Moves the player to the selected room's destination. Called by UI buttons.
         /// </summary>
@@ -102,10 +63,7 @@ namespace Managers
                         player.transform.position = destination.position;
                     }
 
-                    if (roomSelectionPanel)
-                    {
-                        roomSelectionPanel.SetActive(false);
-                    }
+                    _uiManager.ToggleRoomPanel();
 
                     Cursor.lockState = CursorLockMode.Locked;
                     Cursor.visible = false;

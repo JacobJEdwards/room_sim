@@ -33,6 +33,7 @@ namespace Managers
 
         public void SetOnPKeyPressed(UnityAction action)
         {
+             PlayerControls.Player.Cancel.performed += _ => action.Invoke();
         }
 
         public void SetOnRKeyPressed(UnityAction action)
