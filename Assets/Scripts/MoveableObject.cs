@@ -14,6 +14,9 @@ public class MoveableObject : MonoBehaviour, IInteractable
     [SerializeField]
     [Tooltip("How smoothly the object follows the mouse position (lower values are smoother but lag more).")]
     private float moveSmoothTime = 0.05f;
+    [SerializeField]
+    [Tooltip("A small buffer to allow for slight clipping, preventing the object from getting stuck.")]
+    private float skinWidth = 0.05f;
 
     [Header("Interaction")]
     [SerializeField]
@@ -30,6 +33,7 @@ public class MoveableObject : MonoBehaviour, IInteractable
     private string dropPromptMobile = "Tap to drop | Swipe to rotate";
 
     private Rigidbody _rigidbody;
+    private Collider _collider;
     private Camera _mainCamera;
     private bool _isHeld;
     private Vector3 _targetPosition;
@@ -47,6 +51,7 @@ public class MoveableObject : MonoBehaviour, IInteractable
     private void Awake()
     {
         _rigidbody = GetComponent<Rigidbody>();
+        _collider = GetComponent<Collider>();
         _rigidbody.useGravity = true;
         _rigidbody.isKinematic = false;
 
@@ -159,9 +164,21 @@ public class MoveableObject : MonoBehaviour, IInteractable
     {
         if (!_isHeld) return;
 
-        var smoothedPosition = Vector3.SmoothDamp(_rigidbody.position, _targetPosition, ref _velocity, moveSmoothTime);
-        _rigidbody.MovePosition(smoothedPosition);
+        var smoothedPosition = Vector3.SmoothDamp(transform.position, _targetPosition, ref _velocity, moveSmoothTime);
+        
+        // --- Collision Check with Skin Width ---
+        var direction = smoothedPosition - transform.position;
+        var distance = direction.magnitude;
+        
+        // Subtract the skinWidth to make the cast slightly smaller
+        var castExtents = _collider.bounds.extents - Vector3.one * skinWidth;
 
+        if (!Physics.BoxCast(transform.position, castExtents, direction.normalized, transform.rotation, distance))
+        {
+            _rigidbody.MovePosition(smoothedPosition);
+        }
+        
+        // --- Rotation ---
         if (_leftArrowPressed)
         {
             transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime);
@@ -211,7 +228,7 @@ public class MoveableObject : MonoBehaviour, IInteractable
     {
         _isHeld = true;
         _rigidbody.useGravity = false;
-        _rigidbody.isKinematic = true;
+        _rigidbody.isKinematic = true; 
 
         _heldDistance = Vector3.Distance(_mainCamera.transform.position, transform.position);
 
@@ -225,7 +242,6 @@ public class MoveableObject : MonoBehaviour, IInteractable
         _isHeld = false;
         _rigidbody.useGravity = true;
         _rigidbody.isKinematic = false;
-
     }
 
 
