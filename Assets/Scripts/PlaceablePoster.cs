@@ -18,6 +18,22 @@ public class PlaceablePoster : MonoBehaviour, IInteractable
         {
             Debug.LogError("A Renderer component is required on this object.", this);
             enabled = false;
+            return;
+        }
+
+        // Subscribe to the image upload event
+        if (_imageUploader != null)
+        {
+            _imageUploader.OnImageUploaded.AddListener(UpdateTexture);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // Unsubscribe from the event to prevent memory leaks
+        if (_imageUploader != null)
+        {
+            _imageUploader.OnImageUploaded.RemoveListener(UpdateTexture);
         }
     }
 
@@ -48,7 +64,12 @@ public class PlaceablePoster : MonoBehaviour, IInteractable
     {
         if (_renderer && _renderer.material)
         {
+            Debug.Log($"Updating texture on {gameObject.name}. New texture size: {newTexture.width}x{newTexture.height}");
             _renderer.material.mainTexture = newTexture;
+        }
+        else
+        {
+            Debug.LogError("Cannot update texture: Renderer or material is null");
         }
     }
 }

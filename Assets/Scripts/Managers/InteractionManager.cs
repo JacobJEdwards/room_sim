@@ -22,6 +22,7 @@ namespace Managers
         private Camera? _mainCamera;
 
         private readonly List<Color> _oldColors = new();
+        private readonly List<Material> _highlightedMaterials = new(); // Keep track of materials we've changed
         [SerializeField]
         private float highlightIntensity = 1.5f;
 
@@ -45,7 +46,6 @@ namespace Managers
 
         private void HandleInteractionRaycast()
         {
-
             if (!_mainCamera || !_uiManager) return;
 
             var ray = _mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
@@ -56,10 +56,16 @@ namespace Managers
 
                 if (interactable != null)
                 {
-                    if (!interactable.CanInteract(gameObject)) return;
-
-                    if (!_currentTargetObject)
+                    if (!interactable.CanInteract(gameObject))
                     {
+                        RestoreCurrentTarget(); // Restore if we can't interact
+                        return;
+                    }
+
+                    // Check if we are already highlighting this object
+                    if (_currentTargetObject != hit.collider.gameObject)
+                    {
+                        RestoreCurrentTarget(); // Restore the old one
                         _currentTarget = interactable;
                         _currentTargetObject = hit.collider.gameObject;
                         HighLightCurrentTarget();
@@ -68,25 +74,17 @@ namespace Managers
                     var prompt = Application.isMobilePlatform
                         ? interactable.GetInteractionPromptMobile(gameObject)
                         : interactable.GetInteractionPromptDesktop(gameObject);
-                    print(prompt);
 
                     _uiManager.SetHint(prompt);
-
                 }
                 else
                 {
                     RestoreCurrentTarget();
-                    _currentTarget = null;
-                    _currentTargetObject = null;
-                    _uiManager.ClearHint();
                 }
             }
             else
             {
                 RestoreCurrentTarget();
-                _currentTarget = null;
-                _currentTargetObject = null;
-                _uiManager.ClearHint();
             }
         }
 
@@ -100,42 +98,49 @@ namespace Managers
 
         private void HighLightCurrentTarget()
         {
-            if (_currentTarget == null || !_currentTargetObject) return;
+            if (_currentTargetObject == null) return;
 
             var renderer = _currentTargetObject.GetComponentInChildren<Renderer>();
             if (!renderer) return;
 
             _oldColors.Clear();
+            _highlightedMaterials.Clear();
 
             foreach (var mat in renderer.materials)
             {
-                _oldColors.Add(mat.color);
+                // --- THIS IS THE FIX ---
+                // Check if the material has a "_Color" property before trying to access it.
+                if (mat != null && mat.HasProperty("_Color"))
+                {
+                    _highlightedMaterials.Add(mat);
+                    _oldColors.Add(mat.color);
+                    mat.color = new Color(mat.color.r * highlightIntensity, mat.color.g * highlightIntensity, mat.color.b * highlightIntensity);
+                }
             }
-
-            foreach (var mat in renderer.materials)
-            {
-                mat.color = new Color(mat.color.r * highlightIntensity, mat.color.g * highlightIntensity,
-                    mat.color.b * highlightIntensity);
-            }
-            renderer.materials = renderer.materials.ToArray();
         }
 
         private void RestoreCurrentTarget()
         {
-            if (!_currentTargetObject) return;
+            if (_currentTargetObject == null) return;
 
-            var renderer = _currentTargetObject.GetComponentInChildren<Renderer>();
-            if (!renderer) return;
-            var materials = renderer.materials;
-            for (var i = 0; i < materials.Length; i++)
+            // Only restore colors if we have saved data
+            if (_highlightedMaterials.Count > 0)
             {
-                materials[i].color = _oldColors[i];
+                 for (var i = 0; i < _highlightedMaterials.Count; i++)
+                {
+                    if (_highlightedMaterials[i] != null)
+                    {
+                        _highlightedMaterials[i].color = _oldColors[i];
+                    }
+                }
             }
-
-            renderer.materials = materials;
+           
+            // Clear the lists and references
+            _highlightedMaterials.Clear();
             _oldColors.Clear();
             _currentTargetObject = null;
             _currentTarget = null;
+            if(_uiManager) _uiManager.ClearHint();
         }
     }
 }

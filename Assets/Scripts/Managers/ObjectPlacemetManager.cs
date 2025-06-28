@@ -1,3 +1,5 @@
+// Scripts/Managers/ObjectPlacementManager.cs
+
 #nullable enable
 
 using UnityEngine;
@@ -30,7 +32,7 @@ namespace Managers
         private float defaultPlacementDistance = 1f;
         
         // Private script references
-        private InputManager _inputManager = null!;
+        private InputManager? _inputManager;
         private Camera? _mainCamera;
 
         // State variables
@@ -45,10 +47,11 @@ namespace Managers
         private void Awake()
         {
             _mainCamera = Camera.main;
-            if (_mainCamera) return;
-
-            Debug.LogError("ObjectPlacementManager requires a Camera tagged 'MainCamera' in the scene.", this);
-            enabled = false;
+            if (_mainCamera == null)
+            {
+                Debug.LogError("ObjectPlacementManager requires a Camera tagged 'MainCamera' in the scene.", this);
+                enabled = false;
+            }
         }
 
         private void Start()
@@ -87,7 +90,7 @@ namespace Managers
         {
             if (index >= 0 && index < placeablePrefabs.Count)
             {
-                if (placeablePrefabs[index])
+                if (placeablePrefabs[index] != null)
                 {
                     _selectedPrefabIndex = index;
 
@@ -224,7 +227,9 @@ namespace Managers
             {
                 foreach (var matInstance in rend.materials)
                 {
-                    if (matInstance)
+                    // --- THIS IS THE FIX ---
+                    // Check if the material's shader has a "_Color" property before trying to access it.
+                    if (matInstance && matInstance.HasProperty("_Color"))
                     {
                         _cachedMaterials.Add(matInstance);
                         _originalColors.Add(matInstance.color);
