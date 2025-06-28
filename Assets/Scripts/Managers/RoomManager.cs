@@ -1,18 +1,17 @@
-// Scripts/Managers/Room Manager.cs
-
 #nullable enable
 
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 namespace Managers
 {
     public class RoomManager : MonoBehaviour
     {
         
-        public GameManager GameManager;
-        private UIManager _uiManager;
+        [FormerlySerializedAs("GameManager")] public GameManager gameManager = null!;
+        private UIManager _uiManager = null!;
         [Header("Player Settings")] [SerializeField] [Tooltip("The player GameObject that will be moved.")]
         private GameObject? player;
 
@@ -26,18 +25,13 @@ namespace Managers
             _uiManager = UIManager.Instance;
             
             if (player) return;
-            // Try to find the player by tag if not assigned
             player = GameObject.FindGameObjectWithTag("Player");
             if (player) return;
             Debug.LogError("Player object is not assigned and could not be found by tag 'Player'.", this);
             enabled = false;
-            GameManager = GameManager.Instance;
+            gameManager = GameManager.Instance;
         }
         
-        /// <summary>
-        /// Moves the player to the selected room's destination. Called by UI buttons.
-        /// </summary>
-        /// <param name="roomIndex">The index of the room destination in the list.</param>
         public void MovePlayerToRoom(int roomIndex)
         {
             if (!player)
@@ -51,7 +45,6 @@ namespace Managers
                 var destination = roomDestinations[roomIndex];
                 if (destination)
                 {
-                    // If the player has a CharacterController, we must disable it to teleport them.
                     if (player.TryGetComponent<CharacterController>(out var controller))
                     {
                         controller.enabled = false;

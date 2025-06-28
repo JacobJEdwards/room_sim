@@ -1,5 +1,3 @@
-// Scripts/Managers/ObjectPlacementManager.cs
-
 #nullable enable
 
 using UnityEngine;
@@ -32,7 +30,7 @@ namespace Managers
         private float defaultPlacementDistance = 1f;
         
         // Private script references
-        private InputManager? _inputManager;
+        private InputManager _inputManager = null!;
         private Camera? _mainCamera;
 
         // State variables
@@ -47,11 +45,10 @@ namespace Managers
         private void Awake()
         {
             _mainCamera = Camera.main;
-            if (_mainCamera == null)
-            {
-                Debug.LogError("ObjectPlacementManager requires a Camera tagged 'MainCamera' in the scene.", this);
-                enabled = false;
-            }
+            if (_mainCamera) return;
+
+            Debug.LogError("ObjectPlacementManager requires a Camera tagged 'MainCamera' in the scene.", this);
+            enabled = false;
         }
 
         private void Start()
@@ -90,7 +87,7 @@ namespace Managers
         {
             if (index >= 0 && index < placeablePrefabs.Count)
             {
-                if (placeablePrefabs[index] != null)
+                if (placeablePrefabs[index])
                 {
                     _selectedPrefabIndex = index;
 

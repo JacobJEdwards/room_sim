@@ -24,6 +24,7 @@ namespace Managers
         [Header("Mobile Controls")]
         [SerializeField] private GameObject leftThumbstick;
         [SerializeField] private GameObject rightThumbstick;
+        [SerializeField] private GameObject[] toHideOnMobile;
 
         [Header("Mode Indicator")]
         [SerializeField] private GameObject modeIndicatorPanel;
@@ -53,7 +54,6 @@ namespace Managers
         // --- Private Fields ---
         private TMP_Text HintText => Application.isMobilePlatform ? hintTextMobile : hintTextDesktop;
         private GameManager _gameManager;
-        // This dictionary will hold the CanvasGroup for each panel, which is needed for fading.
         private readonly Dictionary<GameObject, CanvasGroup> _panelCanvasGroups = new();
 
         private void Awake()
@@ -103,22 +103,18 @@ namespace Managers
         // Helper method to get or add a CanvasGroup to a panel
         private void PreparePanelForFading(GameObject panel)
         {
-            if (panel != null && !_panelCanvasGroups.ContainsKey(panel))
-            {
-                var canvasGroup = panel.GetComponent<CanvasGroup>() ?? panel.AddComponent<CanvasGroup>();
-                _panelCanvasGroups.Add(panel, canvasGroup);
-            }
+            if (!panel || _panelCanvasGroups.ContainsKey(panel)) return;
+
+            var canvasGroup = panel.GetComponent<CanvasGroup>() ?? panel.AddComponent<CanvasGroup>();
+            _panelCanvasGroups.Add(panel, canvasGroup);
         }
 
         private void InitializePanels()
         {
-            // Set the initial state for all managed panels
-            foreach (var entry in _panelCanvasGroups)
+            foreach (var (panel, canvasGroup) in _panelCanvasGroups)
             {
-                var panel = entry.Key;
-                var canvasGroup = entry.Value;
-                canvasGroup.alpha = 0; // Start fully transparent
-                panel.SetActive(false); // Start inactive
+                canvasGroup.alpha = 0;
+                panel.SetActive(false);
             }
         }
 
@@ -129,22 +125,18 @@ namespace Managers
             if (placementButton) placementButton.onClick.AddListener(TogglePlacementPanel);
         }
 
-        // --- Public Toggle Methods ---
         public void ToggleRoomPanel() => TogglePanel(roomPanel);
         public void TogglePlacementPanel() => TogglePanel(placementPanel);
         public void ToggleInventoryPanel() => TogglePanel(inventoryPanel);
 
-        // --- Core Panel Logic ---
         private void TogglePanel(GameObject panelToToggle)
         {
-            if (panelToToggle == null) return;
+            if (!panelToToggle) return;
 
             var wasActive = panelToToggle.activeSelf;
             
-            // Always close any currently open panel first
             CloseAllPanels();
 
-            // If the panel was closed, open it now.
             if (!wasActive)
             {
                 var canvasGroup = _panelCanvasGroups[panelToToggle];
@@ -154,26 +146,22 @@ namespace Managers
             }
             else
             {
-                // If it was already open, CloseAllPanels handled it. Just set the mode.
                 _gameManager?.SetMode(GameManager.ControlMode.Camera);
             }
         }
 
         public void CloseAllPanels()
         {
-            foreach (var entry in _panelCanvasGroups)
+            foreach (var (panel, canvasGroup) in _panelCanvasGroups)
             {
-                var panel = entry.Key;
                 if (panel.activeSelf)
                 {
-                    var canvasGroup = entry.Value;
                     canvasGroup.DOFade(0, panelAnimationDuration)
                         .OnComplete(() => panel.SetActive(false));
                 }
             }
         }
 
-        // --- Hint System and Other UI Methods ---
         public void SetHint(string text)
         {
             if (HintText)
@@ -202,6 +190,12 @@ namespace Managers
                 if (rightThumbstick) rightThumbstick.SetActive(true);
                 if (hintTextDesktop) hintTextDesktop.gameObject.SetActive(false);
                 if (hintTextMobile) hintTextMobile.gameObject.SetActive(true);
+                if (controlsPanel) controlsPanel.SetActive(false);
+
+                foreach (var element in toHideOnMobile)
+                {
+                    if (element) element.SetActive(false);
+                }
             }
             else
             {
@@ -255,7 +249,6 @@ namespace Managers
 
         public bool IsAnyPanelOpen()
         {
-            // A panel is open if its CanvasGroup is visible.
             return _panelCanvasGroups.Values.Any(cg => cg.alpha > 0);
         }
 
