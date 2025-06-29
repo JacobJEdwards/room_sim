@@ -24,13 +24,13 @@ public class MoveableObject : MonoBehaviour, IInteractable
     private string pickupPrompt = "Click to pick up";
     [SerializeField]
     [Tooltip("Text displayed when the object is being held.")]
-    private string dropPrompt = "Click to drop | Scroll to rotate";
+    private string dropPrompt = "Scroll to rotate";
 
     [SerializeField]
     [Tooltip("Text displayed when the object can be picked up on mobile.")]
     private string pickupPromptMobile = "Tap to pick up";
     [SerializeField]
-    private string dropPromptMobile = "Tap to drop | Swipe to rotate";
+    private string dropPromptMobile = "Swipe to rotate";
 
     private Rigidbody _rigidbody;
     private Collider _collider;
