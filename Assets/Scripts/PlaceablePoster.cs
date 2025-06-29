@@ -1,4 +1,3 @@
-// Scripts/Poster.cs
 
 using Interfaces;
 using UnityEngine;
