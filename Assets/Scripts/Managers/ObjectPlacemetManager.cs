@@ -31,16 +31,13 @@ namespace Managers
         [SerializeField] [Tooltip("How far from the camera the object floats when not over a valid surface.")]
         private float defaultPlacementDistance = 1f;
         
-        // Private script references
         private InputManager? _inputManager;
         private Camera? _mainCamera;
 
-        // State variables
         private GameObject? _currentPlacingObject;
         private int _selectedPrefabIndex = -1;
         private bool _isPlacing;
 
-        // Material caching for performance
         private readonly List<Material> _cachedMaterials = new();
         private readonly List<Color> _originalColors = new();
 
@@ -56,7 +53,6 @@ namespace Managers
 
         private void Start()
         {
-            // Get singleton instances
             GameManager = GameManager.Instance;
             _inputManager = InputManager.Instance;
             _uiManager = UIManager.Instance;
@@ -68,14 +64,12 @@ namespace Managers
                 return;
             }
             
-            // Initial cursor state for FPS controls
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
         }
 
         private void Update()
         {
-            // This script's Update only runs while actively placing an object.
             if (!_isPlacing) return;
 
             HandlePlacementMovement();
@@ -128,7 +122,7 @@ namespace Managers
             else
             {
                 _currentPlacingObject.transform.position = ray.GetPoint(defaultPlacementDistance);
-                _currentPlacingObject.transform.rotation = Quaternion.identity;
+                _currentPlacingObject.transform.rotation = _mainCamera.transform.rotation;
             }
         }
 
@@ -153,7 +147,6 @@ namespace Managers
         /// </summary>
         private void StartPlacing()
         {
-            // Set the game mode and cursor state for placement.
             GameManager.SetMode(GameManager.ControlMode.Placement);
     
             if (_selectedPrefabIndex < 0)
@@ -182,12 +175,9 @@ namespace Managers
             if (!_isPlacing || !_currentPlacingObject) return;
 
             RemovePlacementTint();
-
-            // Re-enable physics.
             if (_currentPlacingObject.TryGetComponent<Rigidbody>(out var rb)) rb.isKinematic = false;
             if (_currentPlacingObject.TryGetComponent<Collider>(out var col)) col.enabled = true;
 
-            // Reset state and return to camera mode.
             _currentPlacingObject = null;
             _isPlacing = false;
             _selectedPrefabIndex = -1;
@@ -205,15 +195,12 @@ namespace Managers
             Destroy(_currentPlacingObject);
             _cachedMaterials.Clear();
             _originalColors.Clear();
-
-            // When cancelling, we want to re-open the placement panel.
             _uiManager.TogglePlacementPanel();
 
             _currentPlacingObject = null;
             _isPlacing = false;
             _selectedPrefabIndex = -1;
             
-            // The UIManager and GameManager will handle the mode and cursor state.
         }
 
         private void ApplyPlacementTint(GameObject targetObject)
@@ -227,8 +214,6 @@ namespace Managers
             {
                 foreach (var matInstance in rend.materials)
                 {
-                    // --- THIS IS THE FIX ---
-                    // Check if the material's shader has a "_Color" property before trying to access it.
                     if (matInstance && matInstance.HasProperty("_Color"))
                     {
                         _cachedMaterials.Add(matInstance);

@@ -1,5 +1,9 @@
+// Scripts/Managers/GameManager.cs
+
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Device;
+using Application = UnityEngine.Application; // Required for Application.isMobilePlatform
 
 namespace Managers
 {
@@ -51,8 +55,6 @@ namespace Managers
             SetMode(ControlMode.Camera);
 
             inputManager.PlayerControls.UI.Cancel.performed += OnEscapePressed;
-
-            // inputManager.SetOnCancelPressed(() => OnEscapePressed(default));
         }
 
         private void OnDestroy()
@@ -77,6 +79,10 @@ namespace Managers
             else
             {
                 SetMode(ControlMode.Menu);
+                if (uiManager && !Application.isMobilePlatform)
+                {
+                    uiManager.TogglePanel(uiManager.controlsPanel);
+                }
             }
         }
 
@@ -127,11 +133,9 @@ namespace Managers
             if (playerController != null)
                 playerController.enabled = false;
 
-            // Disable interaction system while in menu
             if (interactionManager != null)
                 interactionManager.enabled = false;
 
-            // Player actions still enabled for ESC key
             inputManager.PlayerControls.Player.Enable();
         }
 
@@ -140,11 +144,9 @@ namespace Managers
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
 
-            // Enable player controller for movement
             if (playerController != null)
                 playerController.enabled = true;
 
-            // Disable normal interactions during placement
             if (interactionManager != null)
                 interactionManager.enabled = false;
 

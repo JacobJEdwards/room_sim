@@ -18,6 +18,7 @@ namespace Managers
         public static UIManager Instance { get; private set; } = null!;
 
         [Header("Hint System")]
+        [SerializeField] private GameObject hintPanel;
         [SerializeField] private TMP_Text hintTextDesktop;
         [SerializeField] private TMP_Text hintTextMobile;
 
@@ -37,7 +38,7 @@ namespace Managers
         [Header("Panels To Fade (Assign in Inspector)")]
         [SerializeField] private GameObject roomPanel;
         [SerializeField] private GameObject inventoryPanel;
-        [SerializeField] private GameObject controlsPanel; // Assign if you want this to be managed
+        [SerializeField] public GameObject controlsPanel; // Now public
         [SerializeField] private GameObject placementPanel;
         [SerializeField] private float panelAnimationDuration = 0.3f;
 
@@ -73,22 +74,20 @@ namespace Managers
         {
             _gameManager = GameManager.Instance;
 
-            // Prepare all panels for fading
             PreparePanelForFading(roomPanel);
             PreparePanelForFading(inventoryPanel);
+            PreparePanelForFading(controlsPanel);
             PreparePanelForFading(placementPanel);
-            // You can also prepare the controlsPanel if you want to fade it
-            // PreparePanelForFading(controlsPanel); 
 
             SetupPlatformSpecificUI();
             InitializePanels();
             SetupButtons();
             ClearHint();
+            if (hintPanel) hintPanel.SetActive(false);
         }
 
         private void Update()
         {
-            // Direct key checks for simplicity and reliability
             if (Keyboard.current.rKey.wasPressedThisFrame)
             {
                 ToggleRoomPanel();
@@ -100,7 +99,6 @@ namespace Managers
             }
         }
 
-        // Helper method to get or add a CanvasGroup to a panel
         private void PreparePanelForFading(GameObject panel)
         {
             if (!panel || _panelCanvasGroups.ContainsKey(panel)) return;
@@ -129,7 +127,7 @@ namespace Managers
         public void TogglePlacementPanel() => TogglePanel(placementPanel);
         public void ToggleInventoryPanel() => TogglePanel(inventoryPanel);
 
-        private void TogglePanel(GameObject panelToToggle)
+        public void TogglePanel(GameObject panelToToggle)
         {
             if (!panelToToggle) return;
 
@@ -166,7 +164,7 @@ namespace Managers
         {
             if (HintText)
             {
-                HintText.gameObject.SetActive(true);
+                if (hintPanel) hintPanel.SetActive(true);
                 HintText.text = text;
             }
             ShowInteractionPrompt(text);
@@ -176,7 +174,7 @@ namespace Managers
         {
             if (HintText)
             {
-                HintText.gameObject.SetActive(false);
+                if (hintPanel) hintPanel.SetActive(false);
                 HintText.text = string.Empty;
             }
             HideInteractionPrompt();

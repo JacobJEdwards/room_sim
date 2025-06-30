@@ -11,22 +11,17 @@ public class PlaceablePoster : MonoBehaviour, IInteractable
     [SerializeField] private LayerMask wallLayerMask = -1; // All layers by default
     [SerializeField] private float rotationSpeed = 100f;
     [SerializeField] private float moveSmoothTime = 0.05f;
-    
+
     [Header("Interaction Prompts")]
-    [SerializeField] private string pickupPromptDesktop = "Press E to pick up poster";
-    [SerializeField] private string changeImagePromptDesktop = "Hold Shift + E to change image";
-    [SerializeField] private string dropPromptDesktop = "Click to place, Scroll to rotate";
-    
-    [SerializeField] private string pickupPromptMobile = "Tap to pick up poster";
-    [SerializeField] private string changeImagePromptMobile = "Double tap to change image";
-    [SerializeField] private string dropPromptMobile = "Tap to place, Swipe to rotate";
+    [SerializeField] private string changeImagePromptDesktop = "Press E to change image";
+    [SerializeField] private string changeImagePromptMobile = "Tap to change image";
 
     private ImageUploader _imageUploader;
     private Renderer _renderer;
     private Rigidbody _rigidbody;
     private Collider _collider;
     private Camera _mainCamera;
-    
+
     private bool _isHeld;
     private bool _isPlacedOnWall;
     private Vector3 _targetPosition;
@@ -49,11 +44,10 @@ public class PlaceablePoster : MonoBehaviour, IInteractable
             return;
         }
 
-        _rigidbody.useGravity = false; 
-        _rigidbody.isKinematic = true; 
+        _rigidbody.useGravity = false;
+        _rigidbody.isKinematic = true;
         _rigidbody.constraints = RigidbodyConstraints.None;
 
-        // Subscribe to the image upload event
         if (_imageUploader != null)
         {
             _imageUploader.OnImageUploaded.AddListener(UpdateTexture);
@@ -74,24 +68,40 @@ public class PlaceablePoster : MonoBehaviour, IInteractable
 
         HandleHeldMovement();
         HandleRotation();
-        HandlePlacement();
+    }
+
+    private void OnMouseDown()
+    {
+        if (!_isHeld)
+        {
+            PickupPoster();
+        }
+    }
+
+    private void OnMouseUp()
+    {
+        if (_isHeld)
+        {
+            PlacePoster();
+        }
     }
 
     private void HandleHeldMovement()
     {
         var ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
         _targetPosition = ray.GetPoint(_heldDistance);
-        
-        // Smooth movement
+
         transform.position = Vector3.SmoothDamp(transform.position, _targetPosition, ref _velocity, moveSmoothTime);
-        
-        // Check if near a wall and orient accordingly
+
         if (Physics.Raycast(transform.position, _mainCamera.transform.forward, out RaycastHit hit, wallDetectionDistance, wallLayerMask))
         {
             _wallNormal = hit.normal;
-            // Smoothly rotate to face away from the wall
             var targetRotation = Quaternion.LookRotation(-hit.normal);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 5f);
+        }
+        else
+        {
+            transform.rotation = _mainCamera.transform.rotation;
         }
     }
 
@@ -104,51 +114,31 @@ public class PlaceablePoster : MonoBehaviour, IInteractable
         }
     }
 
-    private void HandlePlacement()
-    {
-        if (Input.GetMouseButtonDown(0))
-        {
-            PlacePoster();
-        }
-    }
-
     public void OnInteract(GameObject interactor)
     {
-        if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
-        {
-            _imageUploader.OpenFilePicker();
-        }
-        else if (!_isHeld)
-        {
-            PickupPoster();
-        }
+        _imageUploader.OpenFilePicker();
     }
 
     public bool CanInteract(GameObject interactor)
     {
-        return !_isHeld; 
+        return !_isHeld;
     }
 
     public string GetInteractionPromptDesktop(GameObject interactor)
     {
-        if (_isHeld) return dropPromptDesktop;
-        
-        if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
-            return changeImagePromptDesktop;
-        
-        return pickupPromptDesktop;
+        return changeImagePromptDesktop;
     }
 
     public string GetInteractionPromptMobile(GameObject interactor)
     {
-        return _isHeld ? dropPromptMobile : $"{pickupPromptMobile} | {changeImagePromptMobile}";
+        return changeImagePromptMobile;
     }
 
     private void PickupPoster()
     {
         _isHeld = true;
         _isPlacedOnWall = false;
-        _rigidbody.isKinematic = false; 
+        _rigidbody.isKinematic = false;
         _heldDistance = Vector3.Distance(_mainCamera.transform.position, transform.position);
         _velocity = Vector3.zero;
     }
@@ -156,14 +146,14 @@ public class PlaceablePoster : MonoBehaviour, IInteractable
     private void PlacePoster()
     {
         _isHeld = false;
-        
+
         if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, wallDetectionDistance * 2f, wallLayerMask))
         {
-            transform.position = hit.point - transform.forward * 0.01f; // Small offset to prevent z-fighting
+            transform.position = hit.point - transform.forward * 0.01f;
             transform.rotation = Quaternion.LookRotation(-hit.normal);
             _isPlacedOnWall = true;
         }
-        
+
         _rigidbody.isKinematic = true;
         _velocity = Vector3.zero;
     }

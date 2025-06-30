@@ -40,7 +40,7 @@ public class OpenCloseToilet : MonoBehaviour, IInteractable
 
     public string GetInteractionPromptDesktop(GameObject interactor)
     {
-        return _open ? "Press E to Close Toilet" : "Press E to Open Toilet";
+        return _open ? "Close Toilet" : "Open Toilet";
     }
 
     public string GetInteractionPromptMobile(GameObject interactor)

@@ -41,7 +41,7 @@ public class Curtains : MonoBehaviour, IInteractable
     public string GetInteractionPromptDesktop(GameObject interactor)
     {
         // maybe turn to daytime ??
-        return _open ? "Press E to Close Curtains" : "Press E to Open Curtains";
+        return _open ? "Close Curtains" : "Open Curtains";
     }
 
     public string GetInteractionPromptMobile(GameObject interactor)
