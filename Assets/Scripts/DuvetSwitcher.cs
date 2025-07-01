@@ -54,11 +54,11 @@ public class DuvetSwitcher : MonoBehaviour, IInteractable
 
     public string GetInteractionPromptDesktop(GameObject interactor)
     {
-        return "Change duvet";
+        return "Press E to change duvet";
     }
 
     public string GetInteractionPromptMobile(GameObject interactor)
     {
-        return "Change duvet";
+        return "Press E to change duvet";
     }
 }

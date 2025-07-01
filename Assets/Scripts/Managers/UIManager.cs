@@ -38,9 +38,12 @@ namespace Managers
         [Header("Panels To Fade (Assign in Inspector)")]
         [SerializeField] private GameObject roomPanel;
         [SerializeField] private GameObject inventoryPanel;
-        [SerializeField] public GameObject controlsPanel; // Now public
+        [SerializeField] public GameObject controlsPanel;
         [SerializeField] private GameObject placementPanel;
         [SerializeField] private float panelAnimationDuration = 0.3f;
+        
+        [Header("Holding/Placement Panel")]
+        [SerializeField] public GameObject holdingPanel; // Assign your panel in the inspector
 
         [Header("Action Buttons")]
         [SerializeField] private Button roomsButton;
@@ -78,6 +81,7 @@ namespace Managers
             PreparePanelForFading(inventoryPanel);
             PreparePanelForFading(controlsPanel);
             PreparePanelForFading(placementPanel);
+            PreparePanelForFading(holdingPanel); // Prepare the new panel
 
             SetupPlatformSpecificUI();
             InitializePanels();
@@ -135,16 +139,18 @@ namespace Managers
             
             CloseAllPanels();
 
-            if (!wasActive)
+            if (wasActive)
             {
-                var canvasGroup = _panelCanvasGroups[panelToToggle];
-                panelToToggle.SetActive(true);
-                canvasGroup.DOFade(1, panelAnimationDuration);
-                _gameManager?.SetMode(GameManager.ControlMode.Menu);
+                _gameManager?.SetMode(GameManager.ControlMode.Camera);
             }
             else
             {
-                _gameManager?.SetMode(GameManager.ControlMode.Camera);
+                 if (_panelCanvasGroups.TryGetValue(panelToToggle, out var canvasGroup))
+                 {
+                    panelToToggle.SetActive(true);
+                    canvasGroup.DOFade(1, panelAnimationDuration);
+                    _gameManager?.SetMode(GameManager.ControlMode.Menu);
+                 }
             }
         }
 
@@ -152,11 +158,30 @@ namespace Managers
         {
             foreach (var (panel, canvasGroup) in _panelCanvasGroups)
             {
-                if (panel.activeSelf)
+                // *** FIX: Do not close the holding panel with this generic method ***
+                if (panel.activeSelf && panel != holdingPanel)
                 {
                     canvasGroup.DOFade(0, panelAnimationDuration)
                         .OnComplete(() => panel.SetActive(false));
                 }
+            }
+        }
+        
+        public void ShowHoldingPanel()
+        {
+            if (holdingPanel && _panelCanvasGroups.TryGetValue(holdingPanel, out var canvasGroup))
+            {
+                holdingPanel.SetActive(true);
+                canvasGroup.DOFade(1, panelAnimationDuration);
+            }
+        }
+
+        public void HideHoldingPanel()
+        {
+            if (holdingPanel && _panelCanvasGroups.TryGetValue(holdingPanel, out var canvasGroup))
+            {
+                canvasGroup.DOFade(0, panelAnimationDuration)
+                    .OnComplete(() => holdingPanel.SetActive(false));
             }
         }
 
@@ -257,7 +282,7 @@ namespace Managers
             {
                 CloseAllPanels();
             }
-            if (newMode == GameManager.ControlMode.Menu)
+            if (newMode == GameManager.ControlMode.Menu || newMode == GameManager.ControlMode.Placement)
             {
                 ClearHint();
             }

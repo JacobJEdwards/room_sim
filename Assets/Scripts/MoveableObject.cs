@@ -30,16 +30,10 @@ public class MoveableObject : MonoBehaviour, IInteractable
     [Header("Interaction")]
     [SerializeField]
     [Tooltip("Text displayed when the object can be picked up.")]
-    private string pickupPrompt = "Click to pick up";
-
-    [SerializeField] [Tooltip("Text displayed when the object is being held.")]
-    private string dropPrompt = "Scroll to Rotate | 1-3 Change Axis";
-
+    private string pickupPrompt = "Double Click to pick up";
     [SerializeField]
     [Tooltip("Text displayed when the object can be picked up on mobile.")]
     private string pickupPromptMobile = "Tap to pick up";
-    [SerializeField]
-    private string dropPromptMobile = "Tap to drop";
 
     private Rigidbody _rigidbody;
     private Collider _collider;
@@ -49,6 +43,7 @@ public class MoveableObject : MonoBehaviour, IInteractable
     private Vector3 _velocity = Vector3.zero;
     private float _heldDistance;
     private InputManager _inputManager;
+    private UIManager _uiManager;
 
     private bool _leftArrowPressed;
     private bool _rightArrowPressed;
@@ -57,7 +52,6 @@ public class MoveableObject : MonoBehaviour, IInteractable
     private bool _commaPressed;
     private bool _dotPressed;
 
-    // New variable to hold the current rotation axis for the scroll wheel
     private Vector3 _scrollRotationAxis = Vector3.up;
 
     private void Awake()
@@ -70,102 +64,36 @@ public class MoveableObject : MonoBehaviour, IInteractable
          _rigidbody.constraints = RigidbodyConstraints.None;
 
         _mainCamera = Camera.main;
-        if (_mainCamera) return;
-
-        Debug.LogError("MoveableObject requires a Camera tagged 'MainCamera' in the scene.", this);
-        enabled = false;
+        if (!_mainCamera)
+        {
+            Debug.LogError("MoveableObject requires a Camera tagged 'MainCamera' in the scene.", this);
+            enabled = false;
+        }
     }
 
     private void Start()
     {
         _inputManager = InputManager.Instance;
+        _uiManager = UIManager.Instance;
 
-        _inputManager.SetOnLeftArrowPressed(() =>
-        {
-            if (_isHeld)
-            {
-                _leftArrowPressed = true;
-            }
-        });
-
-        _inputManager.SetOnLeftArrowReleased(() =>
-        {
-            _leftArrowPressed = false;
-        });
-
-        _inputManager.SetOnRightArrowPressed(() =>
-        {
-            if (_isHeld)
-            {
-                _rightArrowPressed = true;
-            }
-        });
-        _inputManager.SetOnRightArrowReleased(() =>
-        {
-            _rightArrowPressed = false;
-        });
-
-        _inputManager.SetOnUpArrowPressed(() =>
-        {
-            if (_isHeld)
-            {
-                _upArrowPressed = true;
-            }
-        });
-        _inputManager.SetOnUpArrowReleased(() =>
-        {
-            _upArrowPressed = false;
-        });
-
-        _inputManager.SetOnDownArrowPressed(() =>
-        {
-            if (_isHeld)
-            {
-                _downArrowPressed = true;
-            }
-        });
-        _inputManager.SetOnDownArrowReleased(() =>
-        {
-            _downArrowPressed = false;
-        });
-
-        _inputManager.SetOnCommaPressed(() =>
-        {
-            if (_isHeld)
-            {
-                _commaPressed = true;
-            }
-        });
-
-        _inputManager.SetOnCommaReleased(() =>
-        {
-            _commaPressed = false;
-        });
-
-        _inputManager.SetOnDotPressed(() =>
-        {
-            if (_isHeld)
-            {
-                _dotPressed = true;
-            }
-        });
-
-        _inputManager.SetOnDotReleased(() =>
-        {
-            _dotPressed = false;
-        });
+        _inputManager.SetOnLeftArrowPressed(() => { if (_isHeld) _leftArrowPressed = true; });
+        _inputManager.SetOnLeftArrowReleased(() => { _leftArrowPressed = false; });
+        _inputManager.SetOnRightArrowPressed(() => { if (_isHeld) _rightArrowPressed = true; });
+        _inputManager.SetOnRightArrowReleased(() => { _rightArrowPressed = false; });
+        _inputManager.SetOnUpArrowPressed(() => { if (_isHeld) _upArrowPressed = true; });
+        _inputManager.SetOnUpArrowReleased(() => { _upArrowPressed = false; });
+        _inputManager.SetOnDownArrowPressed(() => { if (_isHeld) _downArrowPressed = true; });
+        _inputManager.SetOnDownArrowReleased(() => { _downArrowPressed = false; });
+        _inputManager.SetOnCommaPressed(() => { if (_isHeld) _commaPressed = true; });
+        _inputManager.SetOnCommaReleased(() => { _commaPressed = false; });
+        _inputManager.SetOnDotPressed(() => { if (_isHeld) _dotPressed = true; });
+        _inputManager.SetOnDotReleased(() => { _dotPressed = false; });
     }
 
     private void OnMouseDown()
     {
-        if (_isHeld)
-        {
-            Drop();
-        }
-        else
-        {
-            Pickup();
-        }
+        if (_isHeld) Drop();
+        else Pickup();
     }
 
     private void FixedUpdate()
@@ -173,10 +101,8 @@ public class MoveableObject : MonoBehaviour, IInteractable
         if (!_isHeld) return;
 
         var smoothedPosition = Vector3.SmoothDamp(transform.position, _targetPosition, ref _velocity, moveSmoothTime);
-        
         var direction = smoothedPosition - transform.position;
         var distance = direction.magnitude;
-        
         var castExtents = _collider.bounds.extents - Vector3.one * skinWidth;
 
         if (!Physics.BoxCast(transform.position, castExtents, direction.normalized, transform.rotation, distance))
@@ -184,22 +110,10 @@ public class MoveableObject : MonoBehaviour, IInteractable
             _rigidbody.MovePosition(smoothedPosition);
         }
         
-        if (_leftArrowPressed)
-        {
-            transform.Rotate(horizontalRotationAxis, rotationSpeed * Time.deltaTime);
-        }
-        if (_rightArrowPressed)
-        {
-            transform.Rotate(horizontalRotationAxis, -rotationSpeed * Time.deltaTime);
-        }
-        if (_upArrowPressed)
-        {
-            transform.Rotate(verticalRotationAxis, rotationSpeed * Time.deltaTime);
-        }
-        if (_downArrowPressed)
-        {
-            transform.Rotate(verticalRotationAxis, -rotationSpeed * Time.deltaTime);
-        }
+        if (_leftArrowPressed) transform.Rotate(horizontalRotationAxis, rotationSpeed * Time.deltaTime);
+        if (_rightArrowPressed) transform.Rotate(horizontalRotationAxis, -rotationSpeed * Time.deltaTime);
+        if (_upArrowPressed) transform.Rotate(verticalRotationAxis, rotationSpeed * Time.deltaTime);
+        if (_downArrowPressed) transform.Rotate(verticalRotationAxis, -rotationSpeed * Time.deltaTime);
 
         if (_commaPressed)
         {
@@ -216,33 +130,18 @@ public class MoveableObject : MonoBehaviour, IInteractable
     {
         if (!_isHeld) return;
         
-        // --- Axis selection logic ---
-        if (Input.GetKeyDown(KeyCode.Alpha1))
-        {
-            _scrollRotationAxis = Vector3.right; // X-axis
-        }
-        if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            _scrollRotationAxis = Vector3.up; // Y-axis
-        }
-        if (Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            _scrollRotationAxis = Vector3.forward; // Z-axis
-        }
+        if (Input.GetKeyDown(KeyCode.Alpha1)) _scrollRotationAxis = Vector3.right;
+        if (Input.GetKeyDown(KeyCode.Alpha2)) _scrollRotationAxis = Vector3.up;
+        if (Input.GetKeyDown(KeyCode.Alpha3)) _scrollRotationAxis = Vector3.forward;
         
-        // --- Scroll wheel rotation logic ---
         var scrollInput = Input.GetAxis("Mouse ScrollWheel");
-
         if (Mathf.Abs(scrollInput) > 0.01f)
         {
-            // Use the selected axis for rotation
             transform.Rotate(_scrollRotationAxis, scrollInput * rotationSpeed * 10f, Space.Self);
         }
 
         var ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
-
         _targetPosition = ray.GetPoint(_heldDistance);
-
     }
 
     private void Pickup()
@@ -250,12 +149,10 @@ public class MoveableObject : MonoBehaviour, IInteractable
         _isHeld = true;
         _rigidbody.useGravity = false;
         _rigidbody.isKinematic = true; 
-
         _heldDistance = Vector3.Distance(_mainCamera.transform.position, transform.position);
-
         _velocity = Vector3.zero;
-
         _targetPosition = transform.position;
+        _uiManager.ShowHoldingPanel();
     }
 
     private void Drop()
@@ -263,9 +160,9 @@ public class MoveableObject : MonoBehaviour, IInteractable
         _isHeld = false;
         _rigidbody.useGravity = true;
         _rigidbody.isKinematic = false;
+        _uiManager.HideHoldingPanel();
     }
-
-
+    
     public void OnInteract(GameObject interactor)
     {
         if (_isHeld) Drop();
@@ -274,16 +171,19 @@ public class MoveableObject : MonoBehaviour, IInteractable
 
     public bool CanInteract(GameObject interactor)
     {
-        return true;
+        // *** FIX: Return false when held to prevent interaction prompt from showing ***
+        return !_isHeld;
     }
 
     public string GetInteractionPromptMobile(GameObject interactor)
     {
-        return _isHeld ? dropPromptMobile : pickupPromptMobile;
+        // This will now only be called when the object is not held.
+        return pickupPromptMobile;
     }
 
     public string GetInteractionPromptDesktop(GameObject interactor)
     {
-        return _isHeld ? dropPrompt : pickupPrompt;
+        // This will now only be called when the object is not held.
+        return pickupPrompt;
     }
 }

@@ -43,11 +43,11 @@ public class OpenDoor : MonoBehaviour, IInteractable
 
     public string GetInteractionPromptDesktop(GameObject interactor)
     {
-        return open ? "Close Door" : "Open Door";
+        return open ? "Press E to close door" : "Press E to open door";
     }
 
     public string GetInteractionPromptMobile(GameObject interactor)
     {
-        return open ? "Tap to Close Door" : "Tap to Open Door";
+        return open ? "Tap to close door" : "Tap to open door";
     }
 }

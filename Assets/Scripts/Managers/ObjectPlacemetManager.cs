@@ -77,9 +77,6 @@ namespace Managers
             HandlePlacementCancellationInput();
         }
         
-        /// <summary>
-        /// Called by UI buttons on the placement panel.
-        /// </summary>
         public void SelectPrefabAndStartPlacing(int index)
         {
             if (index >= 0 && index < placeablePrefabs.Count)
@@ -87,11 +84,7 @@ namespace Managers
                 if (placeablePrefabs[index] != null)
                 {
                     _selectedPrefabIndex = index;
-
-                    // Unambiguously close all UI to enter placement mode.
                     _uiManager.CloseAllPanels();
-                    
-                    // Start the placement process immediately after.
                     StartPlacing();
                 }
                 else
@@ -104,10 +97,7 @@ namespace Managers
                 Debug.LogWarning($"[{nameof(ObjectPlacementManager)}]: Invalid prefab index: {index}. List size is {placeablePrefabs.Count}.", this);
             }
         }
-
-        /// <summary>
-        /// Handles moving the ghost object with the camera.
-        /// </summary>
+        
         private void HandlePlacementMovement()
         {
             if (!_currentPlacingObject || !_mainCamera) return;
@@ -141,10 +131,7 @@ namespace Managers
                 CancelPlacing();
             }
         }
-
-        /// <summary>
-        /// Sets up the state for placing an object.
-        /// </summary>
+        
         private void StartPlacing()
         {
             GameManager.SetMode(GameManager.ControlMode.Placement);
@@ -160,16 +147,13 @@ namespace Managers
             _isPlacing = true;
             _currentPlacingObject = Instantiate(placeablePrefabs[_selectedPrefabIndex]);
 
-            // Disable physics on the ghost object.
             if (_currentPlacingObject.TryGetComponent<Rigidbody>(out var rb)) rb.isKinematic = true;
             if (_currentPlacingObject.TryGetComponent<Collider>(out var col)) col.enabled = false;
 
             ApplyPlacementTint(_currentPlacingObject);
+            _uiManager.ShowHoldingPanel();
         }
-
-        /// <summary>
-        /// Finalizes the object's position and restores its properties.
-        /// </summary>
+        
         private void ConfirmPlacement()
         {
             if (!_isPlacing || !_currentPlacingObject) return;
@@ -178,6 +162,8 @@ namespace Managers
             if (_currentPlacingObject.TryGetComponent<Rigidbody>(out var rb)) rb.isKinematic = false;
             if (_currentPlacingObject.TryGetComponent<Collider>(out var col)) col.enabled = true;
 
+            _uiManager.HideHoldingPanel();
+
             _currentPlacingObject = null;
             _isPlacing = false;
             _selectedPrefabIndex = -1;
@@ -185,9 +171,6 @@ namespace Managers
             GameManager.SetMode(GameManager.ControlMode.Camera);
         }
 
-        /// <summary>
-        /// Aborts the placement process and destroys the ghost object.
-        /// </summary>
         private void CancelPlacing()
         {
             if (!_isPlacing || !_currentPlacingObject) return;
@@ -195,12 +178,13 @@ namespace Managers
             Destroy(_currentPlacingObject);
             _cachedMaterials.Clear();
             _originalColors.Clear();
+            
+            _uiManager.HideHoldingPanel();
             _uiManager.TogglePlacementPanel();
 
             _currentPlacingObject = null;
             _isPlacing = false;
             _selectedPrefabIndex = -1;
-            
         }
 
         private void ApplyPlacementTint(GameObject targetObject)
