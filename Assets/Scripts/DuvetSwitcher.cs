@@ -5,7 +5,7 @@ using UnityEngine;
 public class DuvetSwitcher : MonoBehaviour, IInteractable
 {
     [SerializeField] private GameObject[] duvet;
-    [SerializeField] private Texture[] duvetTextures; // Array to hold your different textures
+    [SerializeField] private Texture[] duvetTextures;
 
     private readonly List<Renderer> _duvetRenderer = new ();
 
@@ -59,6 +59,6 @@ public class DuvetSwitcher : MonoBehaviour, IInteractable
 
     public string GetInteractionPromptMobile(GameObject interactor)
     {
-        return "Press E to change duvet";
+        return "Tap to change duvet";
     }
 }

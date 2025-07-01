@@ -169,11 +169,14 @@ namespace Managers
         
         public void ShowHoldingPanel()
         {
-            if (holdingPanel && _panelCanvasGroups.TryGetValue(holdingPanel, out var canvasGroup))
+            if (!holdingPanel || !_panelCanvasGroups.TryGetValue(holdingPanel, out var canvasGroup)) return;
+
+            if (!Application.isMobilePlatform)
             {
                 holdingPanel.SetActive(true);
-                canvasGroup.DOFade(1, panelAnimationDuration);
             }
+
+            canvasGroup.DOFade(1, panelAnimationDuration);
         }
 
         public void HideHoldingPanel()

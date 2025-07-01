@@ -1,5 +1,6 @@
 // Scripts/Managers/GameManager.cs
 
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Device;
@@ -67,21 +68,25 @@ namespace Managers
 
         private void OnEscapePressed(InputAction.CallbackContext context)
         {
-            if (currentMode == ControlMode.Placement)
+            switch (currentMode)
             {
-                SetMode(ControlMode.Camera);
-            }
-            else if (currentMode == ControlMode.Menu)
-            {
-                uiManager.CloseAllPanels();
-                SetMode(ControlMode.Camera);
-            }
-            else
-            {
-                SetMode(ControlMode.Menu);
-                if (uiManager && !Application.isMobilePlatform)
+                case ControlMode.Placement:
+                    SetMode(ControlMode.Camera);
+                    break;
+                case ControlMode.Menu:
+                    uiManager.CloseAllPanels();
+                    SetMode(ControlMode.Camera);
+                    break;
+                case ControlMode.Camera:
+                default:
                 {
-                    uiManager.TogglePanel(uiManager.controlsPanel);
+                    SetMode(ControlMode.Menu);
+                    if (uiManager && !Application.isMobilePlatform)
+                    {
+                        uiManager.TogglePanel(uiManager.controlsPanel);
+                    }
+
+                    break;
                 }
             }
         }
@@ -90,7 +95,7 @@ namespace Managers
         {
             currentMode = mode;
 
-            if (uiManager != null)
+            if (uiManager)
             {
                 uiManager.OnModeChanged(mode);
             }
@@ -108,6 +113,8 @@ namespace Managers
                 case ControlMode.Placement:
                     EnablePlacementMode();
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(mode), mode, null);
             }
         }
 
@@ -116,10 +123,10 @@ namespace Managers
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
 
-            if (playerController != null)
+            if (playerController)
                 playerController.enabled = true;
 
-            if (interactionManager != null)
+            if (interactionManager)
                 interactionManager.enabled = true;
 
             inputManager.PlayerControls.Player.Enable();
@@ -130,10 +137,10 @@ namespace Managers
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
 
-            if (playerController != null)
+            if (playerController)
                 playerController.enabled = false;
 
-            if (interactionManager != null)
+            if (interactionManager)
                 interactionManager.enabled = false;
 
             inputManager.PlayerControls.Player.Enable();
@@ -144,10 +151,10 @@ namespace Managers
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
 
-            if (playerController != null)
+            if (playerController)
                 playerController.enabled = true;
 
-            if (interactionManager != null)
+            if (interactionManager)
                 interactionManager.enabled = false;
 
             inputManager.PlayerControls.Player.Enable();

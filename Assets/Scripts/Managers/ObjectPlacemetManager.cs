@@ -10,6 +10,7 @@ namespace Managers
 {
     public class ObjectPlacementManager : MonoBehaviour
     {
+        private static readonly int Color1 = Shader.PropertyToID("_Color");
         public GameManager GameManager;
         private UIManager _uiManager;
 
@@ -198,12 +199,11 @@ namespace Managers
             {
                 foreach (var matInstance in rend.materials)
                 {
-                    if (matInstance && matInstance.HasProperty("_Color"))
-                    {
-                        _cachedMaterials.Add(matInstance);
-                        _originalColors.Add(matInstance.color);
-                        matInstance.color = placementTint;
-                    }
+                    if (!matInstance || !matInstance.HasProperty(Color1)) continue;
+
+                    _cachedMaterials.Add(matInstance);
+                    _originalColors.Add(matInstance.color);
+                    matInstance.color = placementTint;
                 }
             }
         }
