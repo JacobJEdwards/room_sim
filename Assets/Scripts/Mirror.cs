@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 
 [ExecuteAlways]
 [RequireComponent(typeof(Renderer))]
@@ -25,7 +26,7 @@ public class Mirror : MonoBehaviour
         _mainCamera = Camera.main;
         _renderer = target.GetComponent<Renderer>();
         reflectionCamera.targetTexture = renderTexture;
-        _renderer.material.mainTexture = renderTexture;
+        _renderer.sharedMaterial.mainTexture = renderTexture;
     }
 
     private void LateUpdate()
@@ -35,7 +36,6 @@ public class Mirror : MonoBehaviour
         var mirror = target.transform;
         var mirrorNormal = mirror.forward;
         var camForward = -_mainCamera.transform.forward;
-
         camForward.y = 0;
         var reflectedForward = ReflectDirection(camForward, mirrorNormal);
         var camUp = _mainCamera.transform.up;
