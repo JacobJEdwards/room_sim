@@ -19,7 +19,13 @@ namespace Managers
         [SerializeField]
         [Tooltip("A list of Transforms representing the teleport destination for each room.")]
         private List<Transform> roomDestinations = new();
-        
+
+        [SerializeField]
+        [Tooltip("A list of Transforms representing the teleport destination for each room.")]
+        private List<GameObject> rooms = new();
+
+        private int _currentRoomIndex = -1;
+
         private void Start()
         {
             _uiManager = UIManager.Instance;
@@ -42,6 +48,11 @@ namespace Managers
 
             if (roomIndex >= 0 && roomIndex < roomDestinations.Count)
             {
+                rooms[roomIndex].SetActive(true);
+                if (_currentRoomIndex >= 0 && _currentRoomIndex < rooms.Count)
+                    rooms[_currentRoomIndex].SetActive(false);
+                _currentRoomIndex = roomIndex;
+
                 var destination = roomDestinations[roomIndex];
                 if (destination)
                 {

@@ -23,46 +23,49 @@ namespace Managers
         [Header("Player")]
         [SerializeField] private GameObject player;
         [SerializeField] private MonoBehaviour playerController;
+        [SerializeField] private RoomManager roomManager;
 
         // Managers
-        private UIManager uiManager;
-        private InputManager inputManager;
-        private InteractionManager interactionManager;
+        private UIManager _uiManager;
+        private InputManager _inputManager;
+        private InteractionManager _interactionManager;
 
-        private static GameManager instance;
-        public static GameManager Instance => instance;
+        public static GameManager Instance { get; private set; }
+
         public ControlMode CurrentMode => currentMode;
+
 
         private void Awake()
         {
-            if (instance == null)
+            if (!Instance)
             {
-                instance = this;
+                Instance = this;
                 DontDestroyOnLoad(gameObject);
             }
             else
             {
                 Destroy(gameObject);
-                return;
             }
         }
 
         private void Start()
         {
-            uiManager = UIManager.Instance;
-            inputManager = InputManager.Instance;
-            interactionManager = FindObjectOfType<InteractionManager>();
+            _uiManager = UIManager.Instance;
+            _inputManager = InputManager.Instance;
+            _interactionManager = FindFirstObjectByType<InteractionManager>();
 
             SetMode(ControlMode.Camera);
 
-            inputManager.PlayerControls.UI.Cancel.performed += OnEscapePressed;
+            _inputManager.PlayerControls.UI.Cancel.performed += OnEscapePressed;
+
+            roomManager.MovePlayerToRoom(0);
         }
 
         private void OnDestroy()
         {
-            if (inputManager != null)
+            if (_inputManager)
             {
-                inputManager.PlayerControls.UI.Cancel.performed -= OnEscapePressed;
+                _inputManager.PlayerControls.UI.Cancel.performed -= OnEscapePressed;
             }
         }
 
@@ -74,16 +77,16 @@ namespace Managers
                     SetMode(ControlMode.Camera);
                     break;
                 case ControlMode.Menu:
-                    uiManager.CloseAllPanels();
+                    _uiManager.CloseAllPanels();
                     SetMode(ControlMode.Camera);
                     break;
                 case ControlMode.Camera:
                 default:
                 {
                     SetMode(ControlMode.Menu);
-                    if (uiManager && !Application.isMobilePlatform)
+                    if (_uiManager && !Application.isMobilePlatform)
                     {
-                        uiManager.TogglePanel(uiManager.controlsPanel);
+                        _uiManager.TogglePanel(_uiManager.controlsPanel);
                     }
 
                     break;
@@ -95,9 +98,9 @@ namespace Managers
         {
             currentMode = mode;
 
-            if (uiManager)
+            if (_uiManager)
             {
-                uiManager.OnModeChanged(mode);
+                _uiManager.OnModeChanged(mode);
             }
 
             switch (mode)
@@ -126,10 +129,10 @@ namespace Managers
             if (playerController)
                 playerController.enabled = true;
 
-            if (interactionManager)
-                interactionManager.enabled = true;
+            if (_interactionManager)
+                _interactionManager.enabled = true;
 
-            inputManager.PlayerControls.Player.Enable();
+            _inputManager.PlayerControls.Player.Enable();
         }
 
         private void EnableMenuMode()
@@ -140,10 +143,10 @@ namespace Managers
             if (playerController)
                 playerController.enabled = false;
 
-            if (interactionManager)
-                interactionManager.enabled = false;
+            if (_interactionManager)
+                _interactionManager.enabled = false;
 
-            inputManager.PlayerControls.Player.Enable();
+            _inputManager.PlayerControls.Player.Enable();
         }
 
         private void EnablePlacementMode()
@@ -154,10 +157,10 @@ namespace Managers
             if (playerController)
                 playerController.enabled = true;
 
-            if (interactionManager)
-                interactionManager.enabled = false;
+            if (_interactionManager)
+                _interactionManager.enabled = false;
 
-            inputManager.PlayerControls.Player.Enable();
+            _inputManager.PlayerControls.Player.Enable();
         }
 
         public void ToggleMenuMode()
@@ -177,7 +180,7 @@ namespace Managers
 
         public bool ShouldProcessPlayerInput()
         {
-            return currentMode == ControlMode.Camera || currentMode == ControlMode.Placement;
+            return currentMode is ControlMode.Camera or ControlMode.Placement;
         }
 
         public bool ShouldProcessUIInput()

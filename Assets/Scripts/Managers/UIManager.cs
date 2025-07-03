@@ -256,20 +256,19 @@ namespace Managers
 
         public void ShowInteractionPrompt(string text)
         {
-            if (!interactionPrompt || !interactionText || !interactionCanvasGroup) return;
             interactionPrompt.SetActive(true);
             interactionText.text = text;
-            interactionCanvasGroup.DOFade(1f, 0.2f);
+            // interactionCanvasGroup.DOFade(1f, 0.2f);
         }
 
         public void HideInteractionPrompt()
         {
-            if (interactionPrompt && interactionCanvasGroup)
+            if (interactionPrompt) //&& interactionCanvasGroup)
             {
-                interactionCanvasGroup.DOFade(0f, 0.2f).OnComplete(() =>
+                // interactionCanvasGroup.DOFade(0f, 0.2f).OnComplete(() =>
                 {
                     if (interactionPrompt) interactionPrompt.SetActive(false);
-                });
+                }
             }
         }
 
@@ -285,7 +284,7 @@ namespace Managers
             {
                 CloseAllPanels();
             }
-            if (newMode == GameManager.ControlMode.Menu || newMode == GameManager.ControlMode.Placement)
+            if (newMode is GameManager.ControlMode.Menu or GameManager.ControlMode.Placement)
             {
                 ClearHint();
             }
