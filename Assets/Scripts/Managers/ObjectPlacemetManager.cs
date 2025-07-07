@@ -72,6 +72,11 @@ namespace Managers
             HandlePlacementConfirmationInput();
             HandlePlacementCancellationInput();
         }
+
+        public void SelectRandom()
+        {
+            SelectPrefabAndStartPlacing(Random.Range(0, placeablePrefabs.Count));
+        }
         
         public void SelectPrefabAndStartPlacing(int index)
         {
