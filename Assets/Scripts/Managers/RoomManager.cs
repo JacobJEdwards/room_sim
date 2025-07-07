@@ -48,10 +48,13 @@ namespace Managers
 
             if (roomIndex >= 0 && roomIndex < roomDestinations.Count)
             {
-                rooms[roomIndex].SetActive(true);
-                if (_currentRoomIndex >= 0 && _currentRoomIndex < rooms.Count)
-                    rooms[_currentRoomIndex].SetActive(false);
-                _currentRoomIndex = roomIndex;
+                if (roomIndex != _currentRoomIndex)
+                {
+                    rooms[roomIndex].SetActive(true);
+                    if (_currentRoomIndex >= 0 && _currentRoomIndex < rooms.Count)
+                        rooms[_currentRoomIndex].SetActive(false);
+                    _currentRoomIndex = roomIndex;
+                }
 
                 var destination = roomDestinations[roomIndex];
                 if (destination)

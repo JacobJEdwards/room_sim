@@ -26,7 +26,7 @@ public class Mirror : MonoBehaviour
         _mainCamera = Camera.main;
         _renderer = target.GetComponent<Renderer>();
         reflectionCamera.targetTexture = renderTexture;
-        _renderer.material.mainTexture = renderTexture;
+        _renderer.sharedMaterial.mainTexture = renderTexture;
     }
 
     private void LateUpdate()

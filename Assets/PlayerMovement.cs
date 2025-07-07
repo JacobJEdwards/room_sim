@@ -1,6 +1,7 @@
 using Managers;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
@@ -27,7 +28,8 @@ public class PlayerMovement : MonoBehaviour
 
     [SerializeField] private float lookSensitivity = 0.5f;
 
-    private CharacterController _characterController;
+    [SerializeField]
+    private CharacterController characterController;
     private InputManager _inputManager = null!;
     private Vector2 _moveInput;
     private bool _jumpRequested;
@@ -37,7 +39,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void Awake()
     {
-        _characterController = GetComponent<CharacterController>();
+        characterController = GetComponent<CharacterController>();
         _gravity = Physics.gravity.y * gravityMultiplier;
     }
 
@@ -100,7 +102,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleMovementAndGravity()
     {
-        var isGrounded = _characterController.isGrounded;
+        var isGrounded = characterController.isGrounded;
 
         if (isGrounded && _playerVelocity.y < 0)
         {
@@ -125,7 +127,7 @@ public class PlayerMovement : MonoBehaviour
         _playerVelocity.y += _gravity * Time.fixedDeltaTime;
 
 
-        _characterController.Move(_playerVelocity * Time.fixedDeltaTime);
+        characterController.Move(_playerVelocity * Time.fixedDeltaTime);
     }
 
     private void HandleJumpPerformed(InputAction.CallbackContext context)
@@ -153,13 +155,13 @@ public class PlayerMovement : MonoBehaviour
     {
         if (groundCheckTransform)
         {
-            Gizmos.color = _characterController.isGrounded ? Color.green : Color.red;
+            Gizmos.color = characterController.isGrounded ? Color.green : Color.red;
             Gizmos.DrawWireSphere(groundCheckTransform.position, groundDistance);
         }
         else
         {
-             Gizmos.color = _characterController.isGrounded ? Color.green : Color.red;
-             Gizmos.DrawWireSphere(transform.position + Vector3.down * (_characterController.height / 2 - _characterController.radius), _characterController.radius);
+             Gizmos.color = characterController.isGrounded ? Color.green : Color.red;
+             Gizmos.DrawWireSphere(transform.position + Vector3.down * (characterController.height / 2 - characterController.radius), characterController.radius);
         }
     }
 }
