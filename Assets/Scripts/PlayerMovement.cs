@@ -61,6 +61,11 @@ public class PlayerMovement : MonoBehaviour
         _jumpAction.performed += HandleJumpPerformed;
     }
 
+    public void SetMouseSensitivity(float sensitivity)
+    {
+        lookSensitivity = sensitivity / 100f;
+    }
+
     private void OnEnable()
     {
         if (_jumpAction != null)

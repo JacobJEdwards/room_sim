@@ -43,7 +43,7 @@ namespace Managers
         [SerializeField] private float panelAnimationDuration = 0.3f;
         
         [Header("Holding/Placement Panel")]
-        [SerializeField] public GameObject holdingPanel; // Assign your panel in the inspector
+        [SerializeField] public GameObject holdingPanel;
 
         [Header("Action Buttons")]
         [SerializeField] private Button roomsButton;
@@ -51,9 +51,9 @@ namespace Managers
         [SerializeField] private Button placementButton;
 
         [Header("Interaction Prompt")]
-        [SerializeField] private GameObject interactionPrompt;
-        [SerializeField] private TMP_Text interactionText;
-        [SerializeField] private CanvasGroup interactionCanvasGroup;
+        // [SerializeField] private GameObject interactionPrompt;
+        // [SerializeField] private TMP_Text interactionText;
+        // [SerializeField] private CanvasGroup interactionCanvasGroup;
 
         // --- Private Fields ---
         private TMP_Text HintText => Application.isMobilePlatform ? hintTextMobile : hintTextDesktop;
@@ -81,13 +81,13 @@ namespace Managers
             PreparePanelForFading(inventoryPanel);
             PreparePanelForFading(controlsPanel);
             PreparePanelForFading(placementPanel);
-            PreparePanelForFading(holdingPanel); // Prepare the new panel
+            PreparePanelForFading(holdingPanel);
 
             SetupPlatformSpecificUI();
             InitializePanels();
             SetupButtons();
             ClearHint();
-            if (hintPanel) hintPanel.SetActive(false);
+            hintPanel.SetActive(false);
         }
 
         private void Update()
@@ -145,12 +145,11 @@ namespace Managers
             }
             else
             {
-                 if (_panelCanvasGroups.TryGetValue(panelToToggle, out var canvasGroup))
-                 {
-                    panelToToggle.SetActive(true);
-                    canvasGroup.DOFade(1, panelAnimationDuration);
-                    _gameManager?.SetMode(GameManager.ControlMode.Menu);
-                 }
+                if (!_panelCanvasGroups.TryGetValue(panelToToggle, out var canvasGroup)) return;
+
+                panelToToggle.SetActive(true);
+                canvasGroup.DOFade(1, panelAnimationDuration);
+                _gameManager?.SetMode(GameManager.ControlMode.Menu);
             }
         }
 
@@ -158,13 +157,17 @@ namespace Managers
         {
             foreach (var (panel, canvasGroup) in _panelCanvasGroups)
             {
-                // *** FIX: Do not close the holding panel with this generic method ***
                 if (panel.activeSelf && panel != holdingPanel)
                 {
                     canvasGroup.DOFade(0, panelAnimationDuration)
                         .OnComplete(() => panel.SetActive(false));
                 }
             }
+        }
+
+        public void OpenSettingsPanel()
+        {
+            controlsPanel.SetActive(true);
         }
         
         public void ShowHoldingPanel()
@@ -190,22 +193,24 @@ namespace Managers
 
         public void SetHint(string text)
         {
-            if (HintText)
-            {
-                if (hintPanel) hintPanel.SetActive(true);
-                HintText.text = text;
-            }
-            ShowInteractionPrompt(text);
+            if (text == HintText.text) return;
+
+            hintPanel.SetActive(true);
+            HintText.gameObject.SetActive(true);
+            HintText.SetText(text);
+
+            // ShowInteractionPrompt(text);
         }
 
         public void ClearHint()
         {
-            if (HintText)
-            {
-                if (hintPanel) hintPanel.SetActive(false);
-                HintText.text = string.Empty;
-            }
-            HideInteractionPrompt();
+            if (!hintPanel.activeSelf || HintText.text == string.Empty) return;
+
+            hintPanel.SetActive(false);
+            HintText.gameObject.SetActive(false);
+            HintText.SetText(string.Empty);
+
+            // HideInteractionPrompt();
         }
         
         private void SetupPlatformSpecificUI()
@@ -215,8 +220,8 @@ namespace Managers
                 if (leftThumbstick) leftThumbstick.SetActive(true);
                 if (rightThumbstick) rightThumbstick.SetActive(true);
                 if (hintTextDesktop) hintTextDesktop.gameObject.SetActive(false);
-                if (hintTextMobile) hintTextMobile.gameObject.SetActive(true);
-                if (controlsPanel) controlsPanel.SetActive(false);
+                // if (hintTextMobile) hintTextMobile.gameObject.SetActive(true);
+                // if (controlsPanel) controlsPanel.SetActive(false);
 
                 foreach (var element in toHideOnMobile)
                 {
@@ -227,8 +232,8 @@ namespace Managers
             {
                 if (leftThumbstick) leftThumbstick.SetActive(false);
                 if (rightThumbstick) rightThumbstick.SetActive(false);
-                if (hintTextDesktop) hintTextDesktop.gameObject.SetActive(true);
-                if (hintTextMobile) hintTextMobile.gameObject.SetActive(false);
+                // if (hintTextDesktop) hintTextDesktop.gameObject.SetActive(true);
+                // if (hintTextMobile) hintTextMobile.gameObject.SetActive(false);
             }
         }
         
@@ -251,26 +256,26 @@ namespace Managers
                     modeText.text = "Placement Mode";
                     modeIndicatorBackground.DOColor(placementColor, 0.3f);
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(mode), mode, null);
             }
         }
 
-        public void ShowInteractionPrompt(string text)
-        {
-            interactionPrompt.SetActive(true);
-            interactionText.text = text;
-            // interactionCanvasGroup.DOFade(1f, 0.2f);
-        }
+        // public void ShowInteractionPrompt(string text)
+        // {
+        //     interactionPrompt.SetActive(true);
+        //     interactionText.text = text;
+        //     // interactionCanvasGroup.DOFade(1f, 0.2f);
+        // }
 
-        public void HideInteractionPrompt()
-        {
-            if (interactionPrompt) //&& interactionCanvasGroup)
-            {
-                // interactionCanvasGroup.DOFade(0f, 0.2f).OnComplete(() =>
-                {
-                    if (interactionPrompt) interactionPrompt.SetActive(false);
-                }
-            }
-        }
+        // public void HideInteractionPrompt()
+        // {
+        //     if (!interactionPrompt) return; //&& interactionCanvasGroup)
+        //     // interactionCanvasGroup.DOFade(0f, 0.2f).OnComplete(() =>
+        //     {
+        //         if (interactionPrompt) interactionPrompt.SetActive(false);
+        //     }
+        // }
 
         public bool IsAnyPanelOpen()
         {
