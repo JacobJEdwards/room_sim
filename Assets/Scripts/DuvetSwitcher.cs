@@ -61,4 +61,9 @@ public class DuvetSwitcher : MonoBehaviour, IInteractable
     {
         return "Tap to change the duvet";
     }
+
+    public void ResetObject()
+    {
+        ChangeDuvetTexture(0);
+    }
 }

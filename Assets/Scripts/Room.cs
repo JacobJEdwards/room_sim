@@ -1,5 +1,7 @@
+using System;
 using UnityEngine;
 using System.Collections.Generic;
+using Interfaces;
 
 public class Room : MonoBehaviour
 {
@@ -8,16 +10,24 @@ public class Room : MonoBehaviour
     private Transform teleportDestination;
 
     public Transform TeleportDestination => teleportDestination;
-    private List<(GameObject, Vector3)> _objectPositions = new();
+    private readonly List<IInteractable> _objectPositions = new();
 
     private void Start()
     {
-        // Store initial positions of objects in the room
-        foreach (Transform child in transform)
+        foreach (var child in GetComponentsInChildren<Transform>())
         {
-            if (child == transform) continue;
+            if (child.TryGetComponent<IInteractable>(out var interactable))
+            {
+                _objectPositions.Add(interactable);
+            }
+        }
+    }
 
-            _objectPositions.Add((child.gameObject, child.position));
+    public void ResetRoom()
+    {
+        foreach (var obj in _objectPositions)
+        {
+            obj.ResetObject();
         }
     }
 

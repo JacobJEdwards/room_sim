@@ -28,7 +28,7 @@ public class ImageUploader : MonoBehaviour
         UploadImage(gameObject.name, "OnImageReceived");
 #else
         // If we're in the Editor, use the test texture instead.
-        if (testTexture != null)
+        if (testTexture)
         {
             Debug.Log("Using test texture in Editor");
             OnImageReceived(testTexture);
@@ -60,7 +60,7 @@ public class ImageUploader : MonoBehaviour
             Debug.Log($"Decoded {imageBytes.Length} bytes from base64");
             
             var texture = new Texture2D(2, 2);
-            bool success = texture.LoadImage(imageBytes);
+            var success = texture.LoadImage(imageBytes);
             
             if (success)
             {

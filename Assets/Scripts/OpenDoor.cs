@@ -50,4 +50,9 @@ public class OpenDoor : MonoBehaviour, IInteractable
     {
         return open ? "Tap to close door" : "Tap to open door";
     }
+
+    public void ResetObject()
+    {
+        Close();
+    }
 }

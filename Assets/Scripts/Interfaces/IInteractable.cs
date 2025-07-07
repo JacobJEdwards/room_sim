@@ -9,5 +9,7 @@ namespace Interfaces
         bool CanInteract(GameObject interactor);
         string GetInteractionPromptMobile(GameObject interactor);
         string GetInteractionPromptDesktop(GameObject interactor);
+
+        void ResetObject();
     }
 }

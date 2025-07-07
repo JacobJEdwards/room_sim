@@ -179,4 +179,8 @@ public class PlaceablePoster : MonoBehaviour, IInteractable
             Gizmos.DrawRay(transform.position, _wallNormal * 0.5f);
         }
     }
+
+    public void ResetObject()
+    {
+    }
 }

@@ -27,4 +27,9 @@ public class DoorButton : MonoBehaviour, IInteractable
     {
         return door.open ? "Door is already open" : "Tap to Open Door";
     }
+
+    public void ResetObject()
+    {
+        door.ResetObject();
+    }
 }

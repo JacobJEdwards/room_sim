@@ -49,4 +49,15 @@ public class Plug : MonoBehaviour, IInteractable
     {
         return "Tap to toggle switch";
     }
+
+    public void ResetObject()
+    {
+        isOn = false;
+        switchObject.transform.localRotation = Quaternion.Euler(switchOffRotation);
+
+        if (pluggedIn && pluggedIn.TryGetComponent(out ISwitchable s))
+        {
+            s.Toggle(false);
+        }
+    }
 }

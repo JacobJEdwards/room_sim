@@ -60,4 +60,9 @@ public class LightSwitch : MonoBehaviour, IInteractable
     {
         return _on ? "Tap to Turn Light Off" : "Tap to Turn Light On";
     }
+
+    public void ResetObject()
+    {
+        TurnOn();
+    }
 }

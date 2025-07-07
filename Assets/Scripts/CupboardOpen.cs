@@ -1,3 +1,4 @@
+using System;
 using DG.Tweening;
 using Interfaces;
 using UnityEngine;
@@ -48,5 +49,10 @@ public class CupboardOpen : MonoBehaviour, IInteractable
     public string GetInteractionPromptMobile(GameObject interactor)
     {
         return open ? "Tap to Close Cupboard" : "Tap to Open Cupboard";
+    }
+
+    public void ResetObject()
+    {
+        Close();
     }
 }

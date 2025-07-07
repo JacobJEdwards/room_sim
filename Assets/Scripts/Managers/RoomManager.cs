@@ -2,15 +2,12 @@
 
 using UnityEngine;
 using System.Collections.Generic;
-using UnityEngine.InputSystem;
-using UnityEngine.Serialization;
 
 namespace Managers
 {
     public class RoomManager : MonoBehaviour
     {
         
-        [FormerlySerializedAs("GameManager")] public GameManager gameManager = null!;
         private UIManager _uiManager = null!;
         [Header("Player Settings")] [SerializeField] [Tooltip("The player GameObject that will be moved.")]
         private GameObject? player;
@@ -21,10 +18,15 @@ namespace Managers
         private List<Transform> roomDestinations = new();
 
         [SerializeField]
-        [Tooltip("A list of Transforms representing the teleport destination for each room.")]
+        [Tooltip("A list of Transforms representing each room.")]
         private List<GameObject> rooms = new();
 
+        [SerializeField] [Tooltip("The room object.")]
+        private List<Room> roomObjects = new();
+
         private int _currentRoomIndex = -1;
+
+        public Room CurrentRoom => roomObjects[_currentRoomIndex];
 
         private void Start()
         {
@@ -35,7 +37,6 @@ namespace Managers
             if (player) return;
             Debug.LogError("Player object is not assigned and could not be found by tag 'Player'.", this);
             enabled = false;
-            gameManager = GameManager.Instance;
         }
         
         public void MovePlayerToRoom(int roomIndex)
@@ -83,6 +84,18 @@ namespace Managers
             else
             {
                 Debug.LogError($"Invalid room index: {roomIndex}. List size is {roomDestinations.Count}.", this);
+            }
+        }
+
+        public void ResetCurrentRoom()
+        {
+            if (_currentRoomIndex >= 0 && _currentRoomIndex < roomObjects.Count)
+            {
+                roomObjects[_currentRoomIndex].ResetRoom();
+            }
+            else
+            {
+                Debug.LogError("Current room index is out of bounds.", this);
             }
         }
     }

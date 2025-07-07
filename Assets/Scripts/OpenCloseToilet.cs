@@ -2,12 +2,12 @@ using DG.Tweening;
 using Interfaces;
 using UnityEngine;
 
-public class Curtains : MonoBehaviour, IInteractable
+public class OpenCloseToilet : MonoBehaviour, IInteractable
 {
-    private bool _open = true;
+    private bool _open;
+
     [SerializeField]
-    private float maxScale = 9.5f;
-    [SerializeField] private GameObject curtain;
+    private GameObject seat;
 
     public void OnInteract(GameObject interactor)
     {
@@ -23,13 +23,13 @@ public class Curtains : MonoBehaviour, IInteractable
 
     private void Open()
     {
-        curtain.transform.DOScaleY(1f, 1f);
+        seat.transform.DOLocalRotate(new Vector3(0, 0, 90f), 1f);
         _open = true;
     }
 
     private void Close()
     {
-        curtain.transform.DOScaleY(maxScale, 1f);
+        seat.transform.DOLocalRotate(new Vector3(0, 0f, 0), 1f);
         _open = false;
     }
 
@@ -40,12 +40,16 @@ public class Curtains : MonoBehaviour, IInteractable
 
     public string GetInteractionPromptDesktop(GameObject interactor)
     {
-        // maybe turn to daytime ??
-        return _open ? "Close Curtains" : "Open Curtains";
+        return _open ? "Press E to close toilet" : "Press E to open toilet";
     }
 
     public string GetInteractionPromptMobile(GameObject interactor)
     {
-        return _open ? "Tap to Close Curtains" : "Tap to Open Curtains";
+        return _open ? "Tap to close toilet" : "Tap to open toilet";
+    }
+
+    public void ResetObject()
+    {
+        Close();
     }
 }

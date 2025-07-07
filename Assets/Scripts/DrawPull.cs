@@ -44,6 +44,10 @@ public class DrawPull : MonoBehaviour, IInteractable
     public string GetInteractionPromptMobile(GameObject interactor)
     {
         return open ? "Tap to close drawer" : "Tap to open drawer";
-        
+    }
+
+    public void ResetObject()
+    {
+        Close();
     }
 }

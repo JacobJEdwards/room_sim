@@ -22,18 +22,13 @@ public class Poster : MonoBehaviour, IInteractable
             return;
         }
 
-        // --- THIS IS THE KEY CHANGE ---
-        // We directly subscribe to the event in the code.
-        // This removes the need to set it up in the Inspector.
         _imageUploader.OnImageUploaded.AddListener(UpdateTexture);
     }
 
-    // This method is called by the ImageUploader when the image is ready
-    public void UpdateTexture(Texture2D newTexture)
+    private void UpdateTexture(Texture2D newTexture)
     {
         if (_renderer && _renderer.material)
         {
-            // Apply the new texture to the material
             _renderer.material.mainTexture = newTexture;
         }
     }
@@ -51,10 +46,17 @@ public class Poster : MonoBehaviour, IInteractable
 
     private void OnDestroy()
     {
-        // Good practice to unsubscribe from events when the object is destroyed
-        if (_imageUploader != null)
+        if (_imageUploader)
         {
             _imageUploader.OnImageUploaded.RemoveListener(UpdateTexture);
+        }
+    }
+
+    public void ResetObject()
+    {
+        if (_renderer && _renderer.material)
+        {
+            _renderer.material.mainTexture = null;
         }
     }
 }

@@ -54,6 +54,9 @@ public class MoveableObject : MonoBehaviour, IInteractable
 
     private Vector3 _scrollRotationAxis = Vector3.up;
 
+    private Vector3 _initialPosition;
+    private Quaternion _initialRotation;
+
     private void Awake()
     {
         _rigidbody = GetComponent<Rigidbody>();
@@ -64,11 +67,6 @@ public class MoveableObject : MonoBehaviour, IInteractable
          _rigidbody.constraints = RigidbodyConstraints.None;
 
         _mainCamera = Camera.main;
-        if (!_mainCamera)
-        {
-            Debug.LogError("MoveableObject requires a Camera tagged 'MainCamera' in the scene.", this);
-            enabled = false;
-        }
     }
 
     private void Start()
@@ -88,6 +86,9 @@ public class MoveableObject : MonoBehaviour, IInteractable
         _inputManager.SetOnCommaReleased(() => { _commaPressed = false; });
         _inputManager.SetOnDotPressed(() => { if (_isHeld) _dotPressed = true; });
         _inputManager.SetOnDotReleased(() => { _dotPressed = false; });
+
+        _initialPosition = transform.position;
+        _initialRotation = transform.rotation;
     }
 
     private void OnMouseDown()
@@ -171,19 +172,28 @@ public class MoveableObject : MonoBehaviour, IInteractable
 
     public bool CanInteract(GameObject interactor)
     {
-        // *** FIX: Return false when held to prevent interaction prompt from showing ***
         return !_isHeld;
     }
 
     public string GetInteractionPromptMobile(GameObject interactor)
     {
-        // This will now only be called when the object is not held.
         return pickupPromptMobile;
     }
 
     public string GetInteractionPromptDesktop(GameObject interactor)
     {
-        // This will now only be called when the object is not held.
         return pickupPrompt;
+    }
+
+    public void ResetObject()
+    {
+        Drop();
+        transform.position = _initialPosition;
+        transform.rotation = _initialRotation;
+        _rigidbody.linearVelocity = Vector3.zero;
+        _rigidbody.angularVelocity = Vector3.zero;
+        _rigidbody.isKinematic = false;
+        _rigidbody.useGravity = true;
+        _uiManager.HideHoldingPanel();
     }
 }

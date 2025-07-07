@@ -187,5 +187,10 @@ namespace Managers
         {
             return currentMode == ControlMode.Menu;
         }
+
+        public void ResetCurrentRoom()
+        {
+            roomManager.ResetCurrentRoom();
+        }
     }
 }
