@@ -4,6 +4,7 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Device;
+using UnityEngine.UI;
 using Application = UnityEngine.Application; // Required for Application.isMobilePlatform
 
 namespace Managers
@@ -23,6 +24,7 @@ namespace Managers
         [Header("Player")]
         [SerializeField] private GameObject player;
         [SerializeField] private MonoBehaviour playerController;
+        private PlayerController _playerController;
         [SerializeField] private RoomManager roomManager;
 
         // Managers
@@ -34,6 +36,8 @@ namespace Managers
 
         public ControlMode CurrentMode => currentMode;
         public Room CurrentRoom => roomManager.CurrentRoom;
+
+        [SerializeField] private Slider _mouseSensitivitySlider;
 
         private void Awake()
         {
@@ -59,6 +63,30 @@ namespace Managers
             _inputManager.PlayerControls.UI.Cancel.performed += OnEscapePressed;
 
             roomManager.MovePlayerToRoom(0);
+
+            _playerController = player.GetComponent<PlayerController>();
+            if (!_playerController)
+            {
+                Debug.LogError("PlayerController component not found on player GameObject.", this);
+                enabled = false;
+                return;
+            }
+
+            if (_mouseSensitivitySlider)
+            {
+                _mouseSensitivitySlider.onValueChanged.AddListener(SetMouseSensitivity);
+                _mouseSensitivitySlider.value = PlayerPrefs.GetFloat("MouseSensitivity", 50f);
+                SetMouseSensitivity(_mouseSensitivitySlider.value);
+            }
+        }
+
+        public void SetMouseSensitivity(float sensitivity)
+        {
+            PlayerPrefs.SetFloat("MouseSensitivity", sensitivity);
+            if (_playerController)
+            {
+                _playerController.SetMouseSensitivity(sensitivity);
+            }
         }
 
         private void OnDestroy()

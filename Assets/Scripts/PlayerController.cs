@@ -8,8 +8,17 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
-        _mouseSensitivity = PlayerPrefs.GetFloat("MouseSensitivity", 100f);
+        playerMovement = GetComponent<PlayerMovement>();
+
+        _mouseSensitivity = PlayerPrefs.GetFloat("MouseSensitivity", 50f);
 
         playerMovement.SetMouseSensitivity(_mouseSensitivity);
+    }
+
+    public void SetMouseSensitivity(float sensitivity)
+    {
+        _mouseSensitivity = sensitivity;
+        PlayerPrefs.SetFloat("MouseSensitivity", sensitivity);
+        playerMovement.SetMouseSensitivity(sensitivity);
     }
 }
