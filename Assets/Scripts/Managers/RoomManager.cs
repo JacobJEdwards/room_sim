@@ -98,5 +98,10 @@ namespace Managers
                 Debug.LogError("Current room index is out of bounds.", this);
             }
         }
+
+        public void ClearPlacedObjects()
+        {
+            CurrentRoom.ClearPlacedObjects();
+        }
     }
 }

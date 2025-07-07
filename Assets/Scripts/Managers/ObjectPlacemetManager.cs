@@ -11,8 +11,8 @@ namespace Managers
     public class ObjectPlacementManager : MonoBehaviour
     {
         private static readonly int Color1 = Shader.PropertyToID("_Color");
-        public GameManager GameManager;
-        private UIManager _uiManager;
+        public GameManager GameManager = null!;
+        private UIManager _uiManager = null!;
 
         [Header("Placement Settings")]
         [SerializeField]
@@ -45,11 +45,6 @@ namespace Managers
         private void Awake()
         {
             _mainCamera = Camera.main;
-            if (_mainCamera == null)
-            {
-                Debug.LogError("ObjectPlacementManager requires a Camera tagged 'MainCamera' in the scene.", this);
-                enabled = false;
-            }
         }
 
         private void Start()
@@ -82,7 +77,7 @@ namespace Managers
         {
             if (index >= 0 && index < placeablePrefabs.Count)
             {
-                if (placeablePrefabs[index] != null)
+                if (placeablePrefabs[index])
                 {
                     _selectedPrefabIndex = index;
                     _uiManager.CloseAllPanels();
@@ -119,7 +114,7 @@ namespace Managers
 
         private void HandlePlacementConfirmationInput()
         {
-            if (_inputManager.PlayerControls.Player.Attack.WasPerformedThisFrame())
+            if (_inputManager && _inputManager.PlayerControls.Player.Attack.WasPerformedThisFrame())
             {
                 ConfirmPlacement();
             }
@@ -136,6 +131,7 @@ namespace Managers
         private void StartPlacing()
         {
             GameManager.SetMode(GameManager.ControlMode.Placement);
+            var currentRoom = GameManager.CurrentRoom;
     
             if (_selectedPrefabIndex < 0)
             {
@@ -146,7 +142,7 @@ namespace Managers
             if (_currentPlacingObject) Destroy(_currentPlacingObject);
 
             _isPlacing = true;
-            _currentPlacingObject = Instantiate(placeablePrefabs[_selectedPrefabIndex]);
+            _currentPlacingObject = Instantiate(placeablePrefabs[_selectedPrefabIndex], currentRoom.transform);
 
             if (_currentPlacingObject.TryGetComponent<Rigidbody>(out var rb)) rb.isKinematic = true;
             if (_currentPlacingObject.TryGetComponent<Collider>(out var col)) col.enabled = false;
@@ -162,6 +158,7 @@ namespace Managers
             RemovePlacementTint();
             if (_currentPlacingObject.TryGetComponent<Rigidbody>(out var rb)) rb.isKinematic = false;
             if (_currentPlacingObject.TryGetComponent<Collider>(out var col)) col.enabled = true;
+            GameManager.CurrentRoom.AddPlacedObject(_currentPlacingObject);
 
             _uiManager.HideHoldingPanel();
 
@@ -170,6 +167,7 @@ namespace Managers
             _selectedPrefabIndex = -1;
             
             GameManager.SetMode(GameManager.ControlMode.Camera);
+
         }
 
         private void CancelPlacing()

@@ -33,7 +33,7 @@ namespace Managers
         public static GameManager Instance { get; private set; }
 
         public ControlMode CurrentMode => currentMode;
-
+        public Room CurrentRoom => roomManager.CurrentRoom;
 
         private void Awake()
         {

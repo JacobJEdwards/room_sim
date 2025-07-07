@@ -11,6 +11,7 @@ public class Room : MonoBehaviour
 
     public Transform TeleportDestination => teleportDestination;
     private readonly List<IInteractable> _objectPositions = new();
+    private readonly List<GameObject> _placedObjects = new();
 
     private void Start()
     {
@@ -39,5 +40,19 @@ public class Room : MonoBehaviour
     public void DeactivateRoom()
     {
         gameObject.SetActive(false);
+    }
+
+    public void AddPlacedObject(GameObject obj)
+    {
+        _placedObjects.Add(obj);
+    }
+
+    public void ClearPlacedObjects()
+    {
+        foreach (var obj in _placedObjects)
+        {
+            Destroy(obj);
+        }
+        _placedObjects.Clear();
     }
 }
