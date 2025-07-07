@@ -53,11 +53,11 @@ public class LightSwitch : MonoBehaviour, IInteractable
 
     public string GetInteractionPromptDesktop(GameObject interactor)
     {
-        return "Turn On/Off Light";
+        return _on ? "Press E to Turn Light Off" : "Press E to Turn Light On";
     }
 
     public string GetInteractionPromptMobile(GameObject interactor)
     {
-        return "Turn On/Off Light";
+        return _on ? "Tap to Turn Light Off" : "Tap to Turn Light On";
     }
 }
