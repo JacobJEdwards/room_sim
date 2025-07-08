@@ -22,6 +22,12 @@ namespace Managers
         [SerializeField] [Tooltip("The layer(s) the object can be placed upon.")]
         private LayerMask placementLayerMask;
 
+        [SerializeField] [Tooltip("The tag that will be used for collision detection.")]
+        private string collisionTag = "Wall";
+        
+        [SerializeField] [Tooltip("The tag that will be used to ignore collision.")]
+        private string ignoreTag = "Player";
+
         [SerializeField] [Tooltip("Optional: Offset the placed object slightly above the surface.")]
         private float placementOffset = 0.05f;
 
@@ -38,6 +44,9 @@ namespace Managers
         private GameObject? _currentPlacingObject;
         private int _selectedPrefabIndex = -1;
         private bool _isPlacing;
+        
+        private Collider _placingObjectCollider;
+
 
         private readonly List<Material> _cachedMaterials = new();
         private readonly List<Color> _originalColors = new();
@@ -102,20 +111,47 @@ namespace Managers
         private void HandlePlacementMovement()
         {
             if (!_currentPlacingObject || !_mainCamera) return;
-
+        
             var ray = _mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
-
+            Vector3 targetPosition;
+            Quaternion targetRotation;
+        
             if (Physics.Raycast(ray, out var hit, 1000f, placementLayerMask))
             {
-                _currentPlacingObject.transform.position = hit.point + hit.normal * placementOffset;
-                _currentPlacingObject.transform.rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
+                targetPosition = hit.point + hit.normal * placementOffset;
+                targetRotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
             }
             else
             {
-                _currentPlacingObject.transform.position = ray.GetPoint(defaultPlacementDistance);
-                _currentPlacingObject.transform.rotation = _mainCamera.transform.rotation;
+                targetPosition = ray.GetPoint(defaultPlacementDistance);
+                targetRotation = _mainCamera.transform.rotation;
             }
+        
+            var direction = targetPosition - _currentPlacingObject.transform.position;
+            var distance = direction.magnitude;
+        
+            if (_placingObjectCollider != null &&
+                Physics.BoxCast(
+                    _currentPlacingObject.transform.position,
+                    _placingObjectCollider.bounds.extents,
+                    direction.normalized,
+                    out var boxHit,
+                    _currentPlacingObject.transform.rotation,
+                    distance) && 
+                boxHit.collider.CompareTag(collisionTag) && 
+                !boxHit.collider.CompareTag(ignoreTag))
+
+            {
+                // Don't move if there's a collision with the specified tag
+            }
+            else
+            {
+                _currentPlacingObject.transform.position = targetPosition;
+            }
+        
+            _currentPlacingObject.transform.rotation = targetRotation;
         }
+
 
         private void HandlePlacementConfirmationInput()
         {
@@ -150,7 +186,11 @@ namespace Managers
             _currentPlacingObject = Instantiate(placeablePrefabs[_selectedPrefabIndex], currentRoom.transform);
 
             if (_currentPlacingObject.TryGetComponent<Rigidbody>(out var rb)) rb.isKinematic = true;
-            if (_currentPlacingObject.TryGetComponent<Collider>(out var col)) col.enabled = false;
+            if (_currentPlacingObject.TryGetComponent<Collider>(out var col))
+            {
+                col.isTrigger = true;
+                _placingObjectCollider = col;
+            }
 
             ApplyPlacementTint(_currentPlacingObject);
             _uiManager.ShowHoldingPanel();
@@ -162,7 +202,10 @@ namespace Managers
 
             RemovePlacementTint();
             if (_currentPlacingObject.TryGetComponent<Rigidbody>(out var rb)) rb.isKinematic = false;
-            if (_currentPlacingObject.TryGetComponent<Collider>(out var col)) col.enabled = true;
+            if (_currentPlacingObject.TryGetComponent<Collider>(out var col))
+            {
+                col.isTrigger = false;
+            }
             GameManager.CurrentRoom.AddPlacedObject(_currentPlacingObject);
 
             _uiManager.HideHoldingPanel();

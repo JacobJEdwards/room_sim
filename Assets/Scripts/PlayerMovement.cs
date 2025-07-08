@@ -1,6 +1,7 @@
 using Managers;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.Serialization;
 
 [RequireComponent(typeof(CharacterController))]
@@ -10,6 +11,7 @@ public class PlayerMovement : MonoBehaviour
     private InputSystem _inputActions;
     private InputAction _moveAction;
     private InputAction _jumpAction;
+    private InputAction _lookAction;
     [SerializeField] private Transform head;
 
     [Header("Movement Settings")]
@@ -57,8 +59,13 @@ public class PlayerMovement : MonoBehaviour
         _inputActions = _inputManager.PlayerControls;
         _moveAction = _inputActions.Player.Move;
         _jumpAction = _inputActions.Player.Jump;
+        _lookAction = _inputActions.Player.Look;
 
         _jumpAction.performed += HandleJumpPerformed;
+        if (UnityEngine.Device.Application.isMobilePlatform)
+        {
+            _lookAction.performed += FilterMobileLookInput;
+        }
     }
 
     public void SetMouseSensitivity(float sensitivity)
@@ -72,13 +79,33 @@ public class PlayerMovement : MonoBehaviour
         {
             _jumpAction.performed += HandleJumpPerformed;
         }
+        
+        if (UnityEngine.Device.Application.isMobilePlatform && _lookAction != null)
+        {
+            _lookAction.performed += FilterMobileLookInput;
+        }
     }
 
     private void OnDisable()
     {
         _jumpAction.performed -= HandleJumpPerformed;
+        
+        if (UnityEngine.Device.Application.isMobilePlatform && _lookAction != null)
+        {
+            _lookAction.performed -= FilterMobileLookInput;
+        }
     }
 
+    private void FilterMobileLookInput(InputAction.CallbackContext context)
+    {
+        // Check if the input is coming from a touchscreen
+        if (context.control.device is Touchscreen)
+        {
+            // Cancel the touch input by not processing it
+            context.ReadValueAsObject();
+            return;
+        }
+    }
 
     private void Update()
     {
@@ -89,9 +116,19 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleRotation()
     {
-        var pitchYaw = _inputActions.Player.Look.ReadValue<Vector2>();
+        // On mobile, ignore look input if it's from touch
+        if (UnityEngine.Device.Application.isMobilePlatform)
+        {
+            // Check the active control to see if it's touch-based
+            var lookControl = _lookAction.activeControl;
+            if (lookControl != null && lookControl.device is Touchscreen)
+            {
+                return; // Ignore touch input
+            }
+        }
 
-        // pitchYaw *= lookSensitivity * Time.deltaTime;
+        var pitchYaw = _lookAction.ReadValue<Vector2>();
+
         _currentRotationX -= pitchYaw.y * lookSensitivity;
         _currentRotationX = Mathf.Clamp(_currentRotationX, -90f, 90f);
 
