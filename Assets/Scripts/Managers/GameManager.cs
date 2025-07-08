@@ -1,11 +1,9 @@
-// Scripts/Managers/GameManager.cs
-
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Device;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
-using Application = UnityEngine.Application; // Required for Application.isMobilePlatform
+using Application = UnityEngine.Application;
 
 namespace Managers
 {
@@ -37,7 +35,7 @@ namespace Managers
         public ControlMode CurrentMode => currentMode;
         public Room CurrentRoom => roomManager.CurrentRoom;
 
-        [SerializeField] private Slider _mouseSensitivitySlider;
+        [FormerlySerializedAs("_mouseSensitivitySlider")] [SerializeField] private Slider mouseSensitivitySlider;
 
         private void Awake()
         {
@@ -72,15 +70,21 @@ namespace Managers
                 return;
             }
 
-            if (_mouseSensitivitySlider)
+            if (mouseSensitivitySlider)
             {
-                _mouseSensitivitySlider.onValueChanged.AddListener(SetMouseSensitivity);
-                _mouseSensitivitySlider.value = PlayerPrefs.GetFloat("MouseSensitivity", 50f);
-                SetMouseSensitivity(_mouseSensitivitySlider.value);
+                if (Application.isMobilePlatform)
+                {
+                    mouseSensitivitySlider.maxValue = 200f;
+
+                }
+
+                mouseSensitivitySlider.onValueChanged.AddListener(SetMouseSensitivity);
+                mouseSensitivitySlider.value = PlayerPrefs.GetFloat("MouseSensitivity", Application.isMobilePlatform ? 100f : 50f);
+                SetMouseSensitivity(mouseSensitivitySlider.value);
             }
         }
 
-        public void SetMouseSensitivity(float sensitivity)
+        private void SetMouseSensitivity(float sensitivity)
         {
             PlayerPrefs.SetFloat("MouseSensitivity", sensitivity);
             if (_playerController)
