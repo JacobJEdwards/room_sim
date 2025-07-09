@@ -116,7 +116,7 @@ namespace Managers
                 default:
                 {
                     SetMode(ControlMode.Menu);
-                    if (_uiManager && !Application.isMobilePlatform)
+                    if (_uiManager)
                     {
                         _uiManager.TogglePanel(_uiManager.controlsPanel);
                     }

@@ -17,10 +17,18 @@ namespace Managers
     {
         public static UIManager Instance { get; private set; } = null!;
 
+        // --- UPDATED HINT SYSTEM FIELDS ---
         [Header("Hint System")]
-        [SerializeField] private GameObject hintPanel;
+        [Tooltip("The panel that will be shown on Desktop builds.")]
+        [SerializeField] private GameObject desktopHintPanel;
+        [Tooltip("The TextMeshPro component within the Desktop Hint Panel.")]
         [SerializeField] private TMP_Text hintTextDesktop;
+
+        [Tooltip("The panel that will be shown on Mobile builds.")]
+        [SerializeField] private GameObject mobileHintPanel;
+        [Tooltip("The TextMeshPro component within the Mobile Hint Panel.")]
         [SerializeField] private TMP_Text hintTextMobile;
+
 
         [Header("Mobile Controls")]
         [SerializeField] private GameObject leftThumbstick;
@@ -50,13 +58,7 @@ namespace Managers
         [SerializeField] private Button inventoryButton;
         [SerializeField] private Button placementButton;
 
-        [Header("Interaction Prompt")]
-        // [SerializeField] private GameObject interactionPrompt;
-        // [SerializeField] private TMP_Text interactionText;
-        // [SerializeField] private CanvasGroup interactionCanvasGroup;
-
         // --- Private Fields ---
-        private TMP_Text HintText => Application.isMobilePlatform ? hintTextMobile : hintTextDesktop;
         private GameManager _gameManager;
         private readonly Dictionary<GameObject, CanvasGroup> _panelCanvasGroups = new();
 
@@ -86,9 +88,65 @@ namespace Managers
             SetupPlatformSpecificUI();
             InitializePanels();
             SetupButtons();
-            ClearHint();
-            hintPanel.SetActive(false);
+            
+            // Start with both hint panels hidden
+            if (desktopHintPanel) desktopHintPanel.SetActive(false);
+            if (mobileHintPanel) mobileHintPanel.SetActive(false);
         }
+
+        public void SetHint(string text)
+        {
+            if (Application.isMobilePlatform)
+            {
+                if (mobileHintPanel && hintTextMobile)
+                {
+                    mobileHintPanel.SetActive(true);
+                    hintTextMobile.text = text;
+                }
+            }
+            else
+            {
+                if (desktopHintPanel && hintTextDesktop)
+                {
+                    desktopHintPanel.SetActive(true);
+                    hintTextDesktop.text = text;
+                }
+            }
+        }
+
+        public void ClearHint()
+        {
+            if (desktopHintPanel) desktopHintPanel.SetActive(false);
+            if (mobileHintPanel) mobileHintPanel.SetActive(false);
+        }
+        
+        private void SetupPlatformSpecificUI()
+        {
+            bool isMobile = Application.isMobilePlatform;
+
+            if (leftThumbstick) leftThumbstick.SetActive(isMobile);
+            if (rightThumbstick) rightThumbstick.SetActive(isMobile);
+
+            foreach (var element in toHideOnMobile)
+            {
+                if (element) element.SetActive(false);
+            }
+        }
+
+        public void OnModeChanged(GameManager.ControlMode newMode)
+        {
+            UpdateModeDisplay(newMode);
+            if (newMode != GameManager.ControlMode.Menu)
+            {
+                CloseAllPanels();
+            }
+            if (newMode is GameManager.ControlMode.Menu or GameManager.ControlMode.Placement)
+            {
+                ClearHint();
+            }
+        }
+        
+        // --- NO CHANGES TO THE METHODS BELOW ---
 
         private void Update()
         {
@@ -102,11 +160,10 @@ namespace Managers
                 TogglePlacementPanel();
             }
         }
-
+        
         private void PreparePanelForFading(GameObject panel)
         {
             if (!panel || _panelCanvasGroups.ContainsKey(panel)) return;
-
             var canvasGroup = panel.GetComponent<CanvasGroup>() ?? panel.AddComponent<CanvasGroup>();
             _panelCanvasGroups.Add(panel, canvasGroup);
         }
@@ -165,20 +222,11 @@ namespace Managers
             }
         }
 
-        public void OpenSettingsPanel()
-        {
-            controlsPanel.SetActive(true);
-        }
-        
+        public void OpenSettingsPanel() => controlsPanel.SetActive(true);
         public void ShowHoldingPanel()
         {
             if (!holdingPanel || !_panelCanvasGroups.TryGetValue(holdingPanel, out var canvasGroup)) return;
-
-            if (!Application.isMobilePlatform)
-            {
-                holdingPanel.SetActive(true);
-            }
-
+            if (!Application.isMobilePlatform) holdingPanel.SetActive(true);
             canvasGroup.DOFade(1, panelAnimationDuration);
         }
 
@@ -186,54 +234,7 @@ namespace Managers
         {
             if (holdingPanel && _panelCanvasGroups.TryGetValue(holdingPanel, out var canvasGroup))
             {
-                canvasGroup.DOFade(0, panelAnimationDuration)
-                    .OnComplete(() => holdingPanel.SetActive(false));
-            }
-        }
-
-        public void SetHint(string text)
-        {
-            if (text == HintText.text) return;
-
-            hintPanel.SetActive(true);
-            HintText.gameObject.SetActive(true);
-            HintText.SetText(text);
-
-            // ShowInteractionPrompt(text);
-        }
-
-        public void ClearHint()
-        {
-            if (!hintPanel.activeSelf || HintText.text == string.Empty) return;
-
-            hintPanel.SetActive(false);
-            HintText.gameObject.SetActive(false);
-            HintText.SetText(string.Empty);
-
-            // HideInteractionPrompt();
-        }
-        
-        private void SetupPlatformSpecificUI()
-        {
-            if (Application.isMobilePlatform)
-            {
-                if (leftThumbstick) leftThumbstick.SetActive(true);
-                if (rightThumbstick) rightThumbstick.SetActive(true);
-                if (hintTextDesktop) hintTextDesktop.gameObject.SetActive(false);
-                // if (hintTextMobile) hintTextMobile.gameObject.SetActive(true);
-                // if (controlsPanel) controlsPanel.SetActive(false);
-
-                foreach (var element in toHideOnMobile)
-                {
-                    if (element) element.SetActive(false);
-                }
-            }
-            else
-            {
-                if (leftThumbstick) leftThumbstick.SetActive(false);
-                if (rightThumbstick) rightThumbstick.SetActive(false);
-                // if (hintTextDesktop) hintTextDesktop.gameObject.SetActive(true);
-                // if (hintTextMobile) hintTextMobile.gameObject.SetActive(false);
+                canvasGroup.DOFade(0, panelAnimationDuration).OnComplete(() => holdingPanel.SetActive(false));
             }
         }
         
@@ -261,38 +262,6 @@ namespace Managers
             }
         }
 
-        // public void ShowInteractionPrompt(string text)
-        // {
-        //     interactionPrompt.SetActive(true);
-        //     interactionText.text = text;
-        //     // interactionCanvasGroup.DOFade(1f, 0.2f);
-        // }
-
-        // public void HideInteractionPrompt()
-        // {
-        //     if (!interactionPrompt) return; //&& interactionCanvasGroup)
-        //     // interactionCanvasGroup.DOFade(0f, 0.2f).OnComplete(() =>
-        //     {
-        //         if (interactionPrompt) interactionPrompt.SetActive(false);
-        //     }
-        // }
-
-        public bool IsAnyPanelOpen()
-        {
-            return _panelCanvasGroups.Values.Any(cg => cg.alpha > 0);
-        }
-
-        public void OnModeChanged(GameManager.ControlMode newMode)
-        {
-            UpdateModeDisplay(newMode);
-            if (newMode != GameManager.ControlMode.Menu)
-            {
-                CloseAllPanels();
-            }
-            if (newMode is GameManager.ControlMode.Menu or GameManager.ControlMode.Placement)
-            {
-                ClearHint();
-            }
-        }
+        public bool IsAnyPanelOpen() => _panelCanvasGroups.Values.Any(cg => cg.alpha > 0);
     }
 }
