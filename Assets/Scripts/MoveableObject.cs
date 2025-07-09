@@ -30,7 +30,7 @@ public class MoveableObject : MonoBehaviour, IInteractable
     [Header("Interaction")]
     [SerializeField]
     [Tooltip("Text displayed when the object can be picked up.")]
-    private string pickupPrompt = "Double Click to pick up";
+    private string pickupPrompt = "Click to pick up";
     [SerializeField]
     [Tooltip("Text displayed when the object can be picked up on mobile.")]
     private string pickupPromptMobile = "Tap to pick up";
