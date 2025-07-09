@@ -10,7 +10,7 @@ public class DrawablePostIt : MonoBehaviour, IInteractable
     [Header("Component References")]
     [SerializeField]
     [Tooltip("CRITICAL: Drag the MeshCollider from the CHILD object here.")]
-    private Collider drawingCollider; // Assign the child's MeshCollider here
+    private Collider drawingCollider;
 
     [Header("Drawing Settings")]
     [SerializeField] private int textureSize = 512;
@@ -22,14 +22,20 @@ public class DrawablePostIt : MonoBehaviour, IInteractable
     [SerializeField] private float moveSmoothTime = 0.05f;
     [SerializeField] private float rotationSpeed = 100f;
 
+    [Header("Placement Settings")]
+    [SerializeField] private float wallDetectionDistance = 0.5f;
+    [SerializeField] private LayerMask wallLayerMask = -1;
+
     [Header("Interaction Prompts")]
     [SerializeField] private string defaultPromptDesktop = "Click to move, Press E to draw";
     [SerializeField] private string stopDrawingPromptDesktop = "Drawing... (Press E to stop)";
+    [SerializeField] private string movingPromptDesktop = "Moving... (Click to place)";
+
 
     // --- Core Components ---
     private Renderer _renderer;
     private Camera _mainCamera;
-    private Collider _physicsCollider; // The BoxCollider on this parent object
+    private Collider _physicsCollider;
 
     // --- Managers ---
     private UIManager _uiManager;
@@ -67,23 +73,31 @@ public class DrawablePostIt : MonoBehaviour, IInteractable
         _gameManager = GameManager.Instance;
     }
 
+    // --- CLICK TO TOGGLE MOVEMENT ---
     private void OnMouseDown()
     {
-        if (!_isDrawing)
+        // Ignore clicks if we are in drawing mode
+        if (_isDrawing) return;
+
+        // Toggle the _isHeld state
+        _isHeld = !_isHeld;
+
+        if (_isHeld)
         {
-            _isHeld = true;
+            // --- Just picked up ---
             _heldDistance = Vector3.Distance(_mainCamera.transform.position, transform.position);
             _velocity = Vector3.zero;
+            if(_uiManager) _uiManager.SetHint(movingPromptDesktop);
+        }
+        else
+        {
+            // --- Just placed down ---
+            PlacePostIt();
+             if(_uiManager) _uiManager.ClearHint();
         }
     }
 
-    private void OnMouseUp()
-    {
-        if (_isHeld)
-        {
-            _isHeld = false;
-        }
-    }
+    // OnMouseUp is no longer needed for this logic.
 
     private void Update()
     {
@@ -105,7 +119,45 @@ public class DrawablePostIt : MonoBehaviour, IInteractable
         if (_isDrawing) StartDrawing();
         else StopDrawing();
     }
+    
+    // --- MOVEMENT & PLACEMENT LOGIC ---
+     private void PlacePostIt()
+    {
+        // This is called when we click to drop the object
+        if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, wallDetectionDistance, wallLayerMask))
+        {
+            transform.position = hit.point + (hit.normal * 0.001f);
+            transform.rotation = Quaternion.LookRotation(-hit.normal);
+        }
+    }
 
+    private void HandleHeldMovement()
+    {
+        Ray ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
+        Vector3 targetPosition = ray.GetPoint(_heldDistance);
+        transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref _velocity, moveSmoothTime);
+
+        if (Physics.Raycast(transform.position, _mainCamera.transform.forward, out RaycastHit hit, wallDetectionDistance, wallLayerMask))
+        {
+            var targetRotation = Quaternion.LookRotation(-hit.normal);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
+        }
+        else
+        {
+            transform.rotation = _mainCamera.transform.rotation;
+        }
+    }
+
+    private void HandleRotation()
+    {
+        float scrollInput = Input.GetAxis("Mouse ScrollWheel");
+        if (Mathf.Abs(scrollInput) > 0.01f)
+        {
+            transform.Rotate(Vector3.forward, scrollInput * rotationSpeed * 10f, Space.Self);
+        }
+    }
+
+    // --- DRAWING LOGIC (UNCHANGED) ---
     private void HandleDrawingInput()
     {
         if (Input.GetMouseButtonDown(1)) ClearDrawing();
@@ -118,10 +170,7 @@ public class DrawablePostIt : MonoBehaviour, IInteractable
 
         if (hit && hitInfo.collider == drawingCollider)
         {
-            // --- THE FIX IS HERE ---
-            // The Y-coordinate is now correctly inverted, just like the original script.
             var pixelPos = new Vector2(hitInfo.textureCoord.x * textureSize, (1f - hitInfo.textureCoord.y) * textureSize);
-            // --- END OF FIX ---
 
             _smoothingBuffer.Add(pixelPos);
             if (_smoothingBuffer.Count > SMOOTHING_SAMPLES) _smoothingBuffer.RemoveAt(0);
@@ -150,24 +199,7 @@ public class DrawablePostIt : MonoBehaviour, IInteractable
         }
     }
 
-    // --- The rest of the script is unchanged ---
     #region Unchanged Code
-    private void HandleHeldMovement()
-    {
-        Ray ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
-        Vector3 targetPosition = ray.GetPoint(_heldDistance);
-        transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref _velocity, moveSmoothTime);
-    }
-
-    private void HandleRotation()
-    {
-        float scrollInput = Input.GetAxis("Mouse ScrollWheel");
-        if (Mathf.Abs(scrollInput) > 0.01f)
-        {
-            transform.Rotate(Vector3.forward, scrollInput * rotationSpeed * 10f, Space.Self);
-        }
-    }
-
     private void StartDrawing()
     {
         _isMouseDownForDrawing = false;
@@ -193,7 +225,7 @@ public class DrawablePostIt : MonoBehaviour, IInteractable
 
     public string GetInteractionPromptDesktop(GameObject interactor)
     {
-        if (_isHeld) return "";
+        if (_isHeld) return movingPromptDesktop;
         return _isDrawing ? stopDrawingPromptDesktop : defaultPromptDesktop;
     }
 
