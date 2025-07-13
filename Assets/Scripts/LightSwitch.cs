@@ -1,3 +1,4 @@
+using System;
 using DG.Tweening;
 using Interfaces;
 using UnityEngine;
@@ -5,11 +6,31 @@ using UnityEngine;
 public class LightSwitch : MonoBehaviour, IInteractable
 {
     [SerializeField] private Light[] lights;
+    private Renderer[] _renderers;
+
+    [SerializeField] private Material onMaterial;
+    [SerializeField] private Material offMaterial;
+
     [SerializeField] private GameObject switchObject;
     [SerializeField] private Vector3 switchOnRotation;
     [SerializeField] private Vector3 switchOffRotation;
 
     private bool _on = true;
+
+    private void Start()
+    {
+        for (var i = 0; i < lights.Length; i++)
+        {
+            var lght = lights[i];
+            if (!lght) continue;
+            lght.enabled = _on;
+            var rndr = lght.GetComponent<Renderer>();
+            if (!rndr) continue;
+            _renderers ??= new Renderer[lights.Length];
+            _renderers[i] = rndr;
+            rndr.material = _on ? onMaterial : offMaterial;
+        }
+    }
 
     public void OnInteract(GameObject interactor)
     {
@@ -29,9 +50,15 @@ public class LightSwitch : MonoBehaviour, IInteractable
         {
             lght.enabled = true;
         }
+        foreach (var rndr in _renderers)
+        {
+            if (rndr)
+            {
+                rndr.material = onMaterial;
+            }
+        }
         _on = true;
         switchObject.transform.DOLocalRotateQuaternion(Quaternion.Euler(switchOnRotation), 0.5f);
-        // switchObject.transform.localRotation = Quaternion.Euler(switchOnRotation);
     }
 
     private void TurnOff()
@@ -39,6 +66,13 @@ public class LightSwitch : MonoBehaviour, IInteractable
         foreach (var lght in lights)
         {
             lght.enabled = false;
+        }
+        foreach (var rndr in _renderers)
+        {
+            if (rndr)
+            {
+                rndr.material = offMaterial;
+            }
         }
 
         _on = false;

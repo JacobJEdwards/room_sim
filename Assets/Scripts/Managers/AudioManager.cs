@@ -66,5 +66,29 @@ namespace Managers
         {
             audioSource.UnPause();
         }
+
+        public void SetMusicVolume(float volume)
+        {
+            musicVolume = volume;
+            PlayerPrefs.SetFloat("MusicVolume", volume);
+        }
+
+        public void SetSoundVolume(float volume)
+        {
+            soundVolume = volume;
+            PlayerPrefs.SetFloat("SFXVolume", volume);
+        }
+
+        public void MuteMusic()
+        {
+            musicVolume = 0;
+            PlayerPrefs.SetFloat("MusicVolume", musicVolume);
+        }
+
+        public void MuteSound()
+        {
+            soundVolume = 0;
+            PlayerPrefs.SetFloat("SFXVolume", soundVolume);
+        }
     }
 }
