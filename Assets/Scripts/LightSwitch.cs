@@ -1,6 +1,7 @@
 using System;
 using DG.Tweening;
 using Interfaces;
+using Managers;
 using UnityEngine;
 
 public class LightSwitch : MonoBehaviour, IInteractable
@@ -15,7 +16,13 @@ public class LightSwitch : MonoBehaviour, IInteractable
     [SerializeField] private Vector3 switchOnRotation;
     [SerializeField] private Vector3 switchOffRotation;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip audioClip;
+
     private bool _on = true;
+
+    private AudioManager _audioManager;
 
     private void Start()
     {
@@ -30,10 +37,14 @@ public class LightSwitch : MonoBehaviour, IInteractable
             _renderers[i] = rndr;
             rndr.material = _on ? onMaterial : offMaterial;
         }
+
+        _audioManager = AudioManager.Instance;
     }
 
     public void OnInteract(GameObject interactor)
     {
+        _audioManager.PlaySound(audioSource, audioClip);
+
         if (_on)
         {
             TurnOff();
