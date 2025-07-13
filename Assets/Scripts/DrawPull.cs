@@ -1,15 +1,26 @@
 using DG.Tweening;
 using Interfaces;
+using Managers;
 using UnityEngine;
 
 public class DrawPull : MonoBehaviour, IInteractable
 {
     [SerializeField] private float to = 0.5f;
-    private bool open;
+    private bool _open;
+
+    [SerializeField] private AudioClip openClip;
+    [SerializeField] private AudioClip closeClip;
+    [SerializeField] private AudioSource audioSource;
+
+    private AudioManager _audioManager;
+    private void Start()
+    {
+        _audioManager = AudioManager.Instance;
+    }
 
     public void OnInteract(GameObject interactor)
     {
-        if (open)
+        if (_open)
         {
             Close();
         }
@@ -21,14 +32,16 @@ public class DrawPull : MonoBehaviour, IInteractable
 
     private void Open()
     {
+        _audioManager.PlaySound(audioSource, openClip);
         transform.DOLocalMoveX(to, 1f);
-        open = true;
+        _open = true;
     }
 
     private void Close()
     {
+        _audioManager.PlaySound(audioSource, closeClip);
         transform.DOLocalMoveX(0, 1f);
-        open = false;
+        _open = false;
     }
 
     public bool CanInteract(GameObject interactor)
@@ -38,12 +51,12 @@ public class DrawPull : MonoBehaviour, IInteractable
 
     public string GetInteractionPromptDesktop(GameObject interactor)
     {
-        return open ? "Press E to close drawer" : "Press E to open drawer";
+        return _open ? "Press E to close drawer" : "Press E to open drawer";
     }
 
     public string GetInteractionPromptMobile(GameObject interactor)
     {
-        return open ? "Tap to close drawer" : "Tap to open drawer";
+        return _open ? "Tap to close drawer" : "Tap to open drawer";
     }
 
     public void ResetObject()

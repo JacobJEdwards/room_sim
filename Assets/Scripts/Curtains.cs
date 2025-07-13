@@ -1,5 +1,6 @@
 using DG.Tweening;
 using Interfaces;
+using Managers;
 using UnityEngine;
 
 public class Curtains : MonoBehaviour, IInteractable
@@ -9,8 +10,21 @@ public class Curtains : MonoBehaviour, IInteractable
     private float maxScale = 9.5f;
     [SerializeField] private GameObject curtain;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip audioClip;
+
+    private AudioManager _audioManager;
+
+    private void Start()
+    {
+        _audioManager = AudioManager.Instance;
+    }
+
     public void OnInteract(GameObject interactor)
     {
+        _audioManager.PlaySound(audioSource, audioClip);
+
         if (_open)
         {
             Close();

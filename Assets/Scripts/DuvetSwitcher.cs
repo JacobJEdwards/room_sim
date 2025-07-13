@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Interfaces;
+using Managers;
 using UnityEngine;
 
 public class DuvetSwitcher : MonoBehaviour, IInteractable
@@ -8,6 +9,11 @@ public class DuvetSwitcher : MonoBehaviour, IInteractable
     [SerializeField] private Texture[] duvetTextures;
 
     private readonly List<Renderer> _duvetRenderer = new ();
+
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip audioClip;
+
+    private AudioManager _audioManager;
 
     private void Awake()
     {
@@ -18,6 +24,11 @@ public class DuvetSwitcher : MonoBehaviour, IInteractable
                 _duvetRenderer.Add(r);
             }
         }
+    }
+
+    private void Start()
+    {
+        _audioManager = AudioManager.Instance;
     }
 
     private void ChangeDuvetTexture(int textureIndex)
@@ -45,6 +56,8 @@ public class DuvetSwitcher : MonoBehaviour, IInteractable
     {
         var nextTextureIndex = (System.Array.IndexOf(duvetTextures, _duvetRenderer[0].material.mainTexture) + 1) % duvetTextures.Length;
         ChangeDuvetTexture(nextTextureIndex);
+
+        _audioManager.PlaySound(audioSource, audioClip);
     }
 
     public bool CanInteract(GameObject interactor)

@@ -1,12 +1,26 @@
 using Interfaces;
+using Managers;
 using UnityEngine;
 
 public class DoorButton : MonoBehaviour, IInteractable
 {
     [SerializeField] private OpenDoor door;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip audioClip;
+
+    private AudioManager _audioManager;
+
+    private void Start()
+    {
+        _audioManager = AudioManager.Instance;
+    }
+
     public void OnInteract(GameObject interactor)
     {
+        _audioManager.PlaySound(audioSource, audioClip);
+
         if (!door.open)
         {
             door.Toggle();

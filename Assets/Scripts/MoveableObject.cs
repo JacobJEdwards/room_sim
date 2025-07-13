@@ -35,6 +35,14 @@ public class MoveableObject : MonoBehaviour, IInteractable
     [Tooltip("Text displayed when the object can be picked up on mobile.")]
     private string pickupPromptMobile = "Tap to pick up";
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip pickupSound;
+    [SerializeField] private AudioClip dropSound;
+
+    private AudioManager _audioManager;
+
+
     private Rigidbody _rigidbody;
     private Collider _collider;
     private Camera _mainCamera;
@@ -73,6 +81,7 @@ public class MoveableObject : MonoBehaviour, IInteractable
     {
         _inputManager = InputManager.Instance;
         _uiManager = UIManager.Instance;
+        _audioManager = AudioManager.Instance;
 
         _inputManager.SetOnLeftArrowPressed(() => { if (_isHeld) _leftArrowPressed = true; });
         _inputManager.SetOnLeftArrowReleased(() => { _leftArrowPressed = false; });
@@ -147,6 +156,7 @@ public class MoveableObject : MonoBehaviour, IInteractable
 
     private void Pickup()
     {
+        _audioManager.PlaySound(audioSource, pickupSound);
         _isHeld = true;
         _rigidbody.useGravity = false;
         _rigidbody.isKinematic = true; 
@@ -158,6 +168,7 @@ public class MoveableObject : MonoBehaviour, IInteractable
 
     private void Drop()
     {
+        _audioManager.PlaySound(audioSource, dropSound);
         _isHeld = false;
         _rigidbody.useGravity = true;
         _rigidbody.isKinematic = false;

@@ -2,6 +2,7 @@
 
 using DG.Tweening;
 using Interfaces;
+using Managers;
 using UnityEngine;
 
 public class Plug : MonoBehaviour, IInteractable
@@ -14,8 +15,20 @@ public class Plug : MonoBehaviour, IInteractable
 
     [SerializeField] private bool isOn;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource audioSource = null!;
+    [SerializeField] private AudioClip audioClip = null!;
+
+    private AudioManager _audioManager = null!;
+
+    private void Start()
+    {
+        _audioManager = AudioManager.Instance;
+    }
+
     public void OnInteract(GameObject interactor)
     {
+        _audioManager.PlaySound(audioSource, audioClip);
 
         switchObject.transform.DOLocalRotate(isOn ? switchOffRotation : switchOnRotation, 1f);
 
