@@ -9,9 +9,14 @@ public class Room : MonoBehaviour
     [SerializeField]
     private Transform teleportDestination;
 
+    [SerializeField]
+    private string roomName;
+
     public Transform TeleportDestination => teleportDestination;
     private readonly List<IInteractable> _objectPositions = new();
     private readonly List<GameObject> _placedObjects = new();
+
+    public string RoomName => roomName;
 
     private void Start()
     {

@@ -60,6 +60,7 @@ namespace Managers
 
             _inputManager.PlayerControls.UI.Cancel.performed += OnEscapePressed;
 
+            roomManager.DisableAllRooms();
             roomManager.MovePlayerToRoom(0);
 
             _playerController = player.GetComponent<PlayerController>();
@@ -70,18 +71,17 @@ namespace Managers
                 return;
             }
 
-            if (mouseSensitivitySlider)
+            if (!mouseSensitivitySlider) return;
+
+            if (Application.isMobilePlatform)
             {
-                if (Application.isMobilePlatform)
-                {
-                    mouseSensitivitySlider.maxValue = 200f;
+                mouseSensitivitySlider.maxValue = 200f;
 
-                }
-
-                mouseSensitivitySlider.onValueChanged.AddListener(SetMouseSensitivity);
-                mouseSensitivitySlider.value = PlayerPrefs.GetFloat("MouseSensitivity", Application.isMobilePlatform ? 100f : 50f);
-                SetMouseSensitivity(mouseSensitivitySlider.value);
             }
+
+            mouseSensitivitySlider.onValueChanged.AddListener(SetMouseSensitivity);
+            mouseSensitivitySlider.value = PlayerPrefs.GetFloat("MouseSensitivity", Application.isMobilePlatform ? 100f : 50f);
+            SetMouseSensitivity(mouseSensitivitySlider.value);
         }
 
         private void SetMouseSensitivity(float sensitivity)
