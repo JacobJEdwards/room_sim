@@ -34,6 +34,8 @@ namespace Managers
 
         public void PlayMusic(AudioSource audioSource, AudioClip clip)
         {
+            if (!audioSource || !clip) return;
+
             if (audioSource.isPlaying) return;
 
             audioSource.clip = clip;
@@ -44,6 +46,7 @@ namespace Managers
 
         public void PlaySound(AudioSource audioSource, AudioClip clip)
         {
+            if (!audioSource || !clip) return;
             if (audioSource.isPlaying) return;
 
             audioSource.volume = soundVolume / 100;
@@ -54,16 +57,19 @@ namespace Managers
 
         public void StopSound(AudioSource audioSource)
         {
+            if (!audioSource) return;
             audioSource.Stop();
         }
 
         public void PauseSound(AudioSource audioSource)
         {
+            if (!audioSource) return;
             audioSource.Pause();
         }
 
         public void UnPauseSound(AudioSource audioSource)
         {
+            if (!audioSource) return;
             audioSource.UnPause();
         }
 
