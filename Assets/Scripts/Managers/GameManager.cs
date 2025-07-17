@@ -114,10 +114,9 @@ namespace Managers
                     break;
                 case ControlMode.Camera:
                 default:
-                {
-                    SetMode(ControlMode.Menu);
+                    // This is the line that was changed
+                    _uiManager.ToggleControlsPanel();
                     break;
-                }
             }
         }
 
