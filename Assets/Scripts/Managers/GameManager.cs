@@ -16,11 +16,10 @@ namespace Managers
             Placement
         }
 
-        [Header("Mode Management")]
-        [SerializeField] private ControlMode currentMode = ControlMode.Camera;
+        [Header("Mode Management")] [SerializeField]
+        private ControlMode currentMode = ControlMode.Camera;
 
-        [Header("Player")]
-        [SerializeField] private GameObject player;
+        [Header("Player")] [SerializeField] private GameObject player;
         [SerializeField] private MonoBehaviour playerController;
         private PlayerController _playerController;
         [SerializeField] private RoomManager roomManager;
@@ -35,6 +34,8 @@ namespace Managers
         public ControlMode CurrentMode => currentMode;
         public Room CurrentRoom => roomManager.CurrentRoom;
 
+        [FormerlySerializedAs("_mouseSensitivitySlider")] [SerializeField]
+        private Slider mouseSensitivitySlider;
 
         private void Awake()
         {
@@ -101,15 +102,9 @@ namespace Managers
                     break;
                 case ControlMode.Camera:
                 default:
-                {
-                    SetMode(ControlMode.Menu);
-                    if (_uiManager)
-                    {
-                        _uiManager.TogglePanel(_uiManager.controlsPanel);
-                    }
-
+                    // This is the line that was changed
+                    _uiManager.ToggleControlsPanel();
                     break;
-                }
             }
         }
 

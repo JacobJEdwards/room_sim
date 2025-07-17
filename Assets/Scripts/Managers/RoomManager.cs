@@ -8,18 +8,27 @@ namespace Managers
 {
     public class RoomManager : MonoBehaviour
     {
-        
         private UIManager _uiManager = null!;
-        [Header("Player Settings")] [SerializeField] [Tooltip("The player GameObject that will be moved.")]
+        [Header("Player Settings")]
+        [SerializeField]
+        [Tooltip("The player GameObject that will be moved.")]
         private GameObject player = null!;
         private CharacterController? _playerController;
 
         [Header("Room Settings")]
-        [SerializeField] [Tooltip("The room object.")]
+        [SerializeField]
+        [Tooltip("The list of room objects.")]
         private List<Room> roomObjects = new();
 
+        [Header("UI References")]
         [SerializeField]
-        private TMP_Text roomNameText = null!;
+        [Tooltip("The TextMeshPro UI element to display the room name on Desktop.")]
+        private TMP_Text roomNameTextDesktop = null!;
+
+        [SerializeField]
+        [Tooltip("The TextMeshPro UI element to display the room name on Mobile.")]
+        private TMP_Text roomNameTextMobile = null!;
+
 
         private int _currentRoomIndex = -1;
 
@@ -29,18 +38,6 @@ namespace Managers
         {
             _uiManager = UIManager.Instance;
 
-
-            if (player)
-            {
-                if (player.TryGetComponent<CharacterController>(out var controller))
-                {
-                    _playerController = controller;
-                }
-
-                return;
-            }
-            player = GameObject.FindGameObjectWithTag("Player");
-
             if (player)
             {
                 if (player.TryGetComponent<CharacterController>(out var controller))
@@ -48,8 +45,24 @@ namespace Managers
                     _playerController = controller;
                 }
             }
-            Debug.LogError("Player object is not assigned and could not be found by tag 'Player'.", this);
-            enabled = false;
+            else
+            {
+                player = GameObject.FindGameObjectWithTag("Player");
+                if (player && player.TryGetComponent<CharacterController>(out var controller))
+                {
+                    _playerController = controller;
+                }
+                else
+                {
+                   Debug.LogError("Player object is not assigned and could not be found by tag 'Player'.", this);
+                   enabled = false;
+                   return;
+                }
+            }
+
+            // Initially disable both text objects. The correct one will be enabled in MovePlayerToRoom.
+            if(roomNameTextDesktop) roomNameTextDesktop.gameObject.SetActive(false);
+            if(roomNameTextMobile) roomNameTextMobile.gameObject.SetActive(false);
         }
 
         public void DisableAllRooms()
@@ -59,7 +72,7 @@ namespace Managers
                 room.DeactivateRoom();
             }
         }
-        
+
         public void MovePlayerToRoom(int roomIndex)
         {
             if (roomIndex < 0 || roomIndex >= roomObjects.Count)
@@ -68,6 +81,7 @@ namespace Managers
                 return;
             }
 
+            // Activate/Deactivate rooms
             if (roomIndex != _currentRoomIndex)
             {
                 roomObjects[roomIndex].ActivateRoom();
@@ -79,6 +93,7 @@ namespace Managers
             var destination = roomObjects[roomIndex];
             if (destination)
             {
+                // Move the player
                 if (_playerController)
                 {
                     _playerController.enabled = false;
@@ -90,11 +105,29 @@ namespace Managers
                     player.transform.position = destination.TeleportDestination.position;
                 }
 
-                _uiManager.ToggleRoomPanel();
-                roomNameText.text = destination.RoomName;
+                if (_uiManager) _uiManager.CloseAllPanels();
 
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
+                // --- Platform-dependent UI update ---
+                if (_uiManager.IsMobilePlatform)
+                {
+                    if (roomNameTextMobile)
+                    {
+                        roomNameTextMobile.text = destination.RoomName;
+                        roomNameTextMobile.gameObject.SetActive(true);
+                        if(roomNameTextDesktop) roomNameTextDesktop.gameObject.SetActive(false); // Ensure other is off
+                    }
+                }
+                else
+                {
+                    if (roomNameTextDesktop)
+                    {
+                        roomNameTextDesktop.text = destination.RoomName;
+                        roomNameTextDesktop.gameObject.SetActive(true);
+                        if(roomNameTextMobile) roomNameTextMobile.gameObject.SetActive(false); // Ensure other is off
+                    }
+                }
+
+                if (GameManager.Instance) GameManager.Instance.SetMode(GameManager.ControlMode.Camera);
             }
             else
             {
