@@ -76,7 +76,6 @@ namespace Managers
             if (Application.isMobilePlatform)
             {
                 mouseSensitivitySlider.maxValue = 200f;
-
             }
 
             mouseSensitivitySlider.onValueChanged.AddListener(SetMouseSensitivity);
@@ -118,9 +117,8 @@ namespace Managers
                     SetMode(ControlMode.Menu);
                     if (_uiManager)
                     {
-                        _uiManager.TogglePanel(_uiManager.controlsPanel);
+                        _uiManager.ToggleControlsPanel(); // Changed from accessing controlsPanel directly
                     }
-
                     break;
                 }
             }
