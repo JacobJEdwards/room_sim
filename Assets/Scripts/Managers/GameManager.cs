@@ -35,7 +35,6 @@ namespace Managers
         public ControlMode CurrentMode => currentMode;
         public Room CurrentRoom => roomManager.CurrentRoom;
 
-        [FormerlySerializedAs("_mouseSensitivitySlider")] [SerializeField] private Slider mouseSensitivitySlider;
 
         private void Awake()
         {
@@ -70,21 +69,9 @@ namespace Managers
                 enabled = false;
                 return;
             }
-
-            if (!mouseSensitivitySlider) return;
-
-            if (Application.isMobilePlatform)
-            {
-                mouseSensitivitySlider.maxValue = 200f;
-
-            }
-
-            mouseSensitivitySlider.onValueChanged.AddListener(SetMouseSensitivity);
-            mouseSensitivitySlider.value = PlayerPrefs.GetFloat("MouseSensitivity", Application.isMobilePlatform ? 100f : 50f);
-            SetMouseSensitivity(mouseSensitivitySlider.value);
         }
 
-        private void SetMouseSensitivity(float sensitivity)
+        public void SetMouseSensitivity(float sensitivity)
         {
             PlayerPrefs.SetFloat("MouseSensitivity", sensitivity);
             if (_playerController)
