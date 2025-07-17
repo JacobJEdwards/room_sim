@@ -28,8 +28,7 @@ namespace Managers
         // --- DESKTOP UI ELEMENTS ---
         [Header("Desktop UI Elements")]
         [SerializeField] private GameObject desktopRoomPanel;
-        [SerializeField] private GameObject desktopInventoryPanel;
-        [SerializeField] private GameObject desktopControlsPanel;
+        [SerializeField] private GameObject desktopControlsPanel;  // This is your "menu"
         [SerializeField] private GameObject desktopPlacementPanel;
         [SerializeField] private GameObject desktopHoldingPanel;
         [SerializeField] private GameObject desktopModeIndicatorPanel;
@@ -37,15 +36,11 @@ namespace Managers
         [SerializeField] private Image desktopModeIndicatorBackground;
         [SerializeField] private GameObject desktopHintPanel;
         [SerializeField] private TMP_Text desktopHintText;
-        [SerializeField] private Button desktopRoomsButton;
-        [SerializeField] private Button desktopInventoryButton;
-        [SerializeField] private Button desktopPlacementButton;
         
         // --- MOBILE UI ELEMENTS ---
         [Header("Mobile UI Elements")]
         [SerializeField] private GameObject mobileRoomPanel;
-        [SerializeField] private GameObject mobileInventoryPanel;
-        [SerializeField] private GameObject mobileControlsPanel;
+        [SerializeField] private GameObject mobileControlsPanel;  // This is your "menu"
         [SerializeField] private GameObject mobilePlacementPanel;
         [SerializeField] private GameObject mobileHoldingPanel;
         [SerializeField] private GameObject mobileModeIndicatorPanel;
@@ -55,9 +50,6 @@ namespace Managers
         [SerializeField] private TMP_Text mobileHintText;
         [SerializeField] private GameObject leftThumbstick;
         [SerializeField] private GameObject rightThumbstick;
-        [SerializeField] private Button mobileRoomsButton;
-        [SerializeField] private Button mobileInventoryButton;
-        [SerializeField] private Button mobilePlacementButton;
 
         // --- MODE COLORS ---
         [Header("Mode Indicator Colors")]
@@ -76,7 +68,6 @@ namespace Managers
         
         // Active references based on platform
         private GameObject _activeRoomPanel;
-        private GameObject _activeInventoryPanel;
         private GameObject _activeControlsPanel;
         private GameObject _activePlacementPanel;
         private GameObject _activeHoldingPanel;
@@ -85,9 +76,6 @@ namespace Managers
         private Image _activeModeIndicatorBackground;
         private GameObject _activeHintPanel;
         private TMP_Text _activeHintText;
-        private Button _activeRoomsButton;
-        private Button _activeInventoryButton;
-        private Button _activePlacementButton;
 
         private void Awake()
         {
@@ -99,27 +87,21 @@ namespace Managers
             else
             {
                 Destroy(gameObject);
+                return;
             }
             
             // Determine platform once
             _isMobilePlatform = Application.isMobilePlatform;
+            
+            // Setup UI immediately in Awake so it's ready for other scripts
+            SetupPlatformSpecificUI();
+            PreparePanels();
+            InitializePanels();
         }
 
         private void Start()
         {
             _gameManager = GameManager.Instance;
-            
-            // Setup platform-specific UI
-            SetupPlatformSpecificUI();
-            
-            // Prepare panels for animation
-            PreparePanels();
-            
-            // Initialize panels
-            InitializePanels();
-            
-            // Setup button listeners
-            SetupButtons();
         }
 
         private void SetupPlatformSpecificUI()
@@ -132,7 +114,6 @@ namespace Managers
                 
                 // Set active references to mobile elements
                 _activeRoomPanel = mobileRoomPanel;
-                _activeInventoryPanel = mobileInventoryPanel;
                 _activeControlsPanel = mobileControlsPanel;
                 _activePlacementPanel = mobilePlacementPanel;
                 _activeHoldingPanel = mobileHoldingPanel;
@@ -141,9 +122,9 @@ namespace Managers
                 _activeModeIndicatorBackground = mobileModeIndicatorBackground;
                 _activeHintPanel = mobileHintPanel;
                 _activeHintText = mobileHintText;
-                _activeRoomsButton = mobileRoomsButton;
-                _activeInventoryButton = mobileInventoryButton;
-                _activePlacementButton = mobilePlacementButton;
+                
+                // Log panel assignments for debugging
+                Debug.Log($"Mobile panels assigned - Room: {_activeRoomPanel?.name ?? "NULL"}, Controls: {_activeControlsPanel?.name ?? "NULL"}, Placement: {_activePlacementPanel?.name ?? "NULL"}");
                 
                 // Ensure mobile controls are visible
                 if (leftThumbstick) leftThumbstick.SetActive(true);
@@ -157,7 +138,6 @@ namespace Managers
                 
                 // Set active references to desktop elements
                 _activeRoomPanel = desktopRoomPanel;
-                _activeInventoryPanel = desktopInventoryPanel;
                 _activeControlsPanel = desktopControlsPanel;
                 _activePlacementPanel = desktopPlacementPanel;
                 _activeHoldingPanel = desktopHoldingPanel;
@@ -166,9 +146,6 @@ namespace Managers
                 _activeModeIndicatorBackground = desktopModeIndicatorBackground;
                 _activeHintPanel = desktopHintPanel;
                 _activeHintText = desktopHintText;
-                _activeRoomsButton = desktopRoomsButton;
-                _activeInventoryButton = desktopInventoryButton;
-                _activePlacementButton = desktopPlacementButton;
             }
             
             // Hide hint panel initially
@@ -177,24 +154,11 @@ namespace Managers
 
         private void PreparePanels()
         {
-            // Prepare all desktop panels for animation
-            if (!_isMobilePlatform)
-            {
-                PreparePanelForFading(desktopRoomPanel);
-                PreparePanelForFading(desktopInventoryPanel);
-                PreparePanelForFading(desktopControlsPanel);
-                PreparePanelForFading(desktopPlacementPanel);
-                PreparePanelForFading(desktopHoldingPanel);
-            }
-            // Prepare all mobile panels for animation
-            else
-            {
-                PreparePanelForFading(mobileRoomPanel);
-                PreparePanelForFading(mobileInventoryPanel);
-                PreparePanelForFading(mobileControlsPanel);
-                PreparePanelForFading(mobilePlacementPanel);
-                PreparePanelForFading(mobileHoldingPanel);
-            }
+            // Prepare all active panels for animation
+            if (_activeRoomPanel) PreparePanelForFading(_activeRoomPanel);
+            if (_activeControlsPanel) PreparePanelForFading(_activeControlsPanel);
+            if (_activePlacementPanel) PreparePanelForFading(_activePlacementPanel);
+            if (_activeHoldingPanel) PreparePanelForFading(_activeHoldingPanel);
         }
 
         private void PreparePanelForFading(GameObject panel)
@@ -214,14 +178,6 @@ namespace Managers
                 canvasGroup.alpha = 0;
                 panel.SetActive(false);
             }
-        }
-
-        private void SetupButtons()
-        {
-            // Setup platform-specific buttons
-            if (_activeRoomsButton) _activeRoomsButton.onClick.AddListener(ToggleRoomPanel);
-            if (_activeInventoryButton) _activeInventoryButton.onClick.AddListener(ToggleInventoryPanel);
-            if (_activePlacementButton) _activePlacementButton.onClick.AddListener(TogglePlacementPanel);
         }
 
         // --- HINT SYSTEM ---
@@ -298,14 +254,51 @@ namespace Managers
             }
         }
 
-        public void ToggleRoomPanel() => TogglePanel(_activeRoomPanel);
-        public void TogglePlacementPanel() => TogglePanel(_activePlacementPanel);
-        public void ToggleInventoryPanel() => TogglePanel(_activeInventoryPanel);
-        public void ToggleControlsPanel() => TogglePanel(_activeControlsPanel);
-
-        public void TogglePanel(GameObject panelToToggle)
+        public void ToggleRoomPanel()
         {
-            if (!panelToToggle) return;
+            Debug.Log($"ToggleRoomPanel called. Current panel active: {_activeRoomPanel?.activeSelf}");
+            if (_activeRoomPanel == null)
+            {
+                Debug.LogError("Room panel is null! Check the mobileRoomPanel assignment in the Inspector.");
+                return;
+            }
+            TogglePanel(_activeRoomPanel);
+        }
+        
+        public void TogglePlacementPanel()
+        {
+            Debug.Log($"TogglePlacementPanel called. Current panel active: {_activePlacementPanel?.activeSelf}");
+            if (_activePlacementPanel == null)
+            {
+                Debug.LogError("Placement panel is null! Check the mobilePlacementPanel assignment in the Inspector.");
+                return;
+            }
+            TogglePanel(_activePlacementPanel);
+        }
+        
+        public void ToggleControlsPanel()
+        {
+            Debug.Log($"ToggleControlsPanel called. Current panel active: {_activeControlsPanel?.activeSelf}");
+            if (_activeControlsPanel == null)
+            {
+                Debug.LogError("Controls panel is null! Check the mobileControlsPanel assignment in the Inspector.");
+                return;
+            }
+            TogglePanel(_activeControlsPanel);
+        }
+
+        // Remove ToggleInventoryPanel since you don't have inventory
+
+        private void TogglePanel(GameObject panelToToggle)
+        {
+            if (!panelToToggle)
+            {
+                Debug.LogError("Panel to toggle is null!");
+                return;
+            }
+
+            Debug.Log($"TogglePanel: {panelToToggle.name}, currently active: {panelToToggle.activeSelf}");
+            Debug.Log($"Call Stack: {System.Environment.StackTrace}");
 
             var wasActive = panelToToggle.activeSelf;
             
@@ -317,7 +310,11 @@ namespace Managers
             }
             else
             {
-                if (!_panelCanvasGroups.TryGetValue(panelToToggle, out var canvasGroup)) return;
+                if (!_panelCanvasGroups.TryGetValue(panelToToggle, out var canvasGroup)) 
+                {
+                    Debug.LogError($"Panel {panelToToggle.name} not found in canvas groups!");
+                    return;
+                }
 
                 panelToToggle.SetActive(true);
                 canvasGroup.DOFade(1, panelAnimationDuration);
@@ -329,7 +326,7 @@ namespace Managers
         {
             foreach (var (panel, canvasGroup) in _panelCanvasGroups)
             {
-                if (panel.activeSelf && panel != _activeHoldingPanel)
+                if (panel && panel.activeSelf && panel != _activeHoldingPanel)
                 {
                     canvasGroup.DOFade(0, panelAnimationDuration)
                         .OnComplete(() => panel.SetActive(false));

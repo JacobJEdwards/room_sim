@@ -16,11 +16,10 @@ namespace Managers
             Placement
         }
 
-        [Header("Mode Management")]
-        [SerializeField] private ControlMode currentMode = ControlMode.Camera;
+        [Header("Mode Management")] [SerializeField]
+        private ControlMode currentMode = ControlMode.Camera;
 
-        [Header("Player")]
-        [SerializeField] private GameObject player;
+        [Header("Player")] [SerializeField] private GameObject player;
         [SerializeField] private MonoBehaviour playerController;
         private PlayerController _playerController;
         [SerializeField] private RoomManager roomManager;
@@ -35,7 +34,8 @@ namespace Managers
         public ControlMode CurrentMode => currentMode;
         public Room CurrentRoom => roomManager.CurrentRoom;
 
-        [FormerlySerializedAs("_mouseSensitivitySlider")] [SerializeField] private Slider mouseSensitivitySlider;
+        [FormerlySerializedAs("_mouseSensitivitySlider")] [SerializeField]
+        private Slider mouseSensitivitySlider;
 
         private void Awake()
         {
@@ -79,7 +79,8 @@ namespace Managers
             }
 
             mouseSensitivitySlider.onValueChanged.AddListener(SetMouseSensitivity);
-            mouseSensitivitySlider.value = PlayerPrefs.GetFloat("MouseSensitivity", Application.isMobilePlatform ? 100f : 50f);
+            mouseSensitivitySlider.value =
+                PlayerPrefs.GetFloat("MouseSensitivity", Application.isMobilePlatform ? 100f : 50f);
             SetMouseSensitivity(mouseSensitivitySlider.value);
         }
 
@@ -115,10 +116,6 @@ namespace Managers
                 default:
                 {
                     SetMode(ControlMode.Menu);
-                    if (_uiManager)
-                    {
-                        _uiManager.ToggleControlsPanel(); // Changed from accessing controlsPanel directly
-                    }
                     break;
                 }
             }

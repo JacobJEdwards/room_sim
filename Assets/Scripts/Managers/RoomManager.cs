@@ -90,11 +90,13 @@ namespace Managers
                     player.transform.position = destination.TeleportDestination.position;
                 }
 
-                _uiManager.ToggleRoomPanel();
+                // Close all panels and return to camera mode
+                if (_uiManager) _uiManager.CloseAllPanels();
+                
                 roomNameText.text = destination.RoomName;
 
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
+                // Let GameManager handle the mode switch
+                if (GameManager.Instance) GameManager.Instance.SetMode(GameManager.ControlMode.Camera);
             }
             else
             {
