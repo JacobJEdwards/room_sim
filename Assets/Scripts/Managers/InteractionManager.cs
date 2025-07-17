@@ -1,7 +1,6 @@
 #nullable enable
 
 using System.Collections.Generic;
-using System.Linq;
 using Interfaces;
 using UnityEngine;
 
@@ -13,18 +12,19 @@ namespace Managers
     {
         [SerializeField] private LayerMask interactionLayer;
         [SerializeField] private float interactionRange = 5f;
+
         private UIManager _uiManager = null!;
-
-        private IInteractable? _currentTarget;
         private InputManager _inputManager = null!;
-        private GameObject? _currentTargetObject;
-
+        private GameManager _gameManager = null!;
         private Camera? _mainCamera;
-
+        
+        private IInteractable? _currentTargetInteractable;
+        private MoveableObject? _currentTargetMoveable;
+        private GameObject? _currentTargetObject;
+        
         private readonly List<Color> _oldColors = new();
-        private readonly List<Material> _highlightedMaterials = new(); // Keep track of materials we've changed
-        [SerializeField]
-        private float highlightIntensity = 1.5f;
+        private readonly List<Material> _highlightedMaterials = new();
+        [SerializeField] private float highlightIntensity = 1.5f;
 
         private void Awake()
         {
@@ -35,7 +35,9 @@ namespace Managers
         {
             _uiManager = UIManager.Instance;
             _inputManager = InputManager.Instance;
+            _gameManager = GameManager.Instance;
             interactionLayer = LayerMask.GetMask("Interaction");
+            
             _inputManager.PlayerControls.Player.Interact.performed += _ => OnInteractInput();
         }
 
@@ -49,98 +51,121 @@ namespace Managers
             if (!_mainCamera || !_uiManager) return;
 
             var ray = _mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+            var hasHit = Physics.Raycast(ray, out var hit, interactionRange, interactionLayer);
 
-            if (Physics.Raycast(ray, out var hit, interactionRange, interactionLayer))
+            if (hasHit)
             {
-                var interactable = hit.collider.GetComponent<IInteractable>();
-
-                if (interactable != null)
+                if (_currentTargetObject != hit.collider.gameObject)
                 {
-                    if (!interactable.CanInteract(gameObject))
+                    if (_currentTargetObject != null)
                     {
-                        RestoreCurrentTarget(); // Restore if we can't interact
-                        return;
+                        ClearCurrentTarget();
                     }
 
-                    // Check if we are already highlighting this object
-                    if (_currentTargetObject != hit.collider.gameObject)
-                    {
-                        RestoreCurrentTarget(); // Restore the old one
-                        _currentTarget = interactable;
-                        _currentTargetObject = hit.collider.gameObject;
-                        HighLightCurrentTarget();
-                    }
+                    _currentTargetObject = hit.collider.gameObject;
+                    _currentTargetInteractable = hit.collider.GetComponent<IInteractable>();
+                    _currentTargetMoveable = hit.collider.GetComponent<MoveableObject>();
 
-                    var prompt = Application.isMobilePlatform
-                        ? interactable.GetInteractionPromptMobile(gameObject)
-                        : interactable.GetInteractionPromptDesktop(gameObject);
-
-                    _uiManager.SetHint(prompt);
-                }
-                else
-                {
-                    RestoreCurrentTarget();
+                    HighLightCurrentTarget();
+                    UpdateUIForTarget();
                 }
             }
             else
             {
-                RestoreCurrentTarget();
+                if (_currentTargetObject != null)
+                {
+                    ClearCurrentTarget();
+                }
             }
         }
 
-        private void OnInteractInput()
+        public void OnInteractInput()
         {
-            if (_currentTarget != null && _currentTarget.CanInteract(gameObject))
+            if (_gameManager.CurrentHeldObject != null)
             {
-                _currentTarget.OnInteract(gameObject);
+                _gameManager.CurrentHeldObject.Drop();
+                return;
             }
+            
+            if (_currentTargetInteractable != null && _currentTargetInteractable.CanInteract(gameObject))
+            {
+                _currentTargetInteractable.OnInteract(gameObject);
+            }
+            else if (_currentTargetMoveable != null)
+            {
+                _currentTargetMoveable.Pickup();
+            }
+        }
+        
+        private void UpdateUIForTarget()
+        {
+            if (_currentTargetObject == null)
+            {
+                _uiManager.ClearHint();
+                _uiManager.ShowInteractionButtons(false, false);
+                return;
+            }
+
+            bool isInteractable = _currentTargetInteractable != null;
+            bool isMoveable = _currentTargetMoveable != null;
+
+            string hint = "";
+            if (isInteractable)
+            {
+                hint = _uiManager.IsMobilePlatform
+                    ? _currentTargetInteractable.GetInteractionPromptMobile(gameObject)
+                    : _currentTargetInteractable.GetInteractionPromptDesktop(gameObject);
+            }
+            else if (isMoveable)
+            {
+                 hint = "Press E to pick up";
+            }
+            _uiManager.SetHint(hint);
+            
+            if (_uiManager.IsMobilePlatform)
+            {
+                _uiManager.ShowInteractionButtons(isInteractable || isMoveable, false);
+            }
+        }
+
+        private void ClearCurrentTarget()
+        {
+            RestoreHighlight();
+            _currentTargetObject = null;
+            _currentTargetInteractable = null;
+            _currentTargetMoveable = null;
+            UpdateUIForTarget();
         }
 
         private void HighLightCurrentTarget()
         {
             if (_currentTargetObject == null) return;
-
             var renderer = _currentTargetObject.GetComponentInChildren<Renderer>();
             if (!renderer) return;
 
             _oldColors.Clear();
             _highlightedMaterials.Clear();
-
             foreach (var mat in renderer.materials)
             {
-                // --- THIS IS THE FIX ---
-                // Check if the material has a "_Color" property before trying to access it.
                 if (mat != null && mat.HasProperty("_Color"))
                 {
                     _highlightedMaterials.Add(mat);
                     _oldColors.Add(mat.color);
-                    mat.color = new Color(mat.color.r * highlightIntensity, mat.color.g * highlightIntensity, mat.color.b * highlightIntensity);
+                    mat.color *= highlightIntensity;
                 }
             }
         }
 
-        private void RestoreCurrentTarget()
+        private void RestoreHighlight()
         {
-            if (_currentTargetObject == null) return;
-
-            // Only restore colors if we have saved data
-            if (_highlightedMaterials.Count > 0)
+            if (_highlightedMaterials.Count == 0) return;
+            for (var i = 0; i < _highlightedMaterials.Count; i++)
             {
-                 for (var i = 0; i < _highlightedMaterials.Count; i++)
+                if (_highlightedMaterials[i] != null)
                 {
-                    if (_highlightedMaterials[i] != null)
-                    {
-                        _highlightedMaterials[i].color = _oldColors[i];
-                    }
+                    _highlightedMaterials[i].color = _oldColors[i];
                 }
             }
-           
-            // Clear the lists and references
-            _highlightedMaterials.Clear();
-            _oldColors.Clear();
-            _currentTargetObject = null;
-            _currentTarget = null;
-            if(_uiManager) _uiManager.ClearHint();
         }
     }
 }

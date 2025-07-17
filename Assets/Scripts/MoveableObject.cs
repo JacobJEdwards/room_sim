@@ -1,4 +1,3 @@
-using System;
 using Interfaces;
 using Managers;
 using UnityEngine;
@@ -8,203 +7,180 @@ using UnityEngine;
 public class MoveableObject : MonoBehaviour, IInteractable
 {
     [Header("Movement Settings")]
-    [SerializeField]
-    [Tooltip("How fast the object rotates while held.")]
-    private float rotationSpeed = 50f;
-    [SerializeField]
-    [Tooltip("How smoothly the object follows the mouse position (lower values are smoother but lag more).")]
-    private float moveSmoothTime = 0.005f;
-    [SerializeField]
-    [Tooltip("A small buffer to allow for slight clipping, preventing the object from getting stuck.")]
-    private float skinWidth = 0.05f;
-
-    [Header("Rotation Axes")]
-    [SerializeField]
-    [Tooltip("The axis of rotation for the Left and Right arrow keys.")]
-    private Vector3 horizontalRotationAxis = Vector3.up;
-    [SerializeField]
-    [Tooltip("The axis of rotation for the Up and Down arrow keys.")]
-    private Vector3 verticalRotationAxis = Vector3.right;
-
-
+    [SerializeField] private float moveSmoothTime = 0.05f;
+    [SerializeField] private float rotationSpeed = 50f;
+    [SerializeField] private float moveStepAmount = 0.1f;
+    [SerializeField] private float rotationStepAmount = 15f;
+    
     [Header("Interaction")]
-    [SerializeField]
-    [Tooltip("Text displayed when the object can be picked up.")]
-    private string pickupPrompt = "Click to pick up";
-    [SerializeField]
-    [Tooltip("Text displayed when the object can be picked up on mobile.")]
-    private string pickupPromptMobile = "Tap to pick up";
+    [SerializeField] private string pickupPromptDesktop = "Press E or Click to pick up";
+    [SerializeField] private string pickupPromptMobile = "Press Interact to pick up";
 
     [Header("Audio")]
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip pickupSound;
     [SerializeField] private AudioClip dropSound;
 
-    private AudioManager _audioManager;
-
+    public bool IsNewlySpawned { get; private set; }
 
     private Rigidbody _rigidbody;
     private Collider _collider;
     private Camera _mainCamera;
+    
     private bool _isHeld;
     private Vector3 _targetPosition;
     private Vector3 _velocity = Vector3.zero;
     private float _heldDistance;
-    private InputManager _inputManager;
-    private UIManager _uiManager;
-
-    private bool _leftArrowPressed;
-    private bool _rightArrowPressed;
-    private bool _upArrowPressed;
-    private bool _downArrowPressed;
-    private bool _commaPressed;
-    private bool _dotPressed;
-
     private Vector3 _scrollRotationAxis = Vector3.up;
-
     private Vector3 _initialPosition;
     private Quaternion _initialRotation;
+
+    // --- Resilient Manager Properties ---
+    private UIManager _uiManager;
+    private UIManager UIManager => _uiManager ??= UIManager.Instance;
+
+    private AudioManager _audioManager;
+    private AudioManager AudioManager => _audioManager ??= AudioManager.Instance;
+
+    private GameManager _gameManager;
+    private GameManager GameManager => _gameManager ??= GameManager.Instance;
+
+    private InputManager _inputManager;
+    private InputManager InputManager => _inputManager ??= InputManager.Instance;
 
     private void Awake()
     {
         _rigidbody = GetComponent<Rigidbody>();
-        _collider = GetComponent<Collider>();
-        _rigidbody.useGravity = true;
-        _rigidbody.isKinematic = false;
-
-         _rigidbody.constraints = RigidbodyConstraints.None;
-
+        _collider = GetComponent<Collider>(); 
         _mainCamera = Camera.main;
-    }
-
-    private void Start()
-    {
-        _inputManager = InputManager.Instance;
-        _uiManager = UIManager.Instance;
-        _audioManager = AudioManager.Instance;
-
-        _inputManager.SetOnLeftArrowPressed(() => { if (_isHeld) _leftArrowPressed = true; });
-        _inputManager.SetOnLeftArrowReleased(() => { _leftArrowPressed = false; });
-        _inputManager.SetOnRightArrowPressed(() => { if (_isHeld) _rightArrowPressed = true; });
-        _inputManager.SetOnRightArrowReleased(() => { _rightArrowPressed = false; });
-        _inputManager.SetOnUpArrowPressed(() => { if (_isHeld) _upArrowPressed = true; });
-        _inputManager.SetOnUpArrowReleased(() => { _upArrowPressed = false; });
-        _inputManager.SetOnDownArrowPressed(() => { if (_isHeld) _downArrowPressed = true; });
-        _inputManager.SetOnDownArrowReleased(() => { _downArrowPressed = false; });
-        _inputManager.SetOnCommaPressed(() => { if (_isHeld) _commaPressed = true; });
-        _inputManager.SetOnCommaReleased(() => { _commaPressed = false; });
-        _inputManager.SetOnDotPressed(() => { if (_isHeld) _dotPressed = true; });
-        _inputManager.SetOnDotReleased(() => { _dotPressed = false; });
-
         _initialPosition = transform.position;
         _initialRotation = transform.rotation;
     }
 
     private void OnMouseDown()
     {
-        if (_isHeld) Drop();
-        else Pickup();
-    }
-
-    private void FixedUpdate()
-    {
-        if (!_isHeld) return;
-
-        var smoothedPosition = Vector3.SmoothDamp(transform.position, _targetPosition, ref _velocity, moveSmoothTime);
-        var direction = smoothedPosition - transform.position;
-        var distance = direction.magnitude;
-        var castExtents = _collider.bounds.extents - Vector3.one * skinWidth;
-
-        if (!Physics.BoxCast(transform.position, castExtents, direction.normalized, transform.rotation, distance))
+        if (Application.isMobilePlatform) return;
+        if (!_isHeld)
         {
-            _rigidbody.MovePosition(smoothedPosition);
+            Pickup();
         }
-        
-        if (_leftArrowPressed) transform.Rotate(horizontalRotationAxis, rotationSpeed * Time.deltaTime);
-        if (_rightArrowPressed) transform.Rotate(horizontalRotationAxis, -rotationSpeed * Time.deltaTime);
-        if (_upArrowPressed) transform.Rotate(verticalRotationAxis, rotationSpeed * Time.deltaTime);
-        if (_downArrowPressed) transform.Rotate(verticalRotationAxis, -rotationSpeed * Time.deltaTime);
-
-        if (_commaPressed)
-        {
-            _heldDistance -= Time.deltaTime;
-            _heldDistance = Mathf.Clamp(_heldDistance, 0.5f, 10f);
-        }
-
-        if (!_dotPressed) return;
-        _heldDistance += Time.deltaTime;
-        _heldDistance = Mathf.Clamp(_heldDistance, 0.5f, 10f);
     }
 
     private void Update()
     {
         if (!_isHeld) return;
         
-        if (Input.GetKeyDown(KeyCode.Alpha1)) _scrollRotationAxis = Vector3.right;
-        if (Input.GetKeyDown(KeyCode.Alpha2)) _scrollRotationAxis = Vector3.up;
-        if (Input.GetKeyDown(KeyCode.Alpha3)) _scrollRotationAxis = Vector3.forward;
-        
-        var scrollInput = Input.GetAxis("Mouse ScrollWheel");
-        if (Mathf.Abs(scrollInput) > 0.01f)
-        {
-            transform.Rotate(_scrollRotationAxis, scrollInput * rotationSpeed * 10f, Space.Self);
-        }
-
-        var ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
+        var ray = _mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         _targetPosition = ray.GetPoint(_heldDistance);
+
+        if (!UIManager.IsMobilePlatform)
+        {
+            HandleDesktopInput();
+        }
     }
 
-    private void Pickup()
+    private void FixedUpdate()
     {
-        _audioManager.PlaySound(audioSource, pickupSound);
-        _isHeld = true;
-        _rigidbody.useGravity = false;
-        _rigidbody.isKinematic = true; 
-        _heldDistance = Vector3.Distance(_mainCamera.transform.position, transform.position);
-        _velocity = Vector3.zero;
-        _targetPosition = transform.position;
-        _uiManager.ShowHoldingPanel();
+        if (!_isHeld) return;
+
+        Vector3 newPosition = Vector3.SmoothDamp(_rigidbody.position, _targetPosition, ref _velocity, moveSmoothTime);
+        Vector3 direction = newPosition - _rigidbody.position;
+        float distance = direction.magnitude;
+
+        if (!Physics.BoxCast(_rigidbody.position, _collider.bounds.extents, direction.normalized, out RaycastHit hit, transform.rotation, distance))
+        {
+            _rigidbody.MovePosition(newPosition);
+        }
     }
 
-    private void Drop()
+    public void ApplyRotationStep(float direction)
     {
-        _audioManager.PlaySound(audioSource, dropSound);
-        _isHeld = false;
-        _rigidbody.useGravity = true;
-        _rigidbody.isKinematic = false;
-        _uiManager.HideHoldingPanel();
+        transform.Rotate(Vector3.right, direction * rotationStepAmount, Space.World);
     }
-    
+
+    public void AdjustDistanceStep(float direction)
+    {
+        if (!_isHeld) return;
+        _heldDistance += direction * moveStepAmount;
+        _heldDistance = Mathf.Clamp(_heldDistance, 1f, 10f);
+    }
+
+    public void ApplyHorizontalMovementStep(float direction)
+    {
+        if (!_isHeld) return;
+        Vector3 right = _mainCamera.transform.right;
+        right.y = 0;
+        _targetPosition += right.normalized * direction * moveStepAmount;
+    }
+
     public void OnInteract(GameObject interactor)
     {
         if (_isHeld) Drop();
         else Pickup();
     }
 
-    public bool CanInteract(GameObject interactor)
+    public void Pickup(bool isNewlySpawned = false)
     {
-        return !_isHeld;
+        if (GameManager.CurrentMode != GameManager.ControlMode.Camera && !isNewlySpawned) return;
+        if (_isHeld) return;
+        _isHeld = true;
+        
+        IsNewlySpawned = isNewlySpawned;
+
+        if (IsNewlySpawned)
+        {
+            _heldDistance = 5f; 
+        }
+        else
+        {
+            _heldDistance = Vector3.Distance(_mainCamera.transform.position, transform.position);
+        }
+
+        GameManager.CurrentHeldObject = this;
+        GameManager.SetMode(GameManager.ControlMode.ObjectHolding);
+        _rigidbody.useGravity = false;
+        _rigidbody.isKinematic = true;
+        _targetPosition = transform.position;
+        _velocity = Vector3.zero;
+        AudioManager.PlaySound(audioSource, pickupSound);
     }
 
-    public string GetInteractionPromptMobile(GameObject interactor)
+    public void Drop()
     {
-        return pickupPromptMobile;
+        if (!_isHeld) return;
+        _isHeld = false;
+        IsNewlySpawned = false; 
+        
+        GameManager.CurrentHeldObject = null;
+        GameManager.SetMode(GameManager.ControlMode.Camera);
+        _rigidbody.useGravity = true;
+        _rigidbody.isKinematic = false;
+        AudioManager.PlaySound(audioSource, dropSound);
     }
 
-    public string GetInteractionPromptDesktop(GameObject interactor)
+    private void HandleDesktopInput()
     {
-        return pickupPrompt;
+        if (Input.GetKeyDown(KeyCode.Alpha1)) _scrollRotationAxis = Vector3.right;
+        if (Input.GetKeyDown(KeyCode.Alpha2)) _scrollRotationAxis = Vector3.up;
+        if (Input.GetKeyDown(KeyCode.Alpha3)) _scrollRotationAxis = Vector3.forward;
+
+        float scrollInput = Input.GetAxis("Mouse ScrollWheel");
+        if (Mathf.Abs(scrollInput) > 0.01f)
+        {
+            transform.Rotate(_scrollRotationAxis, scrollInput * rotationSpeed * 10f, Space.Self);
+        }
+
+        if (InputManager.PlayerControls.Player.Comma.IsPressed()) AdjustDistanceStep(-1);
+        if (InputManager.PlayerControls.Player.Dot.IsPressed()) AdjustDistanceStep(1);
     }
 
+    public bool CanInteract(GameObject interactor) => true;
+    public string GetInteractionPromptMobile(GameObject interactor) => _isHeld ? "" : pickupPromptMobile;
+    public string GetInteractionPromptDesktop(GameObject interactor) => _isHeld ? "Press Esc to drop/cancel" : pickupPromptDesktop;
     public void ResetObject()
     {
-        Drop();
+        if (_isHeld) Drop();
         transform.position = _initialPosition;
         transform.rotation = _initialRotation;
-        _rigidbody.linearVelocity = Vector3.zero;
-        _rigidbody.angularVelocity = Vector3.zero;
-        _rigidbody.isKinematic = false;
-        _rigidbody.useGravity = true;
-        _uiManager.HideHoldingPanel();
     }
 }

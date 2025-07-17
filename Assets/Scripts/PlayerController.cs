@@ -4,7 +4,7 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     [SerializeField] private PlayerMovement playerMovement;
-    private float _mouseSensitivity = 100f;
+    private float _mouseSensitivity = 50f;
 
     private void Start()
     {
