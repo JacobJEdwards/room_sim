@@ -1,8 +1,6 @@
 using Managers;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.Controls;
-using UnityEngine.Serialization;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
@@ -29,15 +27,15 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private LayerMask groundLayer;
 
     [SerializeField] private float lookSensitivity = 0.5f;
-
-    [SerializeField]
+    
     private CharacterController characterController;
     private InputManager _inputManager = null!;
     private Vector2 _moveInput;
     private bool _jumpRequested;
-
     private float _currentRotationX;
     private Vector3 _playerVelocity;
+    
+    private bool _touchLookEnabled = false;
 
     private void Awake()
     {
@@ -62,10 +60,11 @@ public class PlayerMovement : MonoBehaviour
         _lookAction = _inputActions.Player.Look;
 
         _jumpAction.performed += HandleJumpPerformed;
-        if (UnityEngine.Device.Application.isMobilePlatform)
-        {
-            _lookAction.performed += FilterMobileLookInput;
-        }
+    }
+    
+    public void SetTouchLookEnabled(bool isEnabled)
+    {
+        _touchLookEnabled = isEnabled;
     }
 
     public void SetMouseSensitivity(float sensitivity)
@@ -73,57 +72,20 @@ public class PlayerMovement : MonoBehaviour
         lookSensitivity = sensitivity / 100f;
     }
 
-    private void OnEnable()
-    {
-        if (_jumpAction != null)
-        {
-            _jumpAction.performed += HandleJumpPerformed;
-        }
-        
-        if (UnityEngine.Device.Application.isMobilePlatform && _lookAction != null)
-        {
-            _lookAction.performed += FilterMobileLookInput;
-        }
-    }
-
-    private void OnDisable()
-    {
-        _jumpAction.performed -= HandleJumpPerformed;
-        
-        if (UnityEngine.Device.Application.isMobilePlatform && _lookAction != null)
-        {
-            _lookAction.performed -= FilterMobileLookInput;
-        }
-    }
-
-    private void FilterMobileLookInput(InputAction.CallbackContext context)
-    {
-        // Check if the input is coming from a touchscreen
-        if (context.control.device is Touchscreen)
-        {
-            // Cancel the touch input by not processing it
-            context.ReadValueAsObject();
-            return;
-        }
-    }
-
     private void Update()
     {
         _moveInput = _moveAction.ReadValue<Vector2>();
-
         HandleRotation();
     }
 
     private void HandleRotation()
     {
-        // On mobile, ignore look input if it's from touch
-        if (UnityEngine.Device.Application.isMobilePlatform)
+        if (UnityEngine.Device.Application.isMobilePlatform && !_touchLookEnabled)
         {
-            // Check the active control to see if it's touch-based
             var lookControl = _lookAction.activeControl;
             if (lookControl != null && lookControl.device is Touchscreen)
             {
-                return; // Ignore touch input
+                return; 
             }
         }
 
@@ -153,22 +115,16 @@ public class PlayerMovement : MonoBehaviour
 
         var moveDirection = transform.forward * _moveInput.y + transform.right * _moveInput.x;
         moveDirection.Normalize();
-
         var horizontalVelocity = moveDirection * moveSpeed;
-
         _playerVelocity.x = horizontalVelocity.x;
         _playerVelocity.z = horizontalVelocity.z;
-
 
         if (_jumpRequested && isGrounded)
         {
             _playerVelocity.y = jumpForce;
             _jumpRequested = false;
         }
-
         _playerVelocity.y += _gravity * Time.fixedDeltaTime;
-
-
         characterController.Move(_playerVelocity * Time.fixedDeltaTime);
     }
 
@@ -177,22 +133,16 @@ public class PlayerMovement : MonoBehaviour
         _jumpRequested = true;
     }
 
+    // ... (OnControllerColliderHit and OnDrawGizmosSelected are unchanged)
+    #region Unchanged Helper Methods
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
         var body = hit.collider.attachedRigidbody;
-
-        if (!body || body.isKinematic)
-            return;
-
-        if (hit.moveDirection.y < -0.3f)
-            return;
-
+        if (!body || body.isKinematic) return;
+        if (hit.moveDirection.y < -0.3f) return;
         var pushDir = new Vector3(hit.moveDirection.x, 0, hit.moveDirection.z);
-
         body.linearVelocity = pushDir * 2.0f;
     }
-
-
     private void OnDrawGizmosSelected()
     {
         if (groundCheckTransform)
@@ -206,4 +156,13 @@ public class PlayerMovement : MonoBehaviour
              Gizmos.DrawWireSphere(transform.position + Vector3.down * (characterController.height / 2 - characterController.radius), characterController.radius);
         }
     }
+    private void OnEnable()
+    {
+        if (_jumpAction != null) _jumpAction.performed += HandleJumpPerformed;
+    }
+    private void OnDisable()
+    {
+        if (_jumpAction != null) _jumpAction.performed -= HandleJumpPerformed;
+    }
+    #endregion
 }

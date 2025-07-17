@@ -29,7 +29,7 @@ Transform:
   m_GameObject: {fileID: 1542343624216442896}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.6604927, y: 9.893945, z: -10.706911}
+  m_LocalPosition: {x: 1, y: 1, z: 1}
   m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -97,12 +97,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 48f0c4bad6184cdc83ea2e563b26185c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rotationSpeed: 10
   moveSmoothTime: 0.05
-  skinWidth: 0.05
-  horizontalRotationAxis: {x: 0, y: 1, z: 0}
-  verticalRotationAxis: {x: 1, y: 0, z: 0}
-  pickupPrompt: Click to pick up
+  rotationSpeed: 10
+  moveStepAmount: 0.1
+  rotationStepAmount: 15
+  pickupPromptDesktop: Press E or Click to pick up
   pickupPromptMobile: Tap to pick up
   audioSource: {fileID: 1044708980831629037}
   pickupSound: {fileID: 8300000, guid: 02310fb043cb34f5e8f4b80674d5512d, type: 3}

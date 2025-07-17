@@ -97,12 +97,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 48f0c4bad6184cdc83ea2e563b26185c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rotationSpeed: 100
   moveSmoothTime: 0.005
-  skinWidth: 0.05
-  horizontalRotationAxis: {x: 0, y: 1, z: 0}
-  verticalRotationAxis: {x: 1, y: 0, z: 0}
-  pickupPrompt: Click to pick up
+  rotationSpeed: 100
+  moveStepAmount: 0.1
+  rotationStepAmount: 15
+  pickupPromptDesktop: Click or Press E to pick up
   pickupPromptMobile: Tap to pick up
   audioSource: {fileID: 3401374708088224615}
   pickupSound: {fileID: 8300000, guid: 02310fb043cb34f5e8f4b80674d5512d, type: 3}
