@@ -70,11 +70,6 @@ namespace Managers
             roomManager.DisableAllRooms();
             roomManager.MovePlayerToRoom(0);
             
-            if (!mouseSensitivitySlider) return;
-            if (Application.isMobilePlatform) { mouseSensitivitySlider.maxValue = 200f; }
-            mouseSensitivitySlider.onValueChanged.AddListener(SetMouseSensitivity);
-            mouseSensitivitySlider.value = PlayerPrefs.GetFloat("MouseSensitivity", Application.isMobilePlatform ? 100f : 50f);
-            SetMouseSensitivity(mouseSensitivitySlider.value);
         }
 
         private void OnEscapePressed(InputAction.CallbackContext context)
@@ -111,8 +106,6 @@ namespace Managers
             }
         }
 
-        // ... (The rest of the script is unchanged) ...
-        #region Unchanged Code
         public void DropHeldObject()
         {
             if (CurrentHeldObject != null) CurrentHeldObject.Drop();
@@ -123,13 +116,13 @@ namespace Managers
         }
         public void NudgeHeldObjectDistance(float direction)
         {
-            if (CurrentHeldObject != null) CurrentHeldObject.AdjustDistanceStep(direction);
+            if (CurrentHeldObject) CurrentHeldObject.AdjustDistanceStep(direction);
         }
         public void NudgeHeldObjectHorizontal(float direction)
         {
-            if (CurrentHeldObject != null) CurrentHeldObject.ApplyHorizontalMovementStep(direction);
+            if (CurrentHeldObject) CurrentHeldObject.ApplyHorizontalMovementStep(direction);
         }
-        private void SetMouseSensitivity(float sensitivity)
+        public void SetMouseSensitivity(float sensitivity)
         {
             PlayerPrefs.SetFloat("MouseSensitivity", sensitivity);
             if (_playerMovement) _playerMovement.SetMouseSensitivity(sensitivity);
@@ -148,6 +141,8 @@ namespace Managers
                 case ControlMode.Menu: EnableMenuMode(); break;
                 case ControlMode.Placement: EnablePlacementMode(); break;
                 case ControlMode.ObjectHolding: EnableObjectHoldingMode(); break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(mode), mode, null);
             }
         }
         private void EnableCameraMode()
@@ -180,6 +175,5 @@ namespace Managers
             _inputManager.PlayerControls.Player.Enable();
         }
         public void ResetCurrentRoom() => roomManager.ResetCurrentRoom();
-        #endregion
     }
 }
