@@ -62,7 +62,6 @@ namespace Managers
                 }
             }
 
-            // Initially disable both text objects. The correct one will be enabled in MovePlayerToRoom.
             if(roomNameTextDesktop) roomNameTextDesktop.gameObject.SetActive(false);
             if(roomNameTextMobile) roomNameTextMobile.gameObject.SetActive(false);
         }
@@ -83,7 +82,6 @@ namespace Managers
                 return;
             }
 
-            // Activate/Deactivate rooms
             if (roomIndex != _currentRoomIndex)
             {
                 roomObjects[roomIndex].ActivateRoom();
@@ -95,7 +93,6 @@ namespace Managers
             var destination = roomObjects[roomIndex];
             if (destination)
             {
-                // Move the player
                 if (_playerController)
                 {
                     _playerController.enabled = false;
@@ -109,13 +106,17 @@ namespace Managers
 
                 if (_uiManager) _uiManager.CloseAllPanels();
 
+<<<<<<< HEAD
                 if (_gameManager.IsMobilePlatform)
+=======
+                if (_uiManager.IsMobilePlatform)
+>>>>>>> refs/remotes/origin/master
                 {
                     if (roomNameTextMobile)
                     {
                         roomNameTextMobile.text = destination.RoomName;
                         roomNameTextMobile.gameObject.SetActive(true);
-                        if(roomNameTextDesktop) roomNameTextDesktop.gameObject.SetActive(false); // Ensure other is off
+                        if(roomNameTextDesktop) roomNameTextDesktop.gameObject.SetActive(false);
                     }
                 }
                 else
@@ -124,7 +125,7 @@ namespace Managers
                     {
                         roomNameTextDesktop.text = destination.RoomName;
                         roomNameTextDesktop.gameObject.SetActive(true);
-                        if(roomNameTextMobile) roomNameTextMobile.gameObject.SetActive(false); // Ensure other is off
+                        if(roomNameTextMobile) roomNameTextMobile.gameObject.SetActive(false);
                     }
                 }
 

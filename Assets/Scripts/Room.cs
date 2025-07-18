@@ -13,7 +13,7 @@ public class Room : MonoBehaviour
     private string roomName;
 
     public Transform TeleportDestination => teleportDestination;
-    private readonly List<IInteractable> _objectPositions = new();
+    private readonly List<IResetable> _objectPositions = new();
     private readonly List<GameObject> _placedObjects = new();
 
     public string RoomName => roomName;
@@ -22,7 +22,7 @@ public class Room : MonoBehaviour
     {
         foreach (var child in GetComponentsInChildren<Transform>())
         {
-            if (child.TryGetComponent<IInteractable>(out var interactable))
+            if (child.TryGetComponent<IResetable>(out var interactable))
             {
                 _objectPositions.Add(interactable);
             }

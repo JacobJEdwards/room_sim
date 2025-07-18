@@ -14,6 +14,8 @@ public class Curtains : MonoBehaviour, IInteractable
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip audioClip;
 
+    private Tween _tween;
+
     private AudioManager _audioManager;
 
     private void Start()
@@ -37,13 +39,23 @@ public class Curtains : MonoBehaviour, IInteractable
 
     private void Open()
     {
-        curtain.transform.DOScaleY(1f, 1f);
+        if (_tween != null && _tween.IsActive() && _tween.IsPlaying())
+        {
+            return;
+        }
+
+        _tween = curtain.transform.DOScaleY(1f, 1f);
         _open = true;
     }
 
     private void Close()
     {
-        curtain.transform.DOScaleY(maxScale, 1f);
+        if (_tween != null && _tween.IsActive() && _tween.IsPlaying())
+        {
+            return;
+        }
+
+        _tween = curtain.transform.DOScaleY(maxScale, 1f);
         _open = false;
     }
 

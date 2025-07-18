@@ -10,6 +10,7 @@ namespace Managers
 
     public class InteractionManager : MonoBehaviour
     {
+        private static readonly int Color1 = Shader.PropertyToID("_Color");
         [SerializeField] private LayerMask interactionLayer;
         [SerializeField] private float interactionRange = 5f;
 
@@ -26,6 +27,9 @@ namespace Managers
         private readonly List<Material> _highlightedMaterials = new();
         [SerializeField] private float highlightIntensity = 1.5f;
 
+        private float _timeout = 0.5f;
+        private float _lastInteractionTime;
+
         private void Awake()
         {
             _mainCamera = Camera.main;
@@ -39,9 +43,14 @@ namespace Managers
             interactionLayer = LayerMask.GetMask("Interaction");
             
             _inputManager.PlayerControls.Player.Interact.performed += _ => OnInteractInput();
+<<<<<<< HEAD
             
             // Add click handler for desktop pickup (but not on mobile)
             if (!_gameManager.IsMobilePlatform)
+=======
+
+            if (!_uiManager.IsMobilePlatform)
+>>>>>>> refs/remotes/origin/master
             {
                 _inputManager.PlayerControls.Player.Attack.performed += _ => OnPickupInput();
             }
@@ -87,23 +96,28 @@ namespace Managers
 
         public void OnInteractInput()
         {
-            // E key or Interact button - always for interaction only
+            if (Time.time - _lastInteractionTime < _timeout)
+            {
+                return;
+            }
+
             if (_currentTargetInteractable != null && _currentTargetInteractable.CanInteract(gameObject))
             {
                 _currentTargetInteractable.OnInteract(gameObject);
+                _lastInteractionTime = Time.time;
             }
         }
         
         public void OnPickupInput()
         {
             // Click or Pickup button - for picking up/dropping objects
-            if (_gameManager.CurrentHeldObject != null)
+            if (_gameManager.CurrentHeldObject)
             {
                 _gameManager.CurrentHeldObject.Drop();
                 return;
             }
             
-            if (_currentTargetMoveable != null)
+            if (_currentTargetMoveable)
             {
                 _currentTargetMoveable.Pickup();
             }
@@ -122,7 +136,7 @@ namespace Managers
         
         private void UpdateUIForTarget()
         {
-            if (_currentTargetObject == null)
+            if (!_currentTargetObject)
             {
                 _uiManager.ClearHint();
                 _uiManager.ShowInteractionButtons(false, false);
@@ -130,15 +144,20 @@ namespace Managers
             }
 
             bool isInteractable = _currentTargetInteractable != null;
-            bool isMoveable = _currentTargetMoveable != null;
+            bool isMoveable = _currentTargetMoveable;
 
             // Build hint text based on capabilities
+<<<<<<< HEAD
             string hint = "";
             if (_gameManager.IsMobilePlatform)
+=======
+            var hint = "";
+            if (_uiManager.IsMobilePlatform)
+>>>>>>> refs/remotes/origin/master
             {
                 // Mobile hints
-                List<string> hints = new List<string>();
-                if (isInteractable && _currentTargetInteractable.CanInteract(gameObject))
+                var hints = new List<string>();
+                if (isInteractable && _currentTargetInteractable != null && _currentTargetInteractable.CanInteract(gameObject))
                 {
                     hints.Add(_currentTargetInteractable.GetInteractionPromptMobile(gameObject));
                 }
@@ -151,8 +170,8 @@ namespace Managers
             else
             {
                 // Desktop hints  
-                List<string> hints = new List<string>();
-                if (isInteractable && _currentTargetInteractable.CanInteract(gameObject))
+                var hints = new List<string>();
+                if (isInteractable && _currentTargetInteractable != null && _currentTargetInteractable.CanInteract(gameObject))
                 {
                     hints.Add(_currentTargetInteractable.GetInteractionPromptDesktop(gameObject));
                 }
@@ -168,9 +187,8 @@ namespace Managers
             // Show appropriate buttons on mobile
             if (_gameManager.IsMobilePlatform)
             {
-                bool showInteract = isInteractable && _currentTargetInteractable.CanInteract(gameObject);
-                bool showPickup = isMoveable;
-                _uiManager.ShowInteractionButtons(showInteract, showPickup);
+                var showInteract = isInteractable && _currentTargetInteractable != null && _currentTargetInteractable.CanInteract(gameObject);
+                _uiManager.ShowInteractionButtons(showInteract, isMoveable);
             }
         }
 
@@ -185,7 +203,7 @@ namespace Managers
 
         private void HighLightCurrentTarget()
         {
-            if (_currentTargetObject == null) return;
+            if (!_currentTargetObject) return;
             var renderer = _currentTargetObject.GetComponentInChildren<Renderer>();
             if (!renderer) return;
 
@@ -193,7 +211,7 @@ namespace Managers
             _highlightedMaterials.Clear();
             foreach (var mat in renderer.materials)
             {
-                if (mat != null && mat.HasProperty("_Color"))
+                if (mat && mat.HasProperty(Color1))
                 {
                     _highlightedMaterials.Add(mat);
                     _oldColors.Add(mat.color);
@@ -207,7 +225,7 @@ namespace Managers
             if (_highlightedMaterials.Count == 0) return;
             for (var i = 0; i < _highlightedMaterials.Count; i++)
             {
-                if (_highlightedMaterials[i] != null)
+                if (_highlightedMaterials[i])
                 {
                     _highlightedMaterials[i].color = _oldColors[i];
                 }
@@ -216,7 +234,7 @@ namespace Managers
         
         private void OnDestroy()
         {
-            if (_inputManager != null)
+            if (_inputManager)
             {
                 _inputManager.PlayerControls.Player.Interact.performed -= _ => OnInteractInput();
                 if (!_gameManager.IsMobilePlatform)

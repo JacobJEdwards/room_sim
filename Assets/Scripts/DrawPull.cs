@@ -12,6 +12,8 @@ public class DrawPull : MonoBehaviour, IInteractable
     [SerializeField] private AudioClip closeClip;
     [SerializeField] private AudioSource audioSource;
 
+    private Tween _tween;
+
     private AudioManager _audioManager;
     private void Start()
     {
@@ -32,15 +34,25 @@ public class DrawPull : MonoBehaviour, IInteractable
 
     private void Open()
     {
+        if (_tween != null && _tween.IsActive() && _tween.IsPlaying())
+        {
+            return;
+        }
+
         _audioManager.PlaySound(audioSource, openClip);
-        transform.DOLocalMoveX(to, 1f);
+        _tween = transform.DOLocalMoveX(to, 1f);
         _open = true;
     }
 
     private void Close()
     {
+        if (_tween != null && _tween.IsActive() && _tween.IsPlaying())
+        {
+            return;
+        }
+
         _audioManager.PlaySound(audioSource, closeClip);
-        transform.DOLocalMoveX(0, 1f);
+        _tween = transform.DOLocalMoveX(0, 1f);
         _open = false;
     }
 
