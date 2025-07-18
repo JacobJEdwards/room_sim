@@ -54,11 +54,6 @@ namespace Managers
         private GameManager _gameManager;
         private InteractionManager _interactionManager;
         private readonly Dictionary<GameObject, CanvasGroup> _panelCanvasGroups = new();
-<<<<<<< HEAD
-=======
-        private bool _isMobilePlatform => Application.isMobilePlatform;
->>>>>>> refs/remotes/origin/master
-
         private GameObject _activeRoomPanel;
         private GameObject _activeControlsPanel;
         private GameObject _activePlacementPanel;
@@ -82,39 +77,11 @@ namespace Managers
                 return;
             }
 
-<<<<<<< HEAD
-=======
-            // Improved mobile detection for WebGL builds
-            // _isMobilePlatform = DetectMobilePlatform();
->>>>>>> refs/remotes/origin/master
             SetupPlatformSpecificUI();
             PreparePanels();
             InitializePanels();
         }
 
-<<<<<<< HEAD
-=======
-        private bool DetectMobilePlatform()
-        {
-            // First check Unity's built-in detection
-            if (Application.isMobilePlatform)
-                return true;
-
-            // // For WebGL builds, check if touch is supported
-            // #if UNITY_WEBGL && !UNITY_EDITOR
-            //     // Check for touch support which indicates mobile browser
-            //     if (Input.touchSupported)
-            //         return true;
-            //
-            //     // Additional check using SystemInfo
-            //     if (SystemInfo.deviceType == DeviceType.Handheld)
-            //         return true;
-            // #endif
-
-            return false;
-        }
-
->>>>>>> refs/remotes/origin/master
         private void Start()
         {
             _gameManager = GameManager.Instance;
@@ -330,14 +297,7 @@ namespace Managers
                 if (mobileInteractButton) mobileInteractButton.SetActive(!isHolding);
                 if (leftThumbstick) leftThumbstick.SetActive(!isHolding);
                 if (rightThumbstick) rightThumbstick.SetActive(!isHolding);
-<<<<<<< HEAD
-
-                if (isHolding && mobilePickupButton != null)
-=======
-                
-                // When holding an object, the pickup button becomes a drop button
                 if (isHolding && mobilePickupButton)
->>>>>>> refs/remotes/origin/master
                 {
                     mobilePickupButton.SetActive(true);
                     var buttonText = mobilePickupButton.GetComponentInChildren<TMP_Text>();

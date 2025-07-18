@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Interfaces
 {
-    public interface IInteractable : IResetable
+    public interface IInteractable : IResetable 
     {
         void OnInteract(GameObject interactor);
         bool CanInteract(GameObject interactor);

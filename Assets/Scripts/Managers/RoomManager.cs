@@ -106,11 +106,7 @@ namespace Managers
 
                 if (_uiManager) _uiManager.CloseAllPanels();
 
-<<<<<<< HEAD
                 if (_gameManager.IsMobilePlatform)
-=======
-                if (_uiManager.IsMobilePlatform)
->>>>>>> refs/remotes/origin/master
                 {
                     if (roomNameTextMobile)
                     {

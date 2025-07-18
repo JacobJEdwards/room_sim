@@ -43,14 +43,7 @@ namespace Managers
             interactionLayer = LayerMask.GetMask("Interaction");
             
             _inputManager.PlayerControls.Player.Interact.performed += _ => OnInteractInput();
-<<<<<<< HEAD
-            
-            // Add click handler for desktop pickup (but not on mobile)
             if (!_gameManager.IsMobilePlatform)
-=======
-
-            if (!_uiManager.IsMobilePlatform)
->>>>>>> refs/remotes/origin/master
             {
                 _inputManager.PlayerControls.Player.Attack.performed += _ => OnPickupInput();
             }
@@ -145,15 +138,8 @@ namespace Managers
 
             bool isInteractable = _currentTargetInteractable != null;
             bool isMoveable = _currentTargetMoveable;
-
-            // Build hint text based on capabilities
-<<<<<<< HEAD
             string hint = "";
             if (_gameManager.IsMobilePlatform)
-=======
-            var hint = "";
-            if (_uiManager.IsMobilePlatform)
->>>>>>> refs/remotes/origin/master
             {
                 // Mobile hints
                 var hints = new List<string>();
