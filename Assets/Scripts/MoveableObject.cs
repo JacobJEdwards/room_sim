@@ -1,20 +1,15 @@
-using Interfaces;
 using Managers;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(Collider))]
-public class MoveableObject : MonoBehaviour, IInteractable
+public class MoveableObject : MonoBehaviour
 {
     [Header("Movement Settings")]
     [SerializeField] private float moveSmoothTime = 0.05f;
     [SerializeField] private float rotationSpeed = 50f;
     [SerializeField] private float moveStepAmount = 0.1f;
     [SerializeField] private float rotationStepAmount = 15f;
-    
-    [Header("Interaction")]
-    [SerializeField] private string pickupPromptDesktop = "Press E or Click to pick up";
-    [SerializeField] private string pickupPromptMobile = "Press Interact to pick up";
 
     [Header("Audio")]
     [SerializeField] private AudioSource audioSource;
@@ -55,15 +50,6 @@ public class MoveableObject : MonoBehaviour, IInteractable
         _mainCamera = Camera.main;
         _initialPosition = transform.position;
         _initialRotation = transform.rotation;
-    }
-
-    private void OnMouseDown()
-    {
-        if (Application.isMobilePlatform) return;
-        if (!_isHeld)
-        {
-            Pickup();
-        }
     }
 
     private void Update()
@@ -111,12 +97,6 @@ public class MoveableObject : MonoBehaviour, IInteractable
         Vector3 right = _mainCamera.transform.right;
         right.y = 0;
         _targetPosition += right.normalized * direction * moveStepAmount;
-    }
-
-    public void OnInteract(GameObject interactor)
-    {
-        if (_isHeld) Drop();
-        else Pickup();
     }
 
     public void Pickup(bool isNewlySpawned = false)
@@ -174,13 +154,12 @@ public class MoveableObject : MonoBehaviour, IInteractable
         if (InputManager.PlayerControls.Player.Dot.IsPressed()) AdjustDistanceStep(1);
     }
 
-    public bool CanInteract(GameObject interactor) => true;
-    public string GetInteractionPromptMobile(GameObject interactor) => _isHeld ? "" : pickupPromptMobile;
-    public string GetInteractionPromptDesktop(GameObject interactor) => _isHeld ? "Press Esc to drop/cancel" : pickupPromptDesktop;
     public void ResetObject()
     {
         if (_isHeld) Drop();
         transform.position = _initialPosition;
         transform.rotation = _initialRotation;
     }
+    
+    public bool IsHeld => _isHeld;
 }

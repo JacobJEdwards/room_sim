@@ -55,6 +55,7 @@ namespace Managers
         [SerializeField] private float panelAnimationDuration = 0.3f;
 
         private GameManager _gameManager;
+        private InteractionManager _interactionManager;
         private readonly Dictionary<GameObject, CanvasGroup> _panelCanvasGroups = new();
         private bool _isMobilePlatform;
 
@@ -81,15 +82,74 @@ namespace Managers
                 return;
             }
 
-            _isMobilePlatform = Application.isMobilePlatform;
+            // Improved mobile detection for WebGL builds
+            _isMobilePlatform = DetectMobilePlatform();
             SetupPlatformSpecificUI();
             PreparePanels();
             InitializePanels();
         }
 
+        private bool DetectMobilePlatform()
+        {
+            // First check Unity's built-in detection
+            if (Application.isMobilePlatform)
+                return true;
+
+            // For WebGL builds, check if touch is supported
+            #if UNITY_WEBGL && !UNITY_EDITOR
+                // Check for touch support which indicates mobile browser
+                if (Input.touchSupported)
+                    return true;
+                
+                // Additional check using SystemInfo
+                if (SystemInfo.deviceType == DeviceType.Handheld)
+                    return true;
+            #endif
+
+            return false;
+        }
+
         private void Start()
         {
             _gameManager = GameManager.Instance;
+            _interactionManager = FindFirstObjectByType<InteractionManager>();
+            
+            // Connect mobile interaction buttons if on mobile platform
+            if (_isMobilePlatform)
+            {
+                ConnectMobileButtons();
+            }
+        }
+        
+        private void ConnectMobileButtons()
+        {
+            if (_interactionManager == null)
+            {
+                Debug.LogError("InteractionManager not found in scene!");
+                return;
+            }
+            
+            // Connect interact button
+            if (mobileInteractButton != null)
+            {
+                Button interactBtn = mobileInteractButton.GetComponent<Button>();
+                if (interactBtn != null)
+                {
+                    interactBtn.onClick.RemoveAllListeners();
+                    interactBtn.onClick.AddListener(() => _interactionManager.OnMobileInteractPressed());
+                }
+            }
+            
+            // Connect pickup button
+            if (mobilePickupButton != null)
+            {
+                Button pickupBtn = mobilePickupButton.GetComponent<Button>();
+                if (pickupBtn != null)
+                {
+                    pickupBtn.onClick.RemoveAllListeners();
+                    pickupBtn.onClick.AddListener(() => _interactionManager.OnMobilePickupPressed());
+                }
+            }
         }
         
         private void Update()
@@ -247,7 +307,17 @@ namespace Managers
         {
             if (!IsMobilePlatform) return;
             if (mobileInteractButton) mobileInteractButton.SetActive(showInteract);
-            if (mobilePickupButton) mobilePickupButton.SetActive(showPickup);
+            if (mobilePickupButton) 
+            {
+                mobilePickupButton.SetActive(showPickup);
+                // Reset button text to "Pickup" when showing for a new object
+                if (showPickup)
+                {
+                    var buttonText = mobilePickupButton.GetComponentInChildren<TMP_Text>();
+                    if (buttonText != null)
+                        buttonText.text = "Pickup";
+                }
+            }
         }
 
         public void SetHoldingUI(bool isHolding)
@@ -258,6 +328,16 @@ namespace Managers
                 if (mobileInteractButton) mobileInteractButton.SetActive(!isHolding);
                 if (leftThumbstick) leftThumbstick.SetActive(!isHolding);
                 if (rightThumbstick) rightThumbstick.SetActive(!isHolding);
+                
+                // When holding an object, the pickup button becomes a drop button
+                if (isHolding && mobilePickupButton != null)
+                {
+                    mobilePickupButton.SetActive(true);
+                    // Update the button text/image to show "Drop" if needed
+                    var buttonText = mobilePickupButton.GetComponentInChildren<TMP_Text>();
+                    if (buttonText != null)
+                        buttonText.text = "Drop";
+                }
             }
             else
             {
@@ -286,5 +366,26 @@ namespace Managers
 
         public bool IsAnyPanelOpen() => _panelCanvasGroups.Values.Any(cg => cg.alpha > 0);
         public bool IsMobilePlatform => _isMobilePlatform;
+        
+        private void OnDestroy()
+        {
+            // Clean up button listeners on mobile
+            if (_isMobilePlatform)
+            {
+                if (mobileInteractButton != null)
+                {
+                    Button interactBtn = mobileInteractButton.GetComponent<Button>();
+                    if (interactBtn != null)
+                        interactBtn.onClick.RemoveAllListeners();
+                }
+                
+                if (mobilePickupButton != null)
+                {
+                    Button pickupBtn = mobilePickupButton.GetComponent<Button>();
+                    if (pickupBtn != null)
+                        pickupBtn.onClick.RemoveAllListeners();
+                }
+            }
+        }
     }
 }

@@ -26,7 +26,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float groundDistance = 0.2f;
     [SerializeField] private LayerMask groundLayer;
 
-    [SerializeField] private float lookSensitivity = 0.5f;
+    [SerializeField] private float lookSensitivity = 0.30f;
     
     private CharacterController characterController;
     private InputManager _inputManager = null!;
@@ -133,7 +133,6 @@ public class PlayerMovement : MonoBehaviour
         _jumpRequested = true;
     }
 
-    // ... (OnControllerColliderHit and OnDrawGizmosSelected are unchanged)
     #region Unchanged Helper Methods
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {

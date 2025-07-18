@@ -39,6 +39,12 @@ namespace Managers
             interactionLayer = LayerMask.GetMask("Interaction");
             
             _inputManager.PlayerControls.Player.Interact.performed += _ => OnInteractInput();
+            
+            // Add click handler for desktop pickup (but not on mobile)
+            if (!_uiManager.IsMobilePlatform)
+            {
+                _inputManager.PlayerControls.Player.Attack.performed += _ => OnPickupInput();
+            }
         }
 
         private void Update()
@@ -81,20 +87,37 @@ namespace Managers
 
         public void OnInteractInput()
         {
+            // E key or Interact button - always for interaction only
+            if (_currentTargetInteractable != null && _currentTargetInteractable.CanInteract(gameObject))
+            {
+                _currentTargetInteractable.OnInteract(gameObject);
+            }
+        }
+        
+        public void OnPickupInput()
+        {
+            // Click or Pickup button - for picking up/dropping objects
             if (_gameManager.CurrentHeldObject != null)
             {
                 _gameManager.CurrentHeldObject.Drop();
                 return;
             }
             
-            if (_currentTargetInteractable != null && _currentTargetInteractable.CanInteract(gameObject))
-            {
-                _currentTargetInteractable.OnInteract(gameObject);
-            }
-            else if (_currentTargetMoveable != null)
+            if (_currentTargetMoveable != null)
             {
                 _currentTargetMoveable.Pickup();
             }
+        }
+        
+        // Mobile-specific methods to be called by UI buttons
+        public void OnMobileInteractPressed()
+        {
+            OnInteractInput();
+        }
+        
+        public void OnMobilePickupPressed()
+        {
+            OnPickupInput();
         }
         
         private void UpdateUIForTarget()
@@ -109,22 +132,45 @@ namespace Managers
             bool isInteractable = _currentTargetInteractable != null;
             bool isMoveable = _currentTargetMoveable != null;
 
+            // Build hint text based on capabilities
             string hint = "";
-            if (isInteractable)
-            {
-                hint = _uiManager.IsMobilePlatform
-                    ? _currentTargetInteractable.GetInteractionPromptMobile(gameObject)
-                    : _currentTargetInteractable.GetInteractionPromptDesktop(gameObject);
-            }
-            else if (isMoveable)
-            {
-                 hint = "Press E to pick up";
-            }
-            _uiManager.SetHint(hint);
-            
             if (_uiManager.IsMobilePlatform)
             {
-                _uiManager.ShowInteractionButtons(isInteractable || isMoveable, false);
+                // Mobile hints
+                List<string> hints = new List<string>();
+                if (isInteractable && _currentTargetInteractable.CanInteract(gameObject))
+                {
+                    hints.Add(_currentTargetInteractable.GetInteractionPromptMobile(gameObject));
+                }
+                if (isMoveable)
+                {
+                    hints.Add("Tap Pickup button to pick up");
+                }
+                hint = string.Join(" | ", hints);
+            }
+            else
+            {
+                // Desktop hints  
+                List<string> hints = new List<string>();
+                if (isInteractable && _currentTargetInteractable.CanInteract(gameObject))
+                {
+                    hints.Add(_currentTargetInteractable.GetInteractionPromptDesktop(gameObject));
+                }
+                if (isMoveable)
+                {
+                    hints.Add("Click to pick up");
+                }
+                hint = string.Join(" | ", hints);
+            }
+            
+            _uiManager.SetHint(hint);
+            
+            // Show appropriate buttons on mobile
+            if (_uiManager.IsMobilePlatform)
+            {
+                bool showInteract = isInteractable && _currentTargetInteractable.CanInteract(gameObject);
+                bool showPickup = isMoveable;
+                _uiManager.ShowInteractionButtons(showInteract, showPickup);
             }
         }
 
@@ -164,6 +210,18 @@ namespace Managers
                 if (_highlightedMaterials[i] != null)
                 {
                     _highlightedMaterials[i].color = _oldColors[i];
+                }
+            }
+        }
+        
+        private void OnDestroy()
+        {
+            if (_inputManager != null)
+            {
+                _inputManager.PlayerControls.Player.Interact.performed -= _ => OnInteractInput();
+                if (!_uiManager.IsMobilePlatform)
+                {
+                    _inputManager.PlayerControls.Player.Attack.performed -= _ => OnPickupInput();
                 }
             }
         }
