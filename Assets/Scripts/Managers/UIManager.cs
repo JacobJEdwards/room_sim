@@ -242,8 +242,18 @@ namespace Managers
         public void ToggleControlsPanel() => TogglePanel(_activeControlsPanel);
         public void ToggleObjectPlacementMenu() => TogglePanel(_activePlacementPanel);
 
+        private float _timeout = 0.5f;
+        private float _lastToggleTime = 0f;
+
+
         private void TogglePanel(GameObject panelToToggle)
         {
+            if (GameManager.Instance.IsMobilePlatform && Time.time - _lastToggleTime < _timeout)
+            {
+                return;
+            }
+            _lastToggleTime = Time.time;
+
             if (!panelToToggle) return;
             var wasActive = panelToToggle.activeSelf;
             CloseAllPanels();

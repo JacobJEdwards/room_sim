@@ -89,20 +89,29 @@ namespace Managers
 
         public void OnInteractInput()
         {
+
             if (Time.time - _lastInteractionTime < _timeout)
             {
                 return;
             }
 
+            _lastInteractionTime = Time.time;
+
             if (_currentTargetInteractable != null && _currentTargetInteractable.CanInteract(gameObject))
             {
                 _currentTargetInteractable.OnInteract(gameObject);
-                _lastInteractionTime = Time.time;
             }
         }
         
         public void OnPickupInput()
         {
+            if (Time.time - _lastInteractionTime < _timeout)
+            {
+                return;
+            }
+
+            _lastInteractionTime = Time.time;
+
             // Click or Pickup button - for picking up/dropping objects
             if (_gameManager.CurrentHeldObject)
             {
