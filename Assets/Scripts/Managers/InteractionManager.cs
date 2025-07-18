@@ -65,7 +65,7 @@ namespace Managers
             {
                 if (_currentTargetObject != hit.collider.gameObject)
                 {
-                    if (_currentTargetObject != null)
+                    if (_currentTargetObject)
                     {
                         ClearCurrentTarget();
                     }

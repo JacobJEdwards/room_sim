@@ -80,10 +80,10 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleRotation()
     {
-        if (UnityEngine.Device.Application.isMobilePlatform && !_touchLookEnabled)
+        if (Application.isMobilePlatform && !_touchLookEnabled)
         {
             var lookControl = _lookAction.activeControl;
-            if (lookControl != null && lookControl.device is Touchscreen)
+            if (lookControl is { device: Touchscreen })
             {
                 return; 
             }
