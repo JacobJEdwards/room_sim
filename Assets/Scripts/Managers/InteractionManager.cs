@@ -41,7 +41,7 @@ namespace Managers
             _inputManager.PlayerControls.Player.Interact.performed += _ => OnInteractInput();
             
             // Add click handler for desktop pickup (but not on mobile)
-            if (!_uiManager.IsMobilePlatform)
+            if (!_gameManager.IsMobilePlatform)
             {
                 _inputManager.PlayerControls.Player.Attack.performed += _ => OnPickupInput();
             }
@@ -134,7 +134,7 @@ namespace Managers
 
             // Build hint text based on capabilities
             string hint = "";
-            if (_uiManager.IsMobilePlatform)
+            if (_gameManager.IsMobilePlatform)
             {
                 // Mobile hints
                 List<string> hints = new List<string>();
@@ -166,7 +166,7 @@ namespace Managers
             _uiManager.SetHint(hint);
             
             // Show appropriate buttons on mobile
-            if (_uiManager.IsMobilePlatform)
+            if (_gameManager.IsMobilePlatform)
             {
                 bool showInteract = isInteractable && _currentTargetInteractable.CanInteract(gameObject);
                 bool showPickup = isMoveable;
@@ -219,7 +219,7 @@ namespace Managers
             if (_inputManager != null)
             {
                 _inputManager.PlayerControls.Player.Interact.performed -= _ => OnInteractInput();
-                if (!_uiManager.IsMobilePlatform)
+                if (!_gameManager.IsMobilePlatform)
                 {
                     _inputManager.PlayerControls.Player.Attack.performed -= _ => OnPickupInput();
                 }

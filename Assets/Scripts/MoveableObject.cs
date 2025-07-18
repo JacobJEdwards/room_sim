@@ -59,7 +59,7 @@ public class MoveableObject : MonoBehaviour
         var ray = _mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         _targetPosition = ray.GetPoint(_heldDistance);
 
-        if (!UIManager.IsMobilePlatform)
+        if (!_gameManager.IsMobilePlatform)
         {
             HandleDesktopInput();
         }

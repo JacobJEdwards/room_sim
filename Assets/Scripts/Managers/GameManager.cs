@@ -1,9 +1,9 @@
 using System;
+using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
-using Application = UnityEngine.Application;
 
 namespace Managers
 {
@@ -22,12 +22,14 @@ namespace Managers
         private PlayerMovement _playerMovement;
         private PlayerController _playerController;
         [SerializeField] private RoomManager roomManager;
-        
+
         private UIManager _uiManager;
         private InputManager _inputManager;
         private InteractionManager _interactionManager;
 
         public static GameManager Instance { get; private set; }
+
+        public bool IsMobilePlatform { get; private set; }
 
         public ControlMode CurrentMode => currentMode;
         public Room CurrentRoom => roomManager.CurrentRoom;
@@ -35,6 +37,11 @@ namespace Managers
 
         [FormerlySerializedAs("_mouseSensitivitySlider")]
         [SerializeField] private Slider mouseSensitivitySlider;
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+        [DllImport("__Internal")]
+        private static extern bool IsMobile();
+#endif
 
         private void Awake()
         {
@@ -46,7 +53,14 @@ namespace Managers
             else
             {
                 Destroy(gameObject);
+                return;
             }
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+            IsMobilePlatform = IsMobile();
+#else
+            IsMobilePlatform = Application.isMobilePlatform;
+#endif
         }
 
         private void Start()
@@ -54,13 +68,12 @@ namespace Managers
             _uiManager = UIManager.Instance;
             _inputManager = InputManager.Instance;
             _interactionManager = FindFirstObjectByType<InteractionManager>();
-            
+
             _playerMovement = player.GetComponent<PlayerMovement>();
             _playerController = player.GetComponent<PlayerController>();
-            
+
             if (!_playerMovement || !_playerController)
             {
-                Debug.LogError("Player is missing PlayerMovement or PlayerController script!", this);
                 enabled = false;
                 return;
             }
@@ -69,7 +82,6 @@ namespace Managers
             _inputManager.PlayerControls.UI.Cancel.performed += OnEscapePressed;
             roomManager.DisableAllRooms();
             roomManager.MovePlayerToRoom(0);
-            
         }
 
         private void OnEscapePressed(InputAction.CallbackContext context)
@@ -87,12 +99,12 @@ namespace Managers
                     break;
             }
         }
-        
+
         private void EnableObjectHoldingMode()
         {
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
-            
+
             if (_uiManager)
             {
                 _uiManager.SetHoldingUI(true);
@@ -110,27 +122,33 @@ namespace Managers
         {
             if (CurrentHeldObject != null) CurrentHeldObject.Drop();
         }
+
         public void RotateHeldObject(float direction)
         {
             if (CurrentHeldObject != null) CurrentHeldObject.ApplyRotationStep(direction);
         }
+
         public void NudgeHeldObjectDistance(float direction)
         {
             if (CurrentHeldObject) CurrentHeldObject.AdjustDistanceStep(direction);
         }
+
         public void NudgeHeldObjectHorizontal(float direction)
         {
             if (CurrentHeldObject) CurrentHeldObject.ApplyHorizontalMovementStep(direction);
         }
+
         public void SetMouseSensitivity(float sensitivity)
         {
             PlayerPrefs.SetFloat("MouseSensitivity", sensitivity);
             if (_playerMovement) _playerMovement.SetMouseSensitivity(sensitivity);
         }
+
         private void OnDestroy()
         {
             if (_inputManager) _inputManager.PlayerControls.UI.Cancel.performed -= OnEscapePressed;
         }
+
         public void SetMode(ControlMode mode)
         {
             currentMode = mode;
@@ -145,6 +163,7 @@ namespace Managers
                     throw new ArgumentOutOfRangeException(nameof(mode), mode, null);
             }
         }
+
         private void EnableCameraMode()
         {
             Cursor.lockState = CursorLockMode.Locked;
@@ -158,6 +177,7 @@ namespace Managers
             if (_uiManager) _uiManager.SetHoldingUI(false);
             _inputManager.PlayerControls.Player.Enable();
         }
+
         private void EnableMenuMode()
         {
             Cursor.lockState = CursorLockMode.None;
@@ -166,6 +186,7 @@ namespace Managers
             if (_interactionManager) _interactionManager.enabled = false;
             _inputManager.PlayerControls.Player.Enable();
         }
+
         private void EnablePlacementMode()
         {
             Cursor.lockState = CursorLockMode.Locked;
@@ -174,6 +195,7 @@ namespace Managers
             if (_interactionManager) _interactionManager.enabled = false;
             _inputManager.PlayerControls.Player.Enable();
         }
+
         public void ResetCurrentRoom() => roomManager.ResetCurrentRoom();
     }
 }

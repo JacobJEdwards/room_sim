@@ -1,19 +1,16 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
-using DG.Tweening;
 
 namespace Managers
 {
-    using Application = UnityEngine.Device.Application;
-
     public class UIManager : MonoBehaviour
     {
-        public static UIManager Instance { get; private set; } = null!;
+        public static UIManager Instance { get; private set; }
 
         [Header("Canvas Management")]
         [SerializeField] private GameObject desktopCanvas;
@@ -57,7 +54,6 @@ namespace Managers
         private GameManager _gameManager;
         private InteractionManager _interactionManager;
         private readonly Dictionary<GameObject, CanvasGroup> _panelCanvasGroups = new();
-        private bool _isMobilePlatform;
 
         private GameObject _activeRoomPanel;
         private GameObject _activeControlsPanel;
@@ -82,54 +78,29 @@ namespace Managers
                 return;
             }
 
-            // Improved mobile detection for WebGL builds
-            _isMobilePlatform = DetectMobilePlatform();
             SetupPlatformSpecificUI();
             PreparePanels();
             InitializePanels();
-        }
-
-        private bool DetectMobilePlatform()
-        {
-            // First check Unity's built-in detection
-            if (Application.isMobilePlatform)
-                return true;
-
-            // For WebGL builds, check if touch is supported
-            #if UNITY_WEBGL && !UNITY_EDITOR
-                // Check for touch support which indicates mobile browser
-                if (Input.touchSupported)
-                    return true;
-                
-                // Additional check using SystemInfo
-                if (SystemInfo.deviceType == DeviceType.Handheld)
-                    return true;
-            #endif
-
-            return false;
         }
 
         private void Start()
         {
             _gameManager = GameManager.Instance;
             _interactionManager = FindFirstObjectByType<InteractionManager>();
-            
-            // Connect mobile interaction buttons if on mobile platform
-            if (_isMobilePlatform)
+
+            if (_gameManager.IsMobilePlatform)
             {
                 ConnectMobileButtons();
             }
         }
-        
+
         private void ConnectMobileButtons()
         {
             if (_interactionManager == null)
             {
-                Debug.LogError("InteractionManager not found in scene!");
                 return;
             }
-            
-            // Connect interact button
+
             if (mobileInteractButton != null)
             {
                 Button interactBtn = mobileInteractButton.GetComponent<Button>();
@@ -139,8 +110,7 @@ namespace Managers
                     interactBtn.onClick.AddListener(() => _interactionManager.OnMobileInteractPressed());
                 }
             }
-            
-            // Connect pickup button
+
             if (mobilePickupButton != null)
             {
                 Button pickupBtn = mobilePickupButton.GetComponent<Button>();
@@ -151,10 +121,10 @@ namespace Managers
                 }
             }
         }
-        
+
         private void Update()
         {
-            if (_isMobilePlatform) return;
+            if (GameManager.Instance.IsMobilePlatform) return;
             if (Keyboard.current == null) return;
 
             if (Keyboard.current.rKey.wasPressedThisFrame)
@@ -170,7 +140,7 @@ namespace Managers
 
         private void SetupPlatformSpecificUI()
         {
-            if (_isMobilePlatform)
+            if (GameManager.Instance.IsMobilePlatform)
             {
                 if (mobileCanvas) mobileCanvas.SetActive(true);
                 if (desktopCanvas) desktopCanvas.SetActive(false);
@@ -305,12 +275,11 @@ namespace Managers
 
         public void ShowInteractionButtons(bool showInteract, bool showPickup)
         {
-            if (!IsMobilePlatform) return;
+            if (!GameManager.Instance.IsMobilePlatform) return;
             if (mobileInteractButton) mobileInteractButton.SetActive(showInteract);
-            if (mobilePickupButton) 
+            if (mobilePickupButton)
             {
                 mobilePickupButton.SetActive(showPickup);
-                // Reset button text to "Pickup" when showing for a new object
                 if (showPickup)
                 {
                     var buttonText = mobilePickupButton.GetComponentInChildren<TMP_Text>();
@@ -322,18 +291,16 @@ namespace Managers
 
         public void SetHoldingUI(bool isHolding)
         {
-            if (_isMobilePlatform)
+            if (GameManager.Instance.IsMobilePlatform)
             {
                 if (mobileHoldingControlsPanel) mobileHoldingControlsPanel.SetActive(isHolding);
                 if (mobileInteractButton) mobileInteractButton.SetActive(!isHolding);
                 if (leftThumbstick) leftThumbstick.SetActive(!isHolding);
                 if (rightThumbstick) rightThumbstick.SetActive(!isHolding);
-                
-                // When holding an object, the pickup button becomes a drop button
+
                 if (isHolding && mobilePickupButton != null)
                 {
                     mobilePickupButton.SetActive(true);
-                    // Update the button text/image to show "Drop" if needed
                     var buttonText = mobilePickupButton.GetComponentInChildren<TMP_Text>();
                     if (buttonText != null)
                         buttonText.text = "Drop";
@@ -365,12 +332,10 @@ namespace Managers
         }
 
         public bool IsAnyPanelOpen() => _panelCanvasGroups.Values.Any(cg => cg.alpha > 0);
-        public bool IsMobilePlatform => _isMobilePlatform;
         
         private void OnDestroy()
         {
-            // Clean up button listeners on mobile
-            if (_isMobilePlatform)
+            if (GameManager.Instance.IsMobilePlatform)
             {
                 if (mobileInteractButton != null)
                 {
@@ -378,7 +343,7 @@ namespace Managers
                     if (interactBtn != null)
                         interactBtn.onClick.RemoveAllListeners();
                 }
-                
+
                 if (mobilePickupButton != null)
                 {
                     Button pickupBtn = mobilePickupButton.GetComponent<Button>();

@@ -9,6 +9,7 @@ namespace Managers
     public class RoomManager : MonoBehaviour
     {
         private UIManager _uiManager = null!;
+        private GameManager _gameManager = null!;
         [Header("Player Settings")]
         [SerializeField]
         [Tooltip("The player GameObject that will be moved.")]
@@ -37,6 +38,7 @@ namespace Managers
         private void Start()
         {
             _uiManager = UIManager.Instance;
+            _gameManager = GameManager.Instance;
 
             if (player)
             {
@@ -107,8 +109,7 @@ namespace Managers
 
                 if (_uiManager) _uiManager.CloseAllPanels();
 
-                // --- Platform-dependent UI update ---
-                if (_uiManager.IsMobilePlatform)
+                if (_gameManager.IsMobilePlatform)
                 {
                     if (roomNameTextMobile)
                     {
