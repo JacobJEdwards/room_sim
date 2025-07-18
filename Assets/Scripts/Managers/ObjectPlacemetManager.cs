@@ -1,6 +1,8 @@
+#nullable enable
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections.Generic;
+
 
 namespace Managers
 {
@@ -70,14 +72,16 @@ namespace Managers
                 return;
             }
 
+            var curRoom = GameManager.CurrentRoom;
+
             _uiManager.CloseAllPanels();
             
-            GameObject prefabToPlace = placeablePrefabs[index];
+            var prefabToPlace = placeablePrefabs[index];
             
-            // --- This is the corrected spawn logic ---
-            Vector3 spawnPos = _mainCamera.transform.position + (_mainCamera.transform.forward * 1.5f);
+            var spawnPos = _mainCamera.transform.position + (_mainCamera.transform.forward * 1.5f);
             
-            GameObject newObject = Instantiate(prefabToPlace, spawnPos, Quaternion.identity);
+            var newObject = Instantiate(prefabToPlace, spawnPos, Quaternion.identity, curRoom.transform);
+            curRoom.AddPlacedObject(newObject);
 
             if (newObject.TryGetComponent<MoveableObject>(out var moveable))
             {

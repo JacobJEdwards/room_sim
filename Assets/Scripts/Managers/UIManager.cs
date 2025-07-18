@@ -57,7 +57,7 @@ namespace Managers
         private GameManager _gameManager;
         private InteractionManager _interactionManager;
         private readonly Dictionary<GameObject, CanvasGroup> _panelCanvasGroups = new();
-        private bool _isMobilePlatform;
+        private bool _isMobilePlatform => Application.isMobilePlatform;
 
         private GameObject _activeRoomPanel;
         private GameObject _activeControlsPanel;
@@ -83,7 +83,7 @@ namespace Managers
             }
 
             // Improved mobile detection for WebGL builds
-            _isMobilePlatform = DetectMobilePlatform();
+            // _isMobilePlatform = DetectMobilePlatform();
             SetupPlatformSpecificUI();
             PreparePanels();
             InitializePanels();
@@ -95,16 +95,16 @@ namespace Managers
             if (Application.isMobilePlatform)
                 return true;
 
-            // For WebGL builds, check if touch is supported
-            #if UNITY_WEBGL && !UNITY_EDITOR
-                // Check for touch support which indicates mobile browser
-                if (Input.touchSupported)
-                    return true;
-                
-                // Additional check using SystemInfo
-                if (SystemInfo.deviceType == DeviceType.Handheld)
-                    return true;
-            #endif
+            // // For WebGL builds, check if touch is supported
+            // #if UNITY_WEBGL && !UNITY_EDITOR
+            //     // Check for touch support which indicates mobile browser
+            //     if (Input.touchSupported)
+            //         return true;
+            //
+            //     // Additional check using SystemInfo
+            //     if (SystemInfo.deviceType == DeviceType.Handheld)
+            //         return true;
+            // #endif
 
             return false;
         }
@@ -260,6 +260,7 @@ namespace Managers
                 case GameManager.ControlMode.Camera: modeName = "Camera Mode"; modeColor = cameraColor; break;
                 case GameManager.ControlMode.Menu: modeName = "Menu Mode"; modeColor = menuColor; break;
                 case GameManager.ControlMode.Placement: modeName = "Placement Mode"; modeColor = placementColor; break;
+                case GameManager.ControlMode.ObjectHolding:
                 default:
                     _activeModeIndicatorPanel.SetActive(false);
                     return;
@@ -314,7 +315,7 @@ namespace Managers
                 if (showPickup)
                 {
                     var buttonText = mobilePickupButton.GetComponentInChildren<TMP_Text>();
-                    if (buttonText != null)
+                    if (buttonText)
                         buttonText.text = "Pickup";
                 }
             }
@@ -330,12 +331,12 @@ namespace Managers
                 if (rightThumbstick) rightThumbstick.SetActive(!isHolding);
                 
                 // When holding an object, the pickup button becomes a drop button
-                if (isHolding && mobilePickupButton != null)
+                if (isHolding && mobilePickupButton)
                 {
                     mobilePickupButton.SetActive(true);
                     // Update the button text/image to show "Drop" if needed
                     var buttonText = mobilePickupButton.GetComponentInChildren<TMP_Text>();
-                    if (buttonText != null)
+                    if (buttonText)
                         buttonText.text = "Drop";
                 }
             }

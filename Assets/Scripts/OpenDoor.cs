@@ -11,6 +11,8 @@ public class OpenDoor : MonoBehaviour, IInteractable
 
     private AudioManager _audioManager;
 
+    private Tween _tween;
+
     private void Start()
     {
         _audioManager = AudioManager.Instance;
@@ -37,15 +39,25 @@ public class OpenDoor : MonoBehaviour, IInteractable
 
     private void Open()
     {
+        if (_tween != null && _tween.IsActive() && _tween.IsPlaying())
+        {
+            return;
+        }
+
         _audioManager.PlaySound(audioSource, openSound);
-        transform.DOLocalRotate(new Vector3(0, 270f, 0), 1f);
+        _tween = transform.DOLocalRotate(new Vector3(0, 270f, 0), 1f);
         open = true;
     }
 
     private void Close()
     {
+        if (_tween != null && _tween.IsActive() && _tween.IsPlaying())
+        {
+            return;
+        }
+
         _audioManager.PlaySound(audioSource, closeSound);
-        transform.DOLocalRotate(new Vector3(0, 0f, 0), 1f);
+        _tween = transform.DOLocalRotate(new Vector3(0, 0f, 0), 1f);
         open = false;
     }
 

@@ -1,9 +1,10 @@
+using Interfaces;
 using Managers;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(Collider))]
-public class MoveableObject : MonoBehaviour
+public class MoveableObject : MonoBehaviour, IResetable
 {
     [Header("Movement Settings")]
     [SerializeField] private float moveSmoothTime = 0.05f;

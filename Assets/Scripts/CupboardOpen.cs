@@ -15,6 +15,9 @@ public class CupboardOpen : MonoBehaviour, IInteractable
 
     private bool _open;
 
+    private Tween _tweenLeft;
+    private Tween _tweenRight;
+
     private AudioManager _audioManager;
 
     private void Start()
@@ -37,22 +40,28 @@ public class CupboardOpen : MonoBehaviour, IInteractable
 
     private void Open()
     {
+        if (_tweenLeft != null && _tweenLeft.IsActive() && _tweenLeft.IsPlaying())
+        {
+            return;
+        }
+
         _audioManager.PlaySound(audioSource, openSound);
 
-        doorL.transform.DOLocalRotate(new Vector3(0, 90f, 0), 1f);
-        doorR.transform.DOLocalRotate(new Vector3(0, -90f, 0), 1f);
+        _tweenLeft = doorL.transform.DOLocalRotate(new Vector3(0, 90f, 0), 1f);
+        _tweenRight = doorR.transform.DOLocalRotate(new Vector3(0, -90f, 0), 1f);
         _open = true;
     }
 
     private void Close()
     {
-        if (audioSource && closeSound)
+        if (_tweenLeft != null && _tweenLeft.IsActive() && _tweenLeft.IsPlaying())
         {
-            audioSource.PlayOneShot(closeSound);
+            return;
         }
 
-        doorL.transform.DOLocalRotate(new Vector3(0, 0f, 0), 1f);
-        doorR.transform.DOLocalRotate(new Vector3(0, 0f, 0), 1f);
+        _audioManager.PlaySound(audioSource, closeSound);
+        _tweenLeft = doorL.transform.DOLocalRotate(new Vector3(0, 0f, 0), 1f);
+        _tweenRight = doorR.transform.DOLocalRotate(new Vector3(0, 0f, 0), 1f);
         _open = false;
     }
 
