@@ -3,10 +3,10 @@
 using System.Collections.Generic;
 using Interfaces;
 using UnityEngine;
+using Application = UnityEngine.Device.Application;
 
 namespace Managers
 {
-    using Application = UnityEngine.Device.Application;
 
     public class InteractionManager : MonoBehaviour
     {
@@ -27,7 +27,7 @@ namespace Managers
         private readonly List<Material> _highlightedMaterials = new();
         [SerializeField] private float highlightIntensity = 1.5f;
 
-        private float _timeout = 0.5f;
+        private const float Timeout = 0.5f;
         private float _lastInteractionTime;
 
         private void Awake()
@@ -80,7 +80,7 @@ namespace Managers
             }
             else
             {
-                if (_currentTargetObject != null)
+                if (_currentTargetObject)
                 {
                     ClearCurrentTarget();
                 }
@@ -90,7 +90,7 @@ namespace Managers
         public void OnInteractInput()
         {
 
-            if (Time.time - _lastInteractionTime < _timeout)
+            if (Time.time - _lastInteractionTime < Timeout)
             {
                 return;
             }
@@ -105,14 +105,13 @@ namespace Managers
         
         public void OnPickupInput()
         {
-            if (Time.time - _lastInteractionTime < _timeout)
+            if (Time.time - _lastInteractionTime < Timeout)
             {
                 return;
             }
 
             _lastInteractionTime = Time.time;
 
-            // Click or Pickup button - for picking up/dropping objects
             if (_gameManager.CurrentHeldObject)
             {
                 _gameManager.CurrentHeldObject.Drop();
@@ -125,7 +124,6 @@ namespace Managers
             }
         }
         
-        // Mobile-specific methods to be called by UI buttons
         public void OnMobileInteractPressed()
         {
             OnInteractInput();

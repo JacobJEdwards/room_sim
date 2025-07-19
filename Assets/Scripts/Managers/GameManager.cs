@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
-using Application = UnityEngine.Application;
+using Application = UnityEngine.Device.Application;
 
 namespace Managers
 {
@@ -30,7 +30,7 @@ namespace Managers
 
         public static GameManager Instance { get; private set; }
 
-        public bool IsMobilePlatform { get; private set; }
+        public bool IsMobilePlatform => Application.isMobilePlatform;
 
         public ControlMode CurrentMode => currentMode;
         public Room CurrentRoom => roomManager.CurrentRoom;
@@ -57,11 +57,11 @@ namespace Managers
                 return;
             }
 
-#if UNITY_WEBGL && !UNITY_EDITOR
-            IsMobilePlatform = IsMobile();
-#else
-            IsMobilePlatform = Application.isMobilePlatform;
-#endif
+// #if UNITY_WEBGL && !UNITY_EDITOR
+//             IsMobilePlatform = IsMobile();
+// #else
+            // IsMobilePlatform = Application.isMobilePlatform;
+// #endif
         }
 
         private void Start()

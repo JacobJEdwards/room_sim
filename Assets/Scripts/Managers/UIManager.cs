@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
@@ -5,6 +6,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using Application = UnityEngine.Device.Application;
 
 namespace Managers
 {
@@ -95,35 +97,35 @@ namespace Managers
 
         private void ConnectMobileButtons()
         {
-            if (_interactionManager == null)
-            {
-                return;
-            }
-
-            if (mobileInteractButton != null)
-            {
-                Button interactBtn = mobileInteractButton.GetComponent<Button>();
-                if (interactBtn != null)
-                {
-                    interactBtn.onClick.RemoveAllListeners();
-                    interactBtn.onClick.AddListener(() => _interactionManager.OnMobileInteractPressed());
-                }
-            }
-
-            if (mobilePickupButton != null)
-            {
-                Button pickupBtn = mobilePickupButton.GetComponent<Button>();
-                if (pickupBtn != null)
-                {
-                    pickupBtn.onClick.RemoveAllListeners();
-                    pickupBtn.onClick.AddListener(() => _interactionManager.OnMobilePickupPressed());
-                }
-            }
+            // if (_interactionManager == null)
+            // {
+            //     return;
+            // }
+            //
+            // if (mobileInteractButton != null)
+            // {
+            //     Button interactBtn = mobileInteractButton.GetComponent<Button>();
+            //     if (interactBtn != null)
+            //     {
+            //         interactBtn.onClick.RemoveAllListeners();
+            //         interactBtn.onClick.AddListener(() => _interactionManager.OnMobileInteractPressed());
+            //     }
+            // }
+            //
+            // if (mobilePickupButton != null)
+            // {
+            //     Button pickupBtn = mobilePickupButton.GetComponent<Button>();
+            //     if (pickupBtn != null)
+            //     {
+            //         pickupBtn.onClick.RemoveAllListeners();
+            //         pickupBtn.onClick.AddListener(() => _interactionManager.OnMobilePickupPressed());
+            //     }
+            // }
         }
 
         private void Update()
         {
-            if (GameManager.Instance.IsMobilePlatform) return;
+            if (Application.isMobilePlatform) return;
             if (Keyboard.current == null) return;
 
             if (Keyboard.current.rKey.wasPressedThisFrame)
@@ -139,10 +141,11 @@ namespace Managers
 
         private void SetupPlatformSpecificUI()
         {
-            if (GameManager.Instance.IsMobilePlatform)
+            if (Application.isMobilePlatform)
             {
                 if (mobileCanvas) mobileCanvas.SetActive(true);
                 if (desktopCanvas) desktopCanvas.SetActive(false);
+
                 _activeRoomPanel = mobileRoomPanel;
                 _activeControlsPanel = mobileControlsPanel;
                 _activePlacementPanel = mobilePlacementPanel;
@@ -157,6 +160,7 @@ namespace Managers
             {
                 if (desktopCanvas) desktopCanvas.SetActive(true);
                 if (mobileCanvas) mobileCanvas.SetActive(false);
+
                 _activeRoomPanel = desktopRoomPanel;
                 _activeControlsPanel = desktopControlsPanel;
                 _activePlacementPanel = desktopPlacementPanel;
@@ -167,6 +171,7 @@ namespace Managers
                 _activeHintPanel = desktopHintPanel;
                 _activeHintText = desktopHintText;
             }
+
             if (_activeHintPanel) _activeHintPanel.SetActive(false);
         }
 
@@ -189,7 +194,8 @@ namespace Managers
         {
             foreach (var (panel, canvasGroup) in _panelCanvasGroups)
             {
-                canvasGroup.alpha = 0;
+                // canvasGroup.alpha = 0;
+                canvasGroup.gameObject.SetActive(false);
                 panel.SetActive(false);
             }
         }
@@ -203,7 +209,7 @@ namespace Managers
             }
         }
 
-        public void ClearHint() => SetHint("");
+        public void ClearHint() => SetHint(string.Empty);
 
         public void OnModeChanged(GameManager.ControlMode newMode)
         {
@@ -242,13 +248,13 @@ namespace Managers
         public void ToggleControlsPanel() => TogglePanel(_activeControlsPanel);
         public void ToggleObjectPlacementMenu() => TogglePanel(_activePlacementPanel);
 
-        private float _timeout = 0.5f;
-        private float _lastToggleTime = 0f;
+        private const float Timeout = 0.5f;
+        private float _lastToggleTime;
 
 
         private void TogglePanel(GameObject panelToToggle)
         {
-            if (GameManager.Instance.IsMobilePlatform && Time.time - _lastToggleTime < _timeout)
+            if (GameManager.Instance.IsMobilePlatform && Time.time - _lastToggleTime < Timeout)
             {
                 return;
             }
@@ -259,12 +265,12 @@ namespace Managers
             CloseAllPanels();
             if (!wasActive)
             {
-                if (_panelCanvasGroups.TryGetValue(panelToToggle, out var canvasGroup))
-                {
-                    panelToToggle.SetActive(true);
-                    canvasGroup.DOFade(1, panelAnimationDuration);
-                    _gameManager?.SetMode(GameManager.ControlMode.Menu);
-                }
+                if (!_panelCanvasGroups.TryGetValue(panelToToggle, out var canvasGroup)) return;
+
+                panelToToggle.SetActive(true);
+                canvasGroup.gameObject.SetActive(true);
+                canvasGroup.DOFade(1, panelAnimationDuration);
+                _gameManager?.SetMode(GameManager.ControlMode.Menu);
             }
             else
             {
@@ -278,88 +284,86 @@ namespace Managers
             {
                 if (panel && panel.activeSelf && panel != _activeHoldingPanel)
                 {
-                    canvasGroup.DOFade(0, panelAnimationDuration).OnComplete(() => panel.SetActive(false));
+                    canvasGroup.DOFade(0, panelAnimationDuration).OnComplete(() =>
+                    {
+                        panel.SetActive(false);
+                        canvasGroup.gameObject.SetActive(false);
+                    });
                 }
             }
         }
 
         public void ShowInteractionButtons(bool showInteract, bool showPickup)
         {
-            if (!GameManager.Instance.IsMobilePlatform) return;
-            if (mobileInteractButton) mobileInteractButton.SetActive(showInteract);
-            if (mobilePickupButton)
-            {
-                mobilePickupButton.SetActive(showPickup);
-                if (showPickup)
-                {
-                    var buttonText = mobilePickupButton.GetComponentInChildren<TMP_Text>();
-                    if (buttonText)
-                        buttonText.text = "Pickup";
-                }
-            }
+            if (!Application.isMobilePlatform) return;
+            mobileInteractButton.SetActive(showInteract);
+            mobilePickupButton.SetActive(showPickup);
+
+            var buttonText = mobilePickupButton.GetComponentInChildren<TMP_Text>();
+            if (buttonText)
+                buttonText.text = "Pickup";
         }
 
         public void SetHoldingUI(bool isHolding)
         {
-            if (GameManager.Instance.IsMobilePlatform)
+            if (Application.isMobilePlatform)
             {
                 if (mobileHoldingControlsPanel) mobileHoldingControlsPanel.SetActive(isHolding);
                 if (mobileInteractButton) mobileInteractButton.SetActive(!isHolding);
                 if (leftThumbstick) leftThumbstick.SetActive(!isHolding);
                 if (rightThumbstick) rightThumbstick.SetActive(!isHolding);
-                if (isHolding && mobilePickupButton)
-                {
-                    mobilePickupButton.SetActive(true);
-                    var buttonText = mobilePickupButton.GetComponentInChildren<TMP_Text>();
-                    if (buttonText)
-                        buttonText.text = "Drop";
-                }
+                if (!isHolding || !mobilePickupButton) return;
+
+                mobilePickupButton.SetActive(true);
+                var buttonText = mobilePickupButton.GetComponentInChildren<TMP_Text>();
+                if (buttonText)
+                    buttonText.text = "Drop";
             }
             else
             {
-                if (_activeHoldingPanel)
-                {
-                    _activeHoldingPanel.SetActive(isHolding);
-                    if (_panelCanvasGroups.TryGetValue(_activeHoldingPanel, out var canvasGroup))
-                    {
-                        canvasGroup.alpha = isHolding ? 1 : 0;
-                    }
-                }
+                if (!_activeHoldingPanel) return;
+
+                _activeHoldingPanel.SetActive(isHolding);
+                if (!_panelCanvasGroups.TryGetValue(_activeHoldingPanel, out var canvasGroup)) return;
+                canvasGroup.alpha = isHolding ? 1 : 0;
+                canvasGroup.gameObject.SetActive(isHolding);
             }
         }
 
         public void SetPlacementModeUI(bool isActive)
         {
-            if (_activeHoldingPanel)
-            {
-                _activeHoldingPanel.SetActive(isActive);
-                if (_panelCanvasGroups.TryGetValue(_activeHoldingPanel, out var canvasGroup))
-                {
-                    canvasGroup.alpha = isActive ? 1 : 0;
-                }
-            }
+            if (!_activeHoldingPanel) return;
+
+            _activeHoldingPanel.SetActive(isActive);
+            if (!_panelCanvasGroups.TryGetValue(_activeHoldingPanel, out var canvasGroup)) return;
+
+            canvasGroup.alpha = isActive ? 1 : 0;
+            canvasGroup.gameObject.SetActive(isActive);
         }
 
-        public bool IsAnyPanelOpen() => _panelCanvasGroups.Values.Any(cg => cg.alpha > 0);
-        
-        private void OnDestroy()
+        public bool IsAnyPanelOpen()
         {
-            if (GameManager.Instance.IsMobilePlatform)
-            {
-                if (mobileInteractButton != null)
-                {
-                    Button interactBtn = mobileInteractButton.GetComponent<Button>();
-                    if (interactBtn != null)
-                        interactBtn.onClick.RemoveAllListeners();
-                }
-
-                if (mobilePickupButton != null)
-                {
-                    Button pickupBtn = mobilePickupButton.GetComponent<Button>();
-                    if (pickupBtn != null)
-                        pickupBtn.onClick.RemoveAllListeners();
-                }
-            }
+            return _panelCanvasGroups.Values.Any(cg => cg.alpha > 0 && cg.gameObject.activeSelf);
         }
+
+        // private void OnDestroy()
+        // {
+        //     if (GameManager.Instance.IsMobilePlatform)
+        //     {
+        //         if (mobileInteractButton)
+        //         {
+        //             Button interactBtn = mobileInteractButton.GetComponent<Button>();
+        //             if (interactBtn)
+        //                 interactBtn.onClick.RemoveAllListeners();
+        //         }
+        //
+        //         if (mobilePickupButton != null)
+        //         {
+        //             Button pickupBtn = mobilePickupButton.GetComponent<Button>();
+        //             if (pickupBtn != null)
+        //                 pickupBtn.onClick.RemoveAllListeners();
+        //         }
+        //     }
+        // }
     }
 }

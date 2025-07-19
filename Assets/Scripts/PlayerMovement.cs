@@ -1,6 +1,7 @@
 using Managers;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Application = UnityEngine.Device.Application;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
