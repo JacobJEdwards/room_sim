@@ -9,7 +9,7 @@ public class Teleporter : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.TryGetComponent(out PlayerController? player))
+        if (other.gameObject.TryGetComponent(out PlayerController? _))
         {
             roomManager.MovePlayerToRoom(0);
         }

@@ -123,11 +123,13 @@ namespace Managers
                 {
                     _playerController.enabled = false;
                     player.transform.position = destination.TeleportDestination.position;
+                    player.transform.rotation = destination.TeleportDestination.rotation;
                     _playerController.enabled = true;
                 }
                 else
                 {
                     player.transform.position = destination.TeleportDestination.position;
+                    player.transform.rotation = destination.TeleportDestination.rotation;
                 }
 
                 if (_uiManager) _uiManager.CloseAllPanels();
