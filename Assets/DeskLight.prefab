@@ -104,6 +104,7 @@ MonoBehaviour:
   audioSource: {fileID: 3401374708088224615}
   pickupSound: {fileID: 8300000, guid: 02310fb043cb34f5e8f4b80674d5512d, type: 3}
   dropSound: {fileID: 8300000, guid: dd8b347a50ee04d69ba9bdd7d0ade1f3, type: 3}
+  name: 
 --- !u!82 &3401374708088224615
 AudioSource:
   m_ObjectHideFlags: 0

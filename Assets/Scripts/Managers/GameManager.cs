@@ -30,7 +30,7 @@ namespace Managers
 
         public static GameManager Instance { get; private set; }
 
-        public bool IsMobilePlatform => Application.isMobilePlatform;
+        public static bool IsMobilePlatform => Application.isMobilePlatform;
 
         public ControlMode CurrentMode => currentMode;
         public Room CurrentRoom => roomManager.CurrentRoom;
@@ -38,11 +38,6 @@ namespace Managers
 
         [FormerlySerializedAs("_mouseSensitivitySlider")]
         [SerializeField] private Slider mouseSensitivitySlider;
-
-#if UNITY_WEBGL && !UNITY_EDITOR
-        [DllImport("__Internal")]
-        private static extern bool IsMobile();
-#endif
 
         private void Awake()
         {
@@ -54,14 +49,7 @@ namespace Managers
             else
             {
                 Destroy(gameObject);
-                return;
             }
-
-// #if UNITY_WEBGL && !UNITY_EDITOR
-//             IsMobilePlatform = IsMobile();
-// #else
-            // IsMobilePlatform = Application.isMobilePlatform;
-// #endif
         }
 
         private void Start()
@@ -121,12 +109,12 @@ namespace Managers
 
         public void DropHeldObject()
         {
-            if (CurrentHeldObject != null) CurrentHeldObject.Drop();
+            if (CurrentHeldObject) CurrentHeldObject.Drop();
         }
 
         public void RotateHeldObject(float direction)
         {
-            if (CurrentHeldObject != null) CurrentHeldObject.ApplyRotationStep(direction);
+            if (CurrentHeldObject) CurrentHeldObject.ApplyRotationStep(direction);
         }
 
         public void NudgeHeldObjectDistance(float direction)

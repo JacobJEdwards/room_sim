@@ -132,7 +132,7 @@ namespace Managers
 
                 if (_uiManager) _uiManager.CloseAllPanels();
 
-                if (_gameManager.IsMobilePlatform)
+                if (GameManager.IsMobilePlatform)
                 {
                     if (roomNameTextMobile)
                     {

@@ -43,7 +43,7 @@ namespace Managers
             interactionLayer = LayerMask.GetMask("Interaction");
             
             _inputManager.PlayerControls.Player.Interact.performed += _ => OnInteractInput();
-            if (!_gameManager.IsMobilePlatform)
+            if (!GameManager.IsMobilePlatform)
             {
                 _inputManager.PlayerControls.Player.Attack.performed += _ => OnPickupInput();
             }
@@ -123,7 +123,7 @@ namespace Managers
                 _currentTargetMoveable.Pickup();
             }
         }
-        
+
         public void OnMobileInteractPressed()
         {
             OnInteractInput();
@@ -146,7 +146,7 @@ namespace Managers
             bool isInteractable = _currentTargetInteractable != null;
             bool isMoveable = _currentTargetMoveable;
             string hint = "";
-            if (_gameManager.IsMobilePlatform)
+            if (GameManager.IsMobilePlatform)
             {
                 // Mobile hints
                 var hints = new List<string>();
@@ -178,7 +178,7 @@ namespace Managers
             _uiManager.SetHint(hint);
             
             // Show appropriate buttons on mobile
-            if (_gameManager.IsMobilePlatform)
+            if (GameManager.IsMobilePlatform)
             {
                 var showInteract = isInteractable && _currentTargetInteractable != null && _currentTargetInteractable.CanInteract(gameObject);
                 _uiManager.ShowInteractionButtons(showInteract, isMoveable);
@@ -230,7 +230,7 @@ namespace Managers
             if (_inputManager)
             {
                 _inputManager.PlayerControls.Player.Interact.performed -= _ => OnInteractInput();
-                if (!_gameManager.IsMobilePlatform)
+                if (!GameManager.IsMobilePlatform)
                 {
                     _inputManager.PlayerControls.Player.Attack.performed -= _ => OnPickupInput();
                 }

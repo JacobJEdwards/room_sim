@@ -60,7 +60,7 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         var ray = _mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         _targetPosition = ray.GetPoint(_heldDistance);
 
-        if (!_gameManager.IsMobilePlatform)
+        if (!GameManager.IsMobilePlatform)
         {
             HandleDesktopInput();
         }
@@ -70,9 +70,9 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
     {
         if (!_isHeld) return;
 
-        Vector3 newPosition = Vector3.SmoothDamp(_rigidbody.position, _targetPosition, ref _velocity, moveSmoothTime);
-        Vector3 direction = newPosition - _rigidbody.position;
-        float distance = direction.magnitude;
+        var newPosition = Vector3.SmoothDamp(_rigidbody.position, _targetPosition, ref _velocity, moveSmoothTime);
+        var direction = newPosition - _rigidbody.position;
+        var distance = direction.magnitude;
 
         if (!Physics.BoxCast(_rigidbody.position, _collider.bounds.extents, direction.normalized, out RaycastHit hit, transform.rotation, distance))
         {

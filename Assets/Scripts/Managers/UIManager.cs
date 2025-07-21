@@ -89,7 +89,7 @@ namespace Managers
             _gameManager = GameManager.Instance;
             _interactionManager = FindFirstObjectByType<InteractionManager>();
 
-            if (_gameManager.IsMobilePlatform)
+            if (GameManager.IsMobilePlatform)
             {
                 ConnectMobileButtons();
             }
@@ -254,7 +254,7 @@ namespace Managers
 
         private void TogglePanel(GameObject panelToToggle)
         {
-            if (GameManager.Instance.IsMobilePlatform && Time.time - _lastToggleTime < Timeout)
+            if (GameManager.IsMobilePlatform && Time.time - _lastToggleTime < Timeout)
             {
                 return;
             }
@@ -308,10 +308,10 @@ namespace Managers
         {
             if (Application.isMobilePlatform)
             {
-                if (mobileHoldingControlsPanel) mobileHoldingControlsPanel.SetActive(isHolding);
-                if (mobileInteractButton) mobileInteractButton.SetActive(!isHolding);
-                if (leftThumbstick) leftThumbstick.SetActive(!isHolding);
-                if (rightThumbstick) rightThumbstick.SetActive(!isHolding);
+                mobileHoldingControlsPanel.SetActive(isHolding);
+                mobileInteractButton.SetActive(!isHolding);
+                leftThumbstick.SetActive(!isHolding);
+                rightThumbstick.SetActive(!isHolding);
                 if (!isHolding || !mobilePickupButton) return;
 
                 mobilePickupButton.SetActive(true);
