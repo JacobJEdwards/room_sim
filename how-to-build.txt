@@ -1,0 +1,27 @@
+step by step instructions how to build and deploy
+
+Clone and have write access to the repo at https://bitbucket.org/ueawebteam/accommosim
+To be able to push / pull you may need to give Bitbucket and ssh key - can google how to do this.
+
+1. Build for web
+2. In local accommosim, create a new branch in the format: feature/YYYY-MM-DD, for example:
+
+git checkout -b feature/2025-07-21
+
+3. Delete all contents of this branch (rm ./*)
+4. mv across all the build files from the unity repo (mv ../room_sim/www/* .)
+5. commit and push
+
+Now go to the bitbucket repo
+
+6. Click create -> Pull Request
+7. start, approve, and merge a pull request from your new branch to release/test.
+	this will update the build at https://test-accommosim.uea.co
+
+8. after testing that, create a pull request from branch release/test to main.
+	this will update the build at https://accommosim.uea.co
+
+
+Thats all
+
+
