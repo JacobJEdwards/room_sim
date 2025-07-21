@@ -2,6 +2,9 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections.Generic;
+using Interfaces;
+using UnityEngine.Assertions;
+using Application = UnityEngine.Device.Application;
 
 
 namespace Managers
@@ -9,13 +12,13 @@ namespace Managers
     public class ObjectPlacementManager : MonoBehaviour
     {
         private static readonly int Color1 = Shader.PropertyToID("_Color");
-        public GameManager GameManager = null!;
+        public GameManager gameManager = null!;
         private UIManager _uiManager = null!;
 
         [Header("Placement Settings")]
         [SerializeField]
         [Tooltip("The list of prefabs that can be instantiated and placed.")]
-        private List<GameObject> placeablePrefabs = new ();
+        private List<GameObject> placeablePrefabs = new();
 
         [SerializeField] [Tooltip("The layer(s) the object can be placed upon.")]
         private LayerMask placementLayerMask;
@@ -37,6 +40,14 @@ namespace Managers
         private readonly List<Material> _cachedMaterials = new();
         private readonly List<Color> _originalColors = new();
 
+        [SerializeField]
+        private GameObject objectButtonPanelMobile = null!;
+        [SerializeField]
+        private GameObject objectButtonPanelDesktop = null!;
+
+        [SerializeField]
+        private PanelButton objectButtonPrefab = null!;
+
         private void Awake()
         {
             _mainCamera = Camera.main;
@@ -44,15 +55,33 @@ namespace Managers
 
         private void Start()
         {
-            GameManager = GameManager.Instance;
+            gameManager = GameManager.Instance;
             _inputManager = InputManager.Instance;
             _uiManager = UIManager.Instance;
 
-            if (!_inputManager || !_uiManager || !GameManager)
+            Assert.IsNotNull(gameManager);
+            Assert.IsNotNull(_inputManager);
+            Assert.IsNotNull(_uiManager);
+
+            InitialiseObjects();
+        }
+
+        private void InitialiseObjects()
+        {
+            var panel = Application.isMobilePlatform ? objectButtonPanelMobile : objectButtonPanelDesktop;
+            for (var i = 0; i < placeablePrefabs.Count; i++)
             {
-                Debug.LogError("ObjectPlacementManager requires GameManager, InputManager, and UIManager instances in the scene.", this);
-                enabled = false;
+                var btn = Instantiate(objectButtonPrefab, panel.transform);
+                Assert.IsNotNull(btn);
+
+                var prefab = placeablePrefabs[i];
+                Assert.IsNotNull(prefab);
+                btn.SetText(prefab.TryGetComponent<IHasName>(out var hasName) ? hasName.Name : $"Object {i + 1}");
+
+                var index = i;
+                btn.SetOnClickListener(() => SelectPrefabAndStartPlacing(index));
             }
+
         }
 
         private void Update()
@@ -66,19 +95,19 @@ namespace Managers
         
         public void SelectPrefabAndStartPlacing(int index)
         {
-            if (index < 0 || index >= placeablePrefabs.Count || placeablePrefabs[index] == null)
+            if (index < 0 || index >= placeablePrefabs.Count || !placeablePrefabs[index])
             {
                 Debug.LogWarning($"Invalid prefab index: {index}", this);
                 return;
             }
 
-            var curRoom = GameManager.CurrentRoom;
+            var curRoom = gameManager.CurrentRoom;
 
             _uiManager.CloseAllPanels();
             
             var prefabToPlace = placeablePrefabs[index];
             
-            var spawnPos = _mainCamera.transform.position + (_mainCamera.transform.forward * 1.5f);
+            var spawnPos = _mainCamera!.transform.position + (_mainCamera.transform.forward * 1.5f);
             
             var newObject = Instantiate(prefabToPlace, spawnPos, Quaternion.identity, curRoom.transform);
             curRoom.AddPlacedObject(newObject);
@@ -104,7 +133,7 @@ namespace Managers
                 col.enabled = false;
             }
             
-            GameManager.SetMode(GameManager.ControlMode.Placement);
+            gameManager.SetMode(GameManager.ControlMode.Placement);
             ApplyPlacementTint(_currentPlacingObject);
             _uiManager.SetHint("Click to place poster / Right-click to cancel");
         }
@@ -160,14 +189,14 @@ namespace Managers
                 col.enabled = true;
             }
             
-            GameManager.CurrentRoom.AddPlacedObject(_currentPlacingObject);
+            gameManager.CurrentRoom.AddPlacedObject(_currentPlacingObject);
             _uiManager.ClearHint();
             
             _currentPlacingObject = null;
             _isPlacingNonMoveable = false;
             _selectedPrefabIndex = -1;
             
-            GameManager.SetMode(GameManager.ControlMode.Camera);
+            gameManager.SetMode(GameManager.ControlMode.Camera);
         }
 
         private void CancelNonMoveablePlacement()
@@ -181,7 +210,7 @@ namespace Managers
             _isPlacingNonMoveable = false;
             _selectedPrefabIndex = -1;
             
-            GameManager.SetMode(GameManager.ControlMode.Camera);
+            gameManager.SetMode(GameManager.ControlMode.Camera);
         }
 
         private void ApplyPlacementTint(GameObject targetObject)

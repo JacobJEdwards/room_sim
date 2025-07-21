@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 // This script goes on the PARENT object, which should have a BoxCollider.
 [RequireComponent(typeof(Collider))]
-public class DrawablePostIt : MonoBehaviour, IInteractable
+public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
 {
     [Header("Component References")]
     [SerializeField]
@@ -30,6 +30,8 @@ public class DrawablePostIt : MonoBehaviour, IInteractable
     [SerializeField] private string defaultPromptDesktop = "Click to move, Press E to draw";
     [SerializeField] private string stopDrawingPromptDesktop = "Drawing... (Press E to stop)";
     [SerializeField] private string movingPromptDesktop = "Moving... (Click to place)";
+
+    public string Name => "Post-It";
 
 
     // --- Core Components ---

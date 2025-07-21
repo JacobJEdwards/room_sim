@@ -4,8 +4,10 @@ using UnityEngine;
 [RequireComponent(typeof(ImageUploader))]
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(Collider))]
-public class PlaceablePoster : MonoBehaviour, IInteractable
+public class PlaceablePoster : MonoBehaviour, IInteractable, IHasName
 {
+    public string Name => "Poster";
+
     [Header("Placement Settings")]
     [SerializeField] private float wallDetectionDistance = 0.1f;
     [SerializeField] private LayerMask wallLayerMask = -1; // All layers by default

@@ -96,16 +96,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 48f0c4bad6184cdc83ea2e563b26185c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rotationSpeed: 50
   moveSmoothTime: 0.005
-  skinWidth: 0.05
-  horizontalRotationAxis: {x: 0, y: 1, z: 0}
-  verticalRotationAxis: {x: 1, y: 0, z: 0}
-  pickupPrompt: Double Click to pick up
-  pickupPromptMobile: Tap to pick up
+  rotationSpeed: 50
+  moveStepAmount: 0.1
+  rotationStepAmount: 15
   audioSource: {fileID: 3700582714831012537}
   pickupSound: {fileID: 8300000, guid: 02310fb043cb34f5e8f4b80674d5512d, type: 3}
   dropSound: {fileID: 8300000, guid: dd8b347a50ee04d69ba9bdd7d0ade1f3, type: 3}
+  name: Book
 --- !u!82 &3700582714831012537
 AudioSource:
   m_ObjectHideFlags: 0

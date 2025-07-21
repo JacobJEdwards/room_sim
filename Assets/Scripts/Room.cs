@@ -3,7 +3,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using Interfaces;
 
-public class Room : MonoBehaviour
+public class Room : MonoBehaviour, IHasName
 {
     [Header("Room Settings")]
     [SerializeField]
@@ -15,8 +15,6 @@ public class Room : MonoBehaviour
     public Transform TeleportDestination => teleportDestination;
     private readonly List<IResetable> _objectPositions = new();
     private readonly List<GameObject> _placedObjects = new();
-
-    public string RoomName => roomName;
 
     private void Start()
     {
@@ -60,4 +58,6 @@ public class Room : MonoBehaviour
         }
         _placedObjects.Clear();
     }
+
+    public string Name => roomName;
 }

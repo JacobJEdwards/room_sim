@@ -4,7 +4,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(Collider))]
-public class MoveableObject : MonoBehaviour, IResetable
+public class MoveableObject : MonoBehaviour, IResetable, IHasName
 {
     [Header("Movement Settings")]
     [SerializeField] private float moveSmoothTime = 0.05f;
@@ -145,7 +145,7 @@ public class MoveableObject : MonoBehaviour, IResetable
         if (Input.GetKeyDown(KeyCode.Alpha2)) _scrollRotationAxis = Vector3.up;
         if (Input.GetKeyDown(KeyCode.Alpha3)) _scrollRotationAxis = Vector3.forward;
 
-        float scrollInput = Input.GetAxis("Mouse ScrollWheel");
+        var scrollInput = Input.GetAxis("Mouse ScrollWheel");
         if (Mathf.Abs(scrollInput) > 0.01f)
         {
             transform.Rotate(_scrollRotationAxis, scrollInput * rotationSpeed * 10f, Space.Self);
@@ -163,4 +163,8 @@ public class MoveableObject : MonoBehaviour, IResetable
     }
     
     public bool IsHeld => _isHeld;
+
+    [SerializeField] private new string name;
+
+    public string Name => name;
 }

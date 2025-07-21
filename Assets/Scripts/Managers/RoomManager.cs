@@ -3,6 +3,8 @@
 using UnityEngine;
 using System.Collections.Generic;
 using TMPro;
+using UnityEngine.Assertions;
+using Application = UnityEngine.Device.Application;
 
 namespace Managers
 {
@@ -30,8 +32,16 @@ namespace Managers
         [Tooltip("The TextMeshPro UI element to display the room name on Mobile.")]
         private TMP_Text roomNameTextMobile = null!;
 
+        [SerializeField]
+        private GameObject roomButtonPanelMobile = null!;
+        [SerializeField]
+        private GameObject roomButtonPanelDesktop = null!;
+
+        [SerializeField]
+        private PanelButton roomButtonPrefab = null!;
 
         private int _currentRoomIndex = -1;
+
 
         public Room CurrentRoom => roomObjects[_currentRoomIndex];
 
@@ -64,6 +74,22 @@ namespace Managers
 
             if(roomNameTextDesktop) roomNameTextDesktop.gameObject.SetActive(false);
             if(roomNameTextMobile) roomNameTextMobile.gameObject.SetActive(false);
+
+            InitialiseRooms();
+        }
+
+        private void InitialiseRooms()
+        {
+            var panel = Application.isMobilePlatform ? roomButtonPanelMobile : roomButtonPanelDesktop;
+            for (var i = 0; i < roomObjects.Count; i++)
+            {
+
+                var btn = Instantiate(roomButtonPrefab, panel.transform);
+                Assert.IsNotNull(btn);
+                btn.SetText(roomObjects[i].Name);
+                var index = i;
+                btn.SetOnClickListener(() => MovePlayerToRoom(index));
+            }
         }
 
         public void DisableAllRooms()
@@ -110,7 +136,7 @@ namespace Managers
                 {
                     if (roomNameTextMobile)
                     {
-                        roomNameTextMobile.text = destination.RoomName;
+                        roomNameTextMobile.text = destination.Name;
                         roomNameTextMobile.gameObject.SetActive(true);
                         if(roomNameTextDesktop) roomNameTextDesktop.gameObject.SetActive(false);
                     }
@@ -119,7 +145,7 @@ namespace Managers
                 {
                     if (roomNameTextDesktop)
                     {
-                        roomNameTextDesktop.text = destination.RoomName;
+                        roomNameTextDesktop.text = destination.Name;
                         roomNameTextDesktop.gameObject.SetActive(true);
                         if(roomNameTextMobile) roomNameTextMobile.gameObject.SetActive(false);
                     }
