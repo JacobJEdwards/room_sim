@@ -28,6 +28,7 @@ namespace Managers
         [SerializeField] private Image desktopModeIndicatorBackground;
         [SerializeField] private GameObject desktopHintPanel;
         [SerializeField] private TMP_Text desktopHintText;
+        [SerializeField] private GameObject desktopSettings;
 
         [Header("Mobile UI Elements")]
         [SerializeField] private GameObject mobileRoomPanel;
@@ -44,6 +45,7 @@ namespace Managers
         [SerializeField] private GameObject mobileInteractButton;
         [SerializeField] private GameObject mobilePickupButton;
         [SerializeField] private GameObject mobileHoldingControlsPanel;
+        [SerializeField] private GameObject mobileSettings;
 
         [Header("Mode Indicator Colors")]
         [SerializeField] private Color cameraColor = new(0.2f, 0.8f, 0.4f, 0.8f);
@@ -65,6 +67,7 @@ namespace Managers
         private Image _activeModeIndicatorBackground;
         private GameObject _activeHintPanel;
         private TMP_Text _activeHintText;
+        private GameObject _activeSettings;
 
         private void Awake()
         {
@@ -148,6 +151,7 @@ namespace Managers
 
                 _activeRoomPanel = mobileRoomPanel;
                 _activeControlsPanel = mobileControlsPanel;
+                _activeSettings = mobileSettings;
                 _activePlacementPanel = mobilePlacementPanel;
                 _activeHoldingPanel = mobileHoldingPanel;
                 _activeModeIndicatorPanel = mobileModeIndicatorPanel;
@@ -164,6 +168,7 @@ namespace Managers
                 _activeRoomPanel = desktopRoomPanel;
                 _activeControlsPanel = desktopControlsPanel;
                 _activePlacementPanel = desktopPlacementPanel;
+                _activeSettings = desktopSettings;
                 _activeHoldingPanel = desktopHoldingPanel;
                 _activeModeIndicatorPanel = desktopModeIndicatorPanel;
                 _activeModeText = desktopModeText;
@@ -179,6 +184,7 @@ namespace Managers
         {
             if (_activeRoomPanel) PreparePanelForFading(_activeRoomPanel);
             if (_activeControlsPanel) PreparePanelForFading(_activeControlsPanel);
+            if (_activeSettings) PreparePanelForFading(_activeSettings);
             if (_activePlacementPanel) PreparePanelForFading(_activePlacementPanel);
             if (_activeHoldingPanel) PreparePanelForFading(_activeHoldingPanel);
         }
@@ -246,6 +252,7 @@ namespace Managers
 
         public void ToggleRoomPanel() => TogglePanel(_activeRoomPanel);
         public void ToggleControlsPanel() => TogglePanel(_activeControlsPanel);
+        public void ToggleSettingsPanel() => TogglePanel(_activeSettings);
         public void ToggleObjectPlacementMenu() => TogglePanel(_activePlacementPanel);
 
         private const float Timeout = 0.5f;
@@ -254,12 +261,6 @@ namespace Managers
 
         private void TogglePanel(GameObject panelToToggle)
         {
-            if (GameManager.IsMobilePlatform && Time.time - _lastToggleTime < Timeout)
-            {
-                return;
-            }
-            _lastToggleTime = Time.time;
-
             if (!panelToToggle) return;
             var wasActive = panelToToggle.activeSelf;
             CloseAllPanels();

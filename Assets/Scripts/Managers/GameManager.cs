@@ -27,6 +27,7 @@ namespace Managers
         private UIManager _uiManager;
         private InputManager _inputManager;
         private InteractionManager _interactionManager;
+        private AudioManager _audioManager;
 
         public static GameManager Instance { get; private set; }
 
@@ -37,7 +38,10 @@ namespace Managers
         public MoveableObject CurrentHeldObject { get; set; }
 
         [FormerlySerializedAs("_mouseSensitivitySlider")]
-        [SerializeField] private Slider mouseSensitivitySlider;
+        [SerializeField] private Slider mouseSensitivitySliderDesktop;
+        [SerializeField] private Slider mouseSensitivitySliderMobile;
+        [SerializeField] private Slider volumeSliderDesktop;
+        [SerializeField] private Slider volumeSliderMobile;
 
         private void Awake()
         {
@@ -57,6 +61,7 @@ namespace Managers
             _uiManager = UIManager.Instance;
             _inputManager = InputManager.Instance;
             _interactionManager = FindFirstObjectByType<InteractionManager>();
+            _audioManager = AudioManager.Instance;
 
             _playerMovement = player.GetComponent<PlayerMovement>();
             _playerController = player.GetComponent<PlayerController>();
@@ -71,6 +76,40 @@ namespace Managers
             _inputManager.PlayerControls.UI.Cancel.performed += OnEscapePressed;
             roomManager.DisableAllRooms();
             roomManager.MovePlayerToRoom(0);
+
+            if (IsMobilePlatform)
+            {
+                if (mouseSensitivitySliderMobile) mouseSensitivitySliderMobile.onValueChanged.AddListener(SetMouseSensitivity);
+                if (volumeSliderMobile) volumeSliderMobile.onValueChanged.AddListener(SetVolume);
+            }
+            else
+            {
+                if (mouseSensitivitySliderDesktop) mouseSensitivitySliderDesktop.onValueChanged.AddListener(SetMouseSensitivity);
+                if (volumeSliderDesktop) volumeSliderDesktop.onValueChanged.AddListener(SetVolume);
+            }
+
+        }
+
+        public void PressEscape()
+        {
+            switch (currentMode)
+            {
+                case ControlMode.Menu:
+                {
+                    _uiManager.CloseAllPanels();
+                    SetMode(ControlMode.Camera);
+                    break;
+                }
+                case ControlMode.Camera:
+                case ControlMode.ObjectHolding:
+                case ControlMode.Placement:
+                default:
+                {
+                    _uiManager.ToggleControlsPanel();
+                    _uiManager.ToggleSettingsPanel();
+                    break;
+                }
+            }
         }
 
         private void OnEscapePressed(InputAction.CallbackContext context)
@@ -78,14 +117,20 @@ namespace Managers
             switch (currentMode)
             {
                 case ControlMode.Menu:
+                {
                     _uiManager.CloseAllPanels();
                     SetMode(ControlMode.Camera);
                     break;
+                }
                 case ControlMode.Camera:
                 case ControlMode.ObjectHolding:
+                case ControlMode.Placement:
                 default:
+                {
                     _uiManager.ToggleControlsPanel();
+                    _uiManager.ToggleSettingsPanel();
                     break;
+                }
             }
         }
 
@@ -125,6 +170,15 @@ namespace Managers
         public void NudgeHeldObjectHorizontal(float direction)
         {
             if (CurrentHeldObject) CurrentHeldObject.ApplyHorizontalMovementStep(direction);
+        }
+
+        public void SetVolume(float volume)
+        {
+            if (_audioManager) _audioManager.SetMusicVolume(volume);
+            if (_audioManager) _audioManager.SetSoundVolume(volume);
+
+            if (IsMobilePlatform && volumeSliderMobile) volumeSliderMobile.value = volume;
+            else if (volumeSliderDesktop) volumeSliderDesktop.value = volume;
         }
 
         public void SetMouseSensitivity(float sensitivity)
