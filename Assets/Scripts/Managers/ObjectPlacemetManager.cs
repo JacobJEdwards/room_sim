@@ -6,7 +6,6 @@ using Interfaces;
 using UnityEngine.Assertions;
 using Application = UnityEngine.Device.Application;
 
-
 namespace Managers
 {
     public class ObjectPlacementManager : MonoBehaviour
@@ -81,7 +80,6 @@ namespace Managers
                 var index = i;
                 btn.SetOnClickListener(() => SelectPrefabAndStartPlacing(index));
             }
-
         }
 
         private void Update()
@@ -93,8 +91,19 @@ namespace Managers
             HandlePlacementCancellationInput();
         }
         
+        private float _lastSpawnTime;
+        private const float SpawnCooldown = 0.5f;
+        
         public void SelectPrefabAndStartPlacing(int index)
         {
+            // Prevent duplicate spawning
+            if (Time.time - _lastSpawnTime < SpawnCooldown)
+            {
+                Debug.Log("Spawn cooldown active, ignoring duplicate spawn request");
+                return;
+            }
+            _lastSpawnTime = Time.time;
+            
             if (index < 0 || index >= placeablePrefabs.Count || !placeablePrefabs[index])
             {
                 Debug.LogWarning($"Invalid prefab index: {index}", this);
@@ -107,17 +116,40 @@ namespace Managers
             
             var prefabToPlace = placeablePrefabs[index];
             
-            var spawnPos = _mainCamera!.transform.position + (_mainCamera.transform.forward * 1.5f);
+            var spawnPos = _mainCamera!.transform.position + (_mainCamera.transform.forward * 2f);
             
             var newObject = Instantiate(prefabToPlace, spawnPos, Quaternion.identity, curRoom.transform);
+            Debug.Log($"Spawned object: {newObject.name} at {spawnPos}");
             curRoom.AddPlacedObject(newObject);
 
+            // Check for different component types and handle accordingly
             if (newObject.TryGetComponent<MoveableObject>(out var moveable))
             {
                 moveable.Pickup(isNewlySpawned: true);
             }
+            else if (newObject.TryGetComponent<DrawablePostIt>(out var postIt))
+            {
+                // Make sure we're not picking up child PostIts
+                var allPostIts = newObject.GetComponentsInChildren<DrawablePostIt>();
+                Debug.Log($"Found {allPostIts.Length} PostIt components in spawned object");
+                
+                // Only toggle movement on the root PostIt
+                postIt.ToggleMovement();
+                gameManager.SetMode(GameManager.ControlMode.Camera);
+            }
+            else if (newObject.TryGetComponent<PlaceablePoster>(out var poster))
+            {
+                // Make sure we're not picking up child Posters
+                var allPosters = newObject.GetComponentsInChildren<PlaceablePoster>();
+                Debug.Log($"Found {allPosters.Length} Poster components in spawned object");
+                
+                // Only toggle movement on the root Poster
+                poster.ToggleMovement();
+                gameManager.SetMode(GameManager.ControlMode.Camera);
+            }
             else
             {
+                // For other non-moveable objects, use the old placement system
                 _selectedPrefabIndex = index;
                 StartPlacingNonMoveable(newObject);
             }
@@ -135,7 +167,7 @@ namespace Managers
             
             gameManager.SetMode(GameManager.ControlMode.Placement);
             ApplyPlacementTint(_currentPlacingObject);
-            _uiManager.SetHint("Click to place poster / Right-click to cancel");
+            _uiManager.SetHint("Click to place / Right-click to cancel");
         }
 
         private void HandleNonMoveablePlacement()

@@ -1,3 +1,4 @@
+// Scripts/Managers/UIManager.cs
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -251,18 +252,61 @@ namespace Managers
         }
 
         public void ToggleRoomPanel() => TogglePanel(_activeRoomPanel);
-        public void ToggleControlsPanel() => TogglePanel(_activeControlsPanel);
-        public void ToggleSettingsPanel() => TogglePanel(_activeSettings);
         public void ToggleObjectPlacementMenu() => TogglePanel(_activePlacementPanel);
+        
+        public void ToggleSettingsAndControlsPanels()
+        {
+            if (_gameManager.CurrentHeldObject != null)
+            {
+                _gameManager.DropHeldObject();
+            }
 
-        private const float Timeout = 0.5f;
-        private float _lastToggleTime;
+            // For mobile, we only want to toggle the settings panel.
+            if (GameManager.IsMobilePlatform)
+            {
+                TogglePanel(_activeSettings);
+                return;
+            }
+
+            // For desktop, toggle both as a group.
+            bool openPanels = !(_activeSettings.activeSelf || _activeControlsPanel.activeSelf);
+
+            TogglePanelVisibility(_activeSettings, openPanels);
+            TogglePanelVisibility(_activeControlsPanel, openPanels);
+
+            if (openPanels)
+            {
+                _gameManager?.SetMode(GameManager.ControlMode.Menu);
+            }
+            else
+            {
+                _gameManager?.SetMode(GameManager.ControlMode.Camera);
+            }
+        }
+        
+        private void TogglePanelVisibility(GameObject panel, bool open)
+        {
+            if (!panel || !_panelCanvasGroups.TryGetValue(panel, out var canvasGroup)) return;
+
+            panel.SetActive(true);
+            canvasGroup.gameObject.SetActive(true);
+            canvasGroup.DOFade(open ? 1 : 0, panelAnimationDuration).OnComplete(() => {
+                panel.SetActive(open);
+                canvasGroup.gameObject.SetActive(open);
+            });
+        }
 
 
         private void TogglePanel(GameObject panelToToggle)
         {
             if (!panelToToggle) return;
             var wasActive = panelToToggle.activeSelf;
+            
+            if (!wasActive && _gameManager.CurrentHeldObject != null)
+            {
+                _gameManager.DropHeldObject();
+            }
+
             CloseAllPanels();
             if (!wasActive)
             {

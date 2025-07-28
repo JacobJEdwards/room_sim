@@ -7,7 +7,6 @@ using Application = UnityEngine.Device.Application;
 
 namespace Managers
 {
-
     public class InteractionManager : MonoBehaviour
     {
         private static readonly int Color1 = Shader.PropertyToID("_Color");
@@ -21,6 +20,8 @@ namespace Managers
         
         private IInteractable? _currentTargetInteractable;
         private MoveableObject? _currentTargetMoveable;
+        private DrawablePostIt? _currentTargetPostIt;
+        private PlaceablePoster? _currentTargetPoster;
         private GameObject? _currentTargetObject;
         
         private readonly List<Color> _oldColors = new();
@@ -73,6 +74,8 @@ namespace Managers
                     _currentTargetObject = hit.collider.gameObject;
                     _currentTargetInteractable = hit.collider.GetComponent<IInteractable>();
                     _currentTargetMoveable = hit.collider.GetComponent<MoveableObject>();
+                    _currentTargetPostIt = hit.collider.GetComponent<DrawablePostIt>();
+                    _currentTargetPoster = hit.collider.GetComponent<PlaceablePoster>();
 
                     HighLightCurrentTarget();
                     UpdateUIForTarget();
@@ -89,7 +92,6 @@ namespace Managers
 
         public void OnInteractInput()
         {
-
             if (Time.time - _lastInteractionTime < Timeout)
             {
                 return;
@@ -118,6 +120,21 @@ namespace Managers
                 return;
             }
             
+            // Handle special cases for mobile
+            if (GameManager.IsMobilePlatform)
+            {
+                if (_currentTargetPostIt != null)
+                {
+                    _currentTargetPostIt.ToggleMovement();
+                    return;
+                }
+                else if (_currentTargetPoster != null)
+                {
+                    _currentTargetPoster.ToggleMovement();
+                    return;
+                }
+            }
+            
             if (_currentTargetMoveable)
             {
                 _currentTargetMoveable.Pickup();
@@ -144,7 +161,10 @@ namespace Managers
             }
 
             bool isInteractable = _currentTargetInteractable != null;
-            bool isMoveable = _currentTargetMoveable;
+            bool isMoveable = _currentTargetMoveable != null;
+            bool isPostIt = _currentTargetPostIt != null;
+            bool isPoster = _currentTargetPoster != null;
+            
             string hint = "";
             if (GameManager.IsMobilePlatform)
             {
@@ -154,9 +174,9 @@ namespace Managers
                 {
                     hints.Add(_currentTargetInteractable.GetInteractionPromptMobile(gameObject));
                 }
-                if (isMoveable)
+                if (isMoveable || isPostIt || isPoster)
                 {
-                    hints.Add("Tap Pickup button to pick up");
+                    hints.Add("Tap Pickup button to pick up/move");
                 }
                 hint = string.Join(" | ", hints);
             }
@@ -172,6 +192,10 @@ namespace Managers
                 {
                     hints.Add("Click to pick up");
                 }
+                else if (isPostIt || isPoster)
+                {
+                    hints.Add("Click to move");
+                }
                 hint = string.Join(" | ", hints);
             }
             
@@ -181,7 +205,8 @@ namespace Managers
             if (GameManager.IsMobilePlatform)
             {
                 var showInteract = isInteractable && _currentTargetInteractable != null && _currentTargetInteractable.CanInteract(gameObject);
-                _uiManager.ShowInteractionButtons(showInteract, isMoveable);
+                var showPickup = isMoveable || isPostIt || isPoster;
+                _uiManager.ShowInteractionButtons(showInteract, showPickup);
             }
         }
 
@@ -191,6 +216,8 @@ namespace Managers
             _currentTargetObject = null;
             _currentTargetInteractable = null;
             _currentTargetMoveable = null;
+            _currentTargetPostIt = null;
+            _currentTargetPoster = null;
             UpdateUIForTarget();
         }
 

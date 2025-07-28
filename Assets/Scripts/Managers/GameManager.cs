@@ -1,3 +1,4 @@
+// Scripts/Managers/GameManager.cs
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -105,8 +106,7 @@ namespace Managers
                 case ControlMode.Placement:
                 default:
                 {
-                    _uiManager.ToggleControlsPanel();
-                    _uiManager.ToggleSettingsPanel();
+                    _uiManager.ToggleSettingsAndControlsPanels();
                     break;
                 }
             }
@@ -127,8 +127,7 @@ namespace Managers
                 case ControlMode.Placement:
                 default:
                 {
-                    _uiManager.ToggleControlsPanel();
-                    _uiManager.ToggleSettingsPanel();
+                    _uiManager.ToggleSettingsAndControlsPanels();
                     break;
                 }
             }
@@ -152,9 +151,9 @@ namespace Managers
             }
         }
 
-        public void DropHeldObject()
+        public void DropHeldObject(bool preventModeChange = false)
         {
-            if (CurrentHeldObject) CurrentHeldObject.Drop();
+            if (CurrentHeldObject) CurrentHeldObject.Drop(preventModeChange);
         }
 
         public void RotateHeldObject(float direction)

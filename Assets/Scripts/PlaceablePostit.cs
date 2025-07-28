@@ -33,7 +33,6 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
 
     public string Name => "Post-It";
 
-
     // --- Core Components ---
     private Renderer _renderer;
     private Camera _mainCamera;
@@ -75,9 +74,12 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
         _gameManager = GameManager.Instance;
     }
 
-    // --- CLICK TO TOGGLE MOVEMENT ---
+    // --- CLICK TO TOGGLE MOVEMENT (Desktop only) ---
     private void OnMouseDown()
     {
+        // Only handle mouse clicks on desktop
+        if (GameManager.IsMobilePlatform) return;
+        
         // Ignore clicks if we are in drawing mode
         if (_isDrawing) return;
 
@@ -87,7 +89,9 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
         if (_isHeld)
         {
             // --- Just picked up ---
-            _heldDistance = Vector3.Distance(_mainCamera.transform.position, transform.position);
+            // Use a reasonable default distance if the object is far away or just spawned
+            float distance = Vector3.Distance(_mainCamera.transform.position, transform.position);
+            _heldDistance = (distance < 0.5f || distance > 10f) ? 2f : distance;
             _velocity = Vector3.zero;
             if(_uiManager) _uiManager.SetHint(movingPromptDesktop);
         }
@@ -99,7 +103,31 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
         }
     }
 
-    // OnMouseUp is no longer needed for this logic.
+    // --- PUBLIC METHOD FOR MOBILE TOGGLE ---
+    public void ToggleMovement()
+    {
+        // Ignore if we are in drawing mode
+        if (_isDrawing) return;
+
+        // Toggle the _isHeld state
+        _isHeld = !_isHeld;
+
+        if (_isHeld)
+        {
+            // --- Just picked up ---
+            // Use a reasonable default distance if the object is far away or just spawned
+            float distance = Vector3.Distance(_mainCamera.transform.position, transform.position);
+            _heldDistance = (distance < 0.5f || distance > 10f) ? 2f : distance;
+            _velocity = Vector3.zero;
+            if(_uiManager) _uiManager.SetHint("Moving... (Tap Pickup button to place)");
+        }
+        else
+        {
+            // --- Just placed down ---
+            PlacePostIt();
+            if(_uiManager) _uiManager.ClearHint();
+        }
+    }
 
     private void Update()
     {
@@ -123,7 +151,7 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
     }
     
     // --- MOVEMENT & PLACEMENT LOGIC ---
-     private void PlacePostIt()
+    private void PlacePostIt()
     {
         // This is called when we click to drop the object
         if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, wallDetectionDistance, wallLayerMask))
@@ -135,7 +163,17 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
 
     private void HandleHeldMovement()
     {
-        Ray ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
+        // Use viewport center for mobile, mouse position for desktop
+        Ray ray;
+        if (Managers.GameManager.IsMobilePlatform)
+        {
+            ray = _mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+        }
+        else
+        {
+            ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
+        }
+        
         Vector3 targetPosition = ray.GetPoint(_heldDistance);
         transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref _velocity, moveSmoothTime);
 
@@ -152,6 +190,9 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
 
     private void HandleRotation()
     {
+        // Only handle rotation on desktop
+        if (Managers.GameManager.IsMobilePlatform) return;
+        
         float scrollInput = Input.GetAxis("Mouse ScrollWheel");
         if (Mathf.Abs(scrollInput) > 0.01f)
         {
@@ -162,9 +203,22 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
     // --- DRAWING LOGIC (UNCHANGED) ---
     private void HandleDrawingInput()
     {
-        if (Input.GetMouseButtonDown(1)) ClearDrawing();
+        // Only allow right-click clear on desktop
+        if (!Managers.GameManager.IsMobilePlatform && Input.GetMouseButtonDown(1)) ClearDrawing();
 
-        Ray ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
+        // Get the appropriate input position
+        Ray ray;
+        if (Managers.GameManager.IsMobilePlatform && Input.touchCount > 0)
+        {
+            // Use actual touch position for drawing
+            Touch touch = Input.GetTouch(0);
+            ray = _mainCamera.ScreenPointToRay(touch.position);
+        }
+        else
+        {
+            // Use mouse position for desktop
+            ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
+        }
 
         _physicsCollider.enabled = false;
         bool hit = Physics.Raycast(ray, out RaycastHit hitInfo);
@@ -181,7 +235,20 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
             foreach (var pos in _smoothingBuffer) smoothedPos += pos;
             smoothedPos /= _smoothingBuffer.Count;
 
-            if (Input.GetMouseButton(0))
+            // Handle drawing input based on platform
+            bool isDrawing = false;
+            if (Managers.GameManager.IsMobilePlatform && Input.touchCount > 0)
+            {
+                Touch touch = Input.GetTouch(0);
+                // Draw on any touch phase except Ended and Canceled
+                isDrawing = (touch.phase != TouchPhase.Ended && touch.phase != TouchPhase.Canceled);
+            }
+            else
+            {
+                isDrawing = Input.GetMouseButton(0);
+            }
+
+            if (isDrawing)
             {
                 if (_isMouseDownForDrawing) DrawLine(_lastDrawPosition, smoothedPos);
                 else DrawDot(smoothedPos);
@@ -207,16 +274,34 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
         _isMouseDownForDrawing = false;
         _smoothingBuffer.Clear();
         if (_gameManager) _gameManager.SetMode(GameManager.ControlMode.Menu);
-        Cursor.lockState = CursorLockMode.Confined;
-        Cursor.visible = true;
-        if (_uiManager) _uiManager.SetHint(stopDrawingPromptDesktop);
+        
+        // Only modify cursor on desktop
+        if (!Managers.GameManager.IsMobilePlatform)
+        {
+            Cursor.lockState = CursorLockMode.Confined;
+            Cursor.visible = true;
+        }
+        
+        if (_uiManager) 
+        {
+            if (Managers.GameManager.IsMobilePlatform)
+                _uiManager.SetHint("Touch to draw (Tap Interact to stop)");
+            else
+                _uiManager.SetHint(stopDrawingPromptDesktop);
+        }
     }
 
     private void StopDrawing()
     {
         if (_gameManager) _gameManager.SetMode(GameManager.ControlMode.Camera);
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        
+        // Only modify cursor on desktop
+        if (!Managers.GameManager.IsMobilePlatform)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+        
         if (_uiManager) _uiManager.ClearHint();
     }
 
@@ -233,7 +318,8 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
 
     public string GetInteractionPromptMobile(GameObject interactor)
     {
-        return GetInteractionPromptDesktop(interactor);
+        if (_isHeld) return "Moving... (Tap Pickup button to place)";
+        return _isDrawing ? "Drawing... (Tap Interact to stop)" : "Tap Interact to draw";
     }
 
     public void ResetObject()

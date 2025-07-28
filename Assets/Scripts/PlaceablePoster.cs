@@ -72,8 +72,12 @@ public class PlaceablePoster : MonoBehaviour, IInteractable, IHasName
         HandleRotation();
     }
 
+    // --- DESKTOP ONLY MOUSE CONTROLS ---
     private void OnMouseDown()
     {
+        // Only handle mouse clicks on desktop
+        if (Managers.GameManager.IsMobilePlatform) return;
+        
         if (!_isHeld)
         {
             PickupPoster();
@@ -82,15 +86,41 @@ public class PlaceablePoster : MonoBehaviour, IInteractable, IHasName
 
     private void OnMouseUp()
     {
+        // Only handle mouse clicks on desktop
+        if (Managers.GameManager.IsMobilePlatform) return;
+        
         if (_isHeld)
         {
             PlacePoster();
         }
     }
 
+    // --- PUBLIC METHOD FOR MOBILE TOGGLE ---
+    public void ToggleMovement()
+    {
+        if (_isHeld)
+        {
+            PlacePoster();
+        }
+        else
+        {
+            PickupPoster();
+        }
+    }
+
     private void HandleHeldMovement()
     {
-        var ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
+        // Use viewport center for mobile, mouse position for desktop
+        Ray ray;
+        if (Managers.GameManager.IsMobilePlatform)
+        {
+            ray = _mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+        }
+        else
+        {
+            ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
+        }
+        
         _targetPosition = ray.GetPoint(_heldDistance);
 
         transform.position = Vector3.SmoothDamp(transform.position, _targetPosition, ref _velocity, moveSmoothTime);
@@ -109,6 +139,9 @@ public class PlaceablePoster : MonoBehaviour, IInteractable, IHasName
 
     private void HandleRotation()
     {
+        // Only handle rotation on desktop
+        if (Managers.GameManager.IsMobilePlatform) return;
+        
         var scrollInput = Input.GetAxis("Mouse ScrollWheel");
         if (Mathf.Abs(scrollInput) > 0.01f)
         {
@@ -128,11 +161,13 @@ public class PlaceablePoster : MonoBehaviour, IInteractable, IHasName
 
     public string GetInteractionPromptDesktop(GameObject interactor)
     {
+        if (_isHeld) return "Moving... (Click to place)";
         return changeImagePromptDesktop;
     }
 
     public string GetInteractionPromptMobile(GameObject interactor)
     {
+        if (_isHeld) return "Moving... (Tap Pickup button to place)";
         return changeImagePromptMobile;
     }
 
@@ -141,8 +176,21 @@ public class PlaceablePoster : MonoBehaviour, IInteractable, IHasName
         _isHeld = true;
         _isPlacedOnWall = false;
         _rigidbody.isKinematic = false;
-        _heldDistance = Vector3.Distance(_mainCamera.transform.position, transform.position);
+        
+        // Use a reasonable default distance if the object is far away or just spawned
+        float distance = Vector3.Distance(_mainCamera.transform.position, transform.position);
+        _heldDistance = (distance < 0.5f || distance > 10f) ? 2f : distance;
         _velocity = Vector3.zero;
+        
+        // Update UI hint if available
+        var uiManager = Managers.UIManager.Instance;
+        if (uiManager != null)
+        {
+            if (Managers.GameManager.IsMobilePlatform)
+                uiManager.SetHint("Moving... (Tap Pickup button to place)");
+            else
+                uiManager.SetHint("Click to place poster / Right-click to cancel");
+        }
     }
 
     private void PlacePoster()
@@ -158,6 +206,13 @@ public class PlaceablePoster : MonoBehaviour, IInteractable, IHasName
 
         _rigidbody.isKinematic = true;
         _velocity = Vector3.zero;
+        
+        // Clear UI hint if available
+        var uiManager = Managers.UIManager.Instance;
+        if (uiManager != null)
+        {
+            uiManager.ClearHint();
+        }
     }
 
     public void UpdateTexture(Texture2D newTexture)
@@ -184,5 +239,11 @@ public class PlaceablePoster : MonoBehaviour, IInteractable, IHasName
 
     public void ResetObject()
     {
+        if (_isHeld)
+        {
+            _isHeld = false;
+            _rigidbody.isKinematic = true;
+            _velocity = Vector3.zero;
+        }
     }
 }

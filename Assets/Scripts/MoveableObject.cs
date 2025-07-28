@@ -1,3 +1,4 @@
+// Scripts/MoveableObject.cs
 using Interfaces;
 using Managers;
 using UnityEngine;
@@ -126,14 +127,17 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         AudioManager.PlaySound(audioSource, pickupSound);
     }
 
-    public void Drop()
+    public void Drop(bool preventModeChange = false)
     {
         if (!_isHeld) return;
         _isHeld = false;
-        IsNewlySpawned = false; 
+        IsNewlySpawned = false;
         
         GameManager.CurrentHeldObject = null;
-        GameManager.SetMode(GameManager.ControlMode.Camera);
+        if (!preventModeChange)
+        {
+            GameManager.SetMode(GameManager.ControlMode.Camera);
+        }
         _rigidbody.useGravity = true;
         _rigidbody.isKinematic = false;
         AudioManager.PlaySound(audioSource, dropSound);
