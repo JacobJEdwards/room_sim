@@ -54,8 +54,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.09440686, y: 0.039197937, z: 0.37251845}
-  m_Center: {x: 0.003960192, y: -0.0025274232, z: -0.13609199}
+  m_Size: {x: 0.028492982, y: 0.032019667, z: 0.33126283}
+  m_Center: {x: 0.000723592, y: 0.006302338, z: -0.1567198}
 --- !u!54 &5806221137674692720
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -95,13 +95,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 48f0c4bad6184cdc83ea2e563b26185c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rotationSpeed: 50
   moveSmoothTime: 0.005
-  skinWidth: 0.05
-  horizontalRotationAxis: {x: 0, y: 1, z: 0}
-  verticalRotationAxis: {x: 1, y: 0, z: 0}
-  pickupPrompt: Double Click to pick up
-  pickupPromptMobile: Tap to pick up
+  rotationSpeed: 50
+  moveStepAmount: 0.1
+  rotationStepAmount: 15
+  audioSource: {fileID: 7792911297085617241, guid: d67541ea6de96458f9cabf90f3fe3977, type: 3}
+  pickupSound: {fileID: 8300000, guid: 02310fb043cb34f5e8f4b80674d5512d, type: 3}
+  dropSound: {fileID: 8300000, guid: dd8b347a50ee04d69ba9bdd7d0ade1f3, type: 3}
+  name: Toothbrush
 --- !u!1001 &3553673900286846944
 PrefabInstance:
   m_ObjectHideFlags: 0

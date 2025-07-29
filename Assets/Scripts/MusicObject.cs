@@ -1,5 +1,3 @@
-// Scripts/MusicObject.cs
-
 using Interfaces;
 using Managers;
 using UnityEngine;
@@ -12,7 +10,7 @@ using UnityEngine;
 /// </summary>
 [RequireComponent(typeof(AudioSource))]
 [RequireComponent(typeof(MoveableObject))]
-public class MusicObject : MonoBehaviour, IInteractable, IHasName
+public class MusicObject : MonoBehaviour, IInteractable 
 {
     [Header("Object Identity")]
     [SerializeField]
@@ -29,8 +27,6 @@ public class MusicObject : MonoBehaviour, IInteractable, IHasName
     private AudioManager _audioManager;
     private MoveableObject _moveableObject;
 
-    // --- IHasName Implementation ---
-    public string Name => objectName;
 
     private void Awake()
     {
@@ -51,7 +47,6 @@ public class MusicObject : MonoBehaviour, IInteractable, IHasName
         }
     }
 
-    // --- IInteractable Implementation ---
 
     /// <summary>
     /// Called by the InteractionManager when the player interacts with this object.
@@ -86,9 +81,8 @@ public class MusicObject : MonoBehaviour, IInteractable, IHasName
     /// </summary>
     public string GetInteractionPromptDesktop(GameObject interactor)
     {
-        if (!_audioSource || _moveableObject.IsHeld) return ""; // Return empty if something is wrong or object is held.
-        // Provide dynamic text based on whether the music is playing or not.
-        return _audioSource.isPlaying ? $"Press E to stop {objectName}" : $"Press E to play {objectName}";
+        if (!_audioSource || _moveableObject.IsHeld) return ""; 
+        return _audioSource.isPlaying ? $"Press E to stop" : $"Press E to play";
     }
 
     /// <summary>
@@ -96,8 +90,8 @@ public class MusicObject : MonoBehaviour, IInteractable, IHasName
     /// </summary>
     public string GetInteractionPromptMobile(GameObject interactor)
     {
-        if (!_audioSource || _moveableObject.IsHeld) return ""; // Return empty if something is wrong or object is held.
-        return _audioSource.isPlaying ? $"Tap to stop {objectName}" : $"Tap to play {objectName}";
+        if (!_audioSource || _moveableObject.IsHeld) return ""; 
+        return _audioSource.isPlaying ? $"Tap to stop" : $"Tap to play";
     }
 
     /// <summary>

@@ -1,3 +1,4 @@
+// Scripts/PlayerMovement.cs
 using Managers;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -16,6 +17,8 @@ public class PlayerMovement : MonoBehaviour
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 5.0f;
     [SerializeField] private float sprintSpeed = 8.0f;
+    [Tooltip("The force applied to moveable objects when pushing them.")]
+    [SerializeField] private float pushPower = 2.0f;
 
     [Header("Jump Settings")]
     [SerializeField] private float jumpForce = 5.0f;
@@ -134,15 +137,34 @@ public class PlayerMovement : MonoBehaviour
         _jumpRequested = true;
     }
 
-    #region Unchanged Helper Methods
+    // ==========================================================
+    // == MODIFIED: OnControllerColliderHit with Push Logic
+    // ==========================================================
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
-        var body = hit.collider.attachedRigidbody;
-        if (!body || body.isKinematic) return;
-        if (hit.moveDirection.y < -0.3f) return;
-        var pushDir = new Vector3(hit.moveDirection.x, 0, hit.moveDirection.z);
-        body.linearVelocity = pushDir * 2.0f;
+        // Find the Rigidbody on the object we hit
+        Rigidbody body = hit.collider.attachedRigidbody;
+
+        // Ensure it's a valid Rigidbody that we can push (i.e., not kinematic)
+        if (body == null || body.isKinematic)
+        {
+            return;
+        }
+
+        // We don't want to push objects below us
+        if (hit.moveDirection.y < -0.3f)
+        {
+            return;
+        }
+
+        // Calculate the direction to push the object
+        Vector3 pushDirection = new Vector3(hit.moveDirection.x, 0, hit.moveDirection.z);
+
+        // Apply the force. The Rigidbody's mass will affect how much it moves.
+        body.AddForce(pushDirection * pushPower, ForceMode.VelocityChange);
     }
+    
+    #region Unchanged Helper Methods
     private void OnDrawGizmosSelected()
     {
         if (groundCheckTransform)

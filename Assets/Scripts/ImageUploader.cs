@@ -10,7 +10,7 @@ public class ImageUploader : MonoBehaviour
     public UnityEvent<Texture2D> OnImageUploaded;
 
 #if UNITY_EDITOR
-    // This field will only be visible in the Unity Editor.
+    // This field will only be visible in the Unity Editor
     [Header("Editor Testing")]
     [Tooltip("Assign a texture here to simulate an upload in the Editor.")]
     public Texture2D testTexture;
@@ -27,7 +27,7 @@ public class ImageUploader : MonoBehaviour
         Debug.Log("Calling JavaScript UploadImage function...");
         UploadImage(gameObject.name, "OnImageReceived");
 #else
-        // If we're in the Editor, use the test texture instead.
+        // if in the Editor, use the test texture instead.
         if (testTexture)
         {
             Debug.Log("Using test texture in Editor");
@@ -67,7 +67,7 @@ public class ImageUploader : MonoBehaviour
                 Debug.Log($"Successfully loaded image: {texture.width}x{texture.height}");
                 texture.Apply();
                 
-                // Invoke the event, passing the new texture to any listeners.
+                // invoke the event passing the new texture to any listeners.
                 OnImageUploaded?.Invoke(texture);
             }
             else
