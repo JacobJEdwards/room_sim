@@ -1,5 +1,6 @@
 // Scripts/MoveableObject.cs
 using System.Collections;
+using System.Linq;
 using Interfaces;
 using Managers;
 using UnityEngine;
@@ -15,10 +16,14 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
     [SerializeField] private float rotationStepAmount = 15f;
 
     [Header("Collision & Phasing")]
-    [Tooltip("How long to push against an object before the held object phases out.")]
-    [SerializeField] private float phaseDelay = 0.75f;
+    [Tooltip("Force applied to other moveable objects when pushing them.")]
+    [SerializeField] private float pushForce = 1.2f;
+    [Tooltip("Maximum velocity for pushed objects.")]
+    [SerializeField] private float maxPushVelocity = 2f;
+    [Tooltip("How long to push against a non-moveable object before phasing through.")]
+    private float phaseDelay = 0.5f;
     [Tooltip("How long the held object's collider is disabled during a phase.")]
-    [SerializeField] private float phaseDuration = 1.5f;
+     private float phaseDuration = 0.5f;
 
     [Header("Audio")]
     [SerializeField] private AudioSource audioSource;
@@ -41,8 +46,8 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
 
     // Phasing state
     private float _phaseTimer;
-    private Collider _lastPhaseCandidate;
     private bool _isPhasing;
+    private Collider _currentPhaseCandidate;
 
     // --- Resilient Manager Properties ---
     private UIManager _uiManager;
@@ -84,41 +89,57 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         var direction = newPosition - _rigidbody.position;
         var distance = direction.magnitude;
 
-        // Temporarily enable the collider for the collision check, but only if we are not currently phasing.
         if (!_isPhasing)
         {
             _collider.enabled = true;
         }
 
         bool canMove = true;
-        // The BoxCast now uses the held object's own (temporarily enabled) collider to check for hits.
-        if (distance > 0.001f && Physics.BoxCast(_rigidbody.position, _collider.bounds.extents, direction.normalized, out RaycastHit hit, transform.rotation, distance))
+
+        if (distance > 0.001f)
         {
-            // If we hit another moveable object or a wall, stop moving.
-            if (hit.collider.GetComponent<MoveableObject>() != null || hit.collider.CompareTag("wall"))
+            RaycastHit[] hits = Physics.BoxCastAll(_rigidbody.position, _collider.bounds.extents, direction.normalized, transform.rotation, distance);
+
+            if (hits.Length > 0)
             {
-                canMove = false;
-                ResetPhaseTimer();
-            }
-            // If we hit something else, start the timer to phase the held object.
-            else
-            {
-                UpdatePhaseTimer();
-                if (_phaseTimer < phaseDelay)
+                bool isHittingWall = hits.Any(h => h.collider.CompareTag("wall"));
+                bool isHittingMoveable = hits.Any(h => h.collider.GetComponent<MoveableObject>() != null);
+
+                if (isHittingWall)
                 {
+                    // Highest priority: if we hit a wall, stop completely and don't phase.
                     canMove = false;
+                    ResetPhaseTimer();
+                    _currentPhaseCandidate = hits.First(h => h.collider.CompareTag("wall")).collider;
+                }
+                else if (isHittingMoveable)
+                {
+                    // Second priority: if we hit another moveable object, let physics push it.
+                    canMove = true;
+                    ResetPhaseTimer();
+                }
+                else
+                {
+                    // Lowest priority: hit a non-wall, non-moveable object. Start phase timer.
+                    _currentPhaseCandidate = hits[0].collider;
+                    UpdatePhaseTimer();
+
+                    if (_phaseTimer < phaseDelay)
+                    {
+                        canMove = false;
+                    }
+                    else if (!_isPhasing)
+                    {
+                        StartCoroutine(TemporarilyDisableCollider());
+                    }
                 }
             }
-        }
-        else
-        {
-            ResetPhaseTimer();
-        }
-
-        // Disable the collider again after the check to allow free movement.
-        if (!_isPhasing)
-        {
-            _collider.enabled = false;
+            else
+            {
+                // No obstacles, so reset phasing state.
+                ResetPhaseTimer();
+                _currentPhaseCandidate = null;
+            }
         }
         
         if (canMove)
@@ -127,19 +148,50 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         }
     }
 
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        HandleCollisionWithMoveableObject(collision);
+    }
+
+    private void OnCollisionStay(Collision collision)
+    {
+        HandleCollisionWithMoveableObject(collision);
+    }
+
+    private void HandleCollisionWithMoveableObject(Collision collision)
+    {
+        if (!_isHeld) return;
+
+        var otherMoveable = collision.gameObject.GetComponent<MoveableObject>();
+        if (otherMoveable == null || otherMoveable._isHeld) return;
+
+        Vector3 pushDirection = Vector3.zero;
+        foreach (ContactPoint contact in collision.contacts)
+        {
+            pushDirection += contact.normal;
+        }
+        pushDirection = -pushDirection.normalized;
+        pushDirection.y = 0;
+
+        Rigidbody otherRb = collision.rigidbody;
+        if (otherRb != null && !otherRb.isKinematic)
+        {
+            float forceMagnitude = pushForce;
+            otherRb.AddForce(pushDirection * forceMagnitude, ForceMode.VelocityChange);
+            
+            if (otherRb.linearVelocity.magnitude > maxPushVelocity)
+            {
+                otherRb.linearVelocity = otherRb.linearVelocity.normalized * maxPushVelocity;
+            }
+            
+            otherRb.AddForce(Vector3.up * 0.05f, ForceMode.VelocityChange);
+        }
+    }
+
     private void UpdatePhaseTimer()
     {
         _phaseTimer += Time.deltaTime;
-
-        // If the timer is up, start the phasing coroutine.
-        if (_phaseTimer >= phaseDelay)
-        {
-            if (!_isPhasing) // Ensure coroutine is not already running
-            {
-                 StartCoroutine(TemporarilyDisableHeldObjectCollider());
-            }
-            ResetPhaseTimer();
-        }
     }
 
     private void ResetPhaseTimer()
@@ -147,18 +199,17 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         _phaseTimer = 0f;
     }
 
-    // This coroutine now disables THIS object's collider.
-    private IEnumerator TemporarilyDisableHeldObjectCollider()
+    private IEnumerator TemporarilyDisableCollider()
     {
         _isPhasing = true;
-        _collider.enabled = false; // Disable our own collider
+        _collider.enabled = false;
 
         yield return new WaitForSeconds(phaseDuration);
 
-        _collider.enabled = true; // Re-enable our own collider
+        _collider.enabled = true;
         _isPhasing = false;
+        ResetPhaseTimer();
     }
-
 
     public void Pickup(bool isNewlySpawned = false)
     {
@@ -166,7 +217,6 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         if (_isHeld) return;
         _isHeld = true;
 
-        // Collider is enabled here to allow the initial BoxCast to work. It's disabled in FixedUpdate.
         _collider.enabled = true;
 
         IsNewlySpawned = isNewlySpawned;
@@ -184,7 +234,9 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         GameManager.CurrentHeldObject = this;
         GameManager.SetMode(GameManager.ControlMode.ObjectHolding);
         _rigidbody.useGravity = false;
-        _rigidbody.isKinematic = true;
+        _rigidbody.isKinematic = false;
+        _rigidbody.linearDamping = 8f;
+        _rigidbody.angularDamping = 8f;
         _targetPosition = transform.position;
         _velocity = Vector3.zero;
         AudioManager.PlaySound(audioSource, pickupSound);
@@ -195,13 +247,13 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         if (!_isHeld) return;
         _isHeld = false;
 
-        // Always ensure the collider is enabled when dropped.
         _collider.enabled = true;
-        _isPhasing = false; // Stop any phasing
-        StopAllCoroutines(); // Stop the phasing coroutine if it's running
+        _isPhasing = false;
+        StopAllCoroutines();
 
         IsNewlySpawned = false;
         ResetPhaseTimer();
+        _currentPhaseCandidate = null;
 
         GameManager.CurrentHeldObject = null;
         if (!preventModeChange)
@@ -210,6 +262,8 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         }
         _rigidbody.useGravity = true;
         _rigidbody.isKinematic = false;
+        _rigidbody.linearDamping = 0f;
+        _rigidbody.angularDamping = 0.05f;
         AudioManager.PlaySound(audioSource, dropSound);
     }
 
