@@ -13,7 +13,7 @@ namespace Managers
     {
         public enum ControlMode
         {
-            Camera, Menu, Placement, ObjectHolding
+            Camera, Menu, Placement, ObjectHolding,Basketball 
         }
 
         [Header("Mode Management")]
@@ -55,6 +55,18 @@ namespace Managers
             {
                 Destroy(gameObject);
             }
+        }
+        private void EnableBasketballMode()
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+            if (_playerMovement)
+            {
+                _playerMovement.enabled = true;
+                _playerMovement.SetTouchLookEnabled(true);
+            }
+            if (_interactionManager) _interactionManager.enabled = false;
+            _inputManager.PlayerControls.Player.Enable();
         }
 
         private void Start()
@@ -201,11 +213,11 @@ namespace Managers
                 case ControlMode.Menu: EnableMenuMode(); break;
                 case ControlMode.Placement: EnablePlacementMode(); break;
                 case ControlMode.ObjectHolding: EnableObjectHoldingMode(); break;
+                case ControlMode.Basketball: EnableBasketballMode(); break; // Add this line
                 default:
                     throw new ArgumentOutOfRangeException(nameof(mode), mode, null);
             }
         }
-
         private void EnableCameraMode()
         {
             Cursor.lockState = CursorLockMode.Locked;

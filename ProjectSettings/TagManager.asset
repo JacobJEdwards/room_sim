@@ -6,6 +6,7 @@ TagManager:
   tags:
   - wall
   - terrain
+  - Basketball
   layers:
   - Default
   - TransparentFX

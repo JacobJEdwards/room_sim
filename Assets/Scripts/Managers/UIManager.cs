@@ -98,33 +98,66 @@ namespace Managers
                 ConnectMobileButtons();
             }
         }
+        
+        public void SetBasketballMode(bool isActive)
+        {
+            if (!GameManager.IsMobilePlatform) return;
+
+            if (leftThumbstick) leftThumbstick.SetActive(!isActive);
+            if (rightThumbstick) rightThumbstick.SetActive(!isActive);
+            
+            mobileInteractButton.SetActive(isActive);
+            
+            mobilePickupButton.SetActive(isActive);
+            var pickupBtnComp = mobilePickupButton.GetComponent<Button>();
+            if (pickupBtnComp)
+            {
+                var pickupText = mobilePickupButton.GetComponentInChildren<TMP_Text>();
+                pickupBtnComp.onClick.RemoveAllListeners(); 
+
+                if (isActive)
+                {
+                    if (pickupText) pickupText.text = "Throw";
+                    pickupBtnComp.onClick.AddListener(() => BasketballManager.Instance.ShootWithFixedForce());
+                }
+                else
+                {
+                    if (pickupText) pickupText.text = "Pickup";
+                    pickupBtnComp.onClick.AddListener(() => _interactionManager.OnMobilePickupPressed());
+                    
+                    mobileInteractButton.SetActive(false);
+                    mobilePickupButton.SetActive(false);
+                }
+            }
+        }
+
 
         private void ConnectMobileButtons()
         {
-            // if (_interactionManager == null)
-            // {
-            //     return;
-            // }
-            //
-            // if (mobileInteractButton != null)
-            // {
-            //     Button interactBtn = mobileInteractButton.GetComponent<Button>();
-            //     if (interactBtn != null)
-            //     {
-            //         interactBtn.onClick.RemoveAllListeners();
-            //         interactBtn.onClick.AddListener(() => _interactionManager.OnMobileInteractPressed());
-            //     }
-            // }
-            //
-            // if (mobilePickupButton != null)
-            // {
-            //     Button pickupBtn = mobilePickupButton.GetComponent<Button>();
-            //     if (pickupBtn != null)
-            //     {
-            //         pickupBtn.onClick.RemoveAllListeners();
-            //         pickupBtn.onClick.AddListener(() => _interactionManager.OnMobilePickupPressed());
-            //     }
-            // }
+            if (_interactionManager == null)
+            {
+                return;
+            }
+        
+            if (mobileInteractButton != null)
+            {
+                Button interactBtn = mobileInteractButton.GetComponent<Button>();
+                if (interactBtn != null)
+                {
+                    interactBtn.onClick.RemoveAllListeners();
+                    interactBtn.onClick.AddListener(() => _interactionManager.OnMobileInteractPressed());
+                }
+            }
+        
+            if (mobilePickupButton != null)
+            {
+                Button pickupBtn = mobilePickupButton.GetComponent<Button>();
+                if (pickupBtn != null)
+                {
+                    pickupBtn.onClick.RemoveAllListeners();
+                    pickupBtn.onClick.AddListener(() => _interactionManager.OnMobilePickupPressed());
+                }
+            }
         }
 
         private void Update()
@@ -201,7 +234,6 @@ namespace Managers
         {
             foreach (var (panel, canvasGroup) in _panelCanvasGroups)
             {
-                // canvasGroup.alpha = 0;
                 canvasGroup.gameObject.SetActive(false);
                 panel.SetActive(false);
             }
@@ -260,15 +292,13 @@ namespace Managers
             {
                 _gameManager.DropHeldObject();
             }
-
-            // For mobile, we only want to toggle the settings panel.
+            
             if (GameManager.IsMobilePlatform)
             {
                 TogglePanel(_activeSettings);
                 return;
             }
-
-            // For desktop, toggle both as a group.
+            
             bool openPanels = !(_activeSettings.activeSelf || _activeControlsPanel.activeSelf);
 
             TogglePanelVisibility(_activeSettings, openPanels);
@@ -390,25 +420,5 @@ namespace Managers
         {
             return _panelCanvasGroups.Values.Any(cg => cg.alpha > 0 && cg.gameObject.activeSelf);
         }
-
-        // private void OnDestroy()
-        // {
-        //     if (GameManager.Instance.IsMobilePlatform)
-        //     {
-        //         if (mobileInteractButton)
-        //         {
-        //             Button interactBtn = mobileInteractButton.GetComponent<Button>();
-        //             if (interactBtn)
-        //                 interactBtn.onClick.RemoveAllListeners();
-        //         }
-        //
-        //         if (mobilePickupButton != null)
-        //         {
-        //             Button pickupBtn = mobilePickupButton.GetComponent<Button>();
-        //             if (pickupBtn != null)
-        //                 pickupBtn.onClick.RemoveAllListeners();
-        //         }
-        //     }
-        // }
     }
 }
