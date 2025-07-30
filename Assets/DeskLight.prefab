@@ -102,6 +102,7 @@ MonoBehaviour:
   moveStepAmount: 0.1
   rotationStepAmount: 15
   useGravity: 1
+  useForce: 1
   pushForce: 1.2
   maxPushVelocity: 2
   audioSource: {fileID: 3401374708088224615}

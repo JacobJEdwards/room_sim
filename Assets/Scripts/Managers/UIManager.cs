@@ -1,4 +1,5 @@
 // Scripts/Managers/UIManager.cs
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,12 +16,14 @@ namespace Managers
     {
         public static UIManager Instance { get; private set; }
 
-        [Header("Canvas Management")]
-        [SerializeField] private GameObject desktopCanvas;
+        [Header("Canvas Management")] [SerializeField]
+        private GameObject desktopCanvas;
+
         [SerializeField] private GameObject mobileCanvas;
 
-        [Header("Desktop UI Elements")]
-        [SerializeField] private GameObject desktopRoomPanel;
+        [Header("Desktop UI Elements")] [SerializeField]
+        private GameObject desktopRoomPanel;
+
         [SerializeField] private GameObject desktopControlsPanel;
         [SerializeField] private GameObject desktopPlacementPanel;
         [SerializeField] private GameObject desktopHoldingPanel;
@@ -31,8 +34,9 @@ namespace Managers
         [SerializeField] private TMP_Text desktopHintText;
         [SerializeField] private GameObject desktopSettings;
 
-        [Header("Mobile UI Elements")]
-        [SerializeField] private GameObject mobileRoomPanel;
+        [Header("Mobile UI Elements")] [SerializeField]
+        private GameObject mobileRoomPanel;
+
         [SerializeField] private GameObject mobileControlsPanel;
         [SerializeField] private GameObject mobilePlacementPanel;
         [SerializeField] private GameObject mobileHoldingPanel;
@@ -48,13 +52,13 @@ namespace Managers
         [SerializeField] private GameObject mobileHoldingControlsPanel;
         [SerializeField] private GameObject mobileSettings;
 
-        [Header("Mode Indicator Colors")]
-        [SerializeField] private Color cameraColor = new(0.2f, 0.8f, 0.4f, 0.8f);
+        [Header("Mode Indicator Colors")] [SerializeField]
+        private Color cameraColor = new(0.2f, 0.8f, 0.4f, 0.8f);
+
         [SerializeField] private Color menuColor = new(0.2f, 0.4f, 0.8f, 0.8f);
         [SerializeField] private Color placementColor = new(0.8f, 0.4f, 0.2f, 0.8f);
 
-        [Header("Animation")]
-        [SerializeField] private float panelAnimationDuration = 0.3f;
+        [Header("Animation")] [SerializeField] private float panelAnimationDuration = 0.3f;
 
         private GameManager _gameManager;
         private InteractionManager _interactionManager;
@@ -98,22 +102,37 @@ namespace Managers
                 ConnectMobileButtons();
             }
         }
-        
+
         public void SetBasketballMode(bool isActive)
         {
             if (!GameManager.IsMobilePlatform) return;
 
             if (leftThumbstick) leftThumbstick.SetActive(!isActive);
             if (rightThumbstick) rightThumbstick.SetActive(!isActive);
-            
+
             mobileInteractButton.SetActive(isActive);
-            
+            if (isActive)
+            {
+                var interactText = mobileInteractButton.GetComponentInChildren<TMP_Text>();
+                if (interactText) interactText.text = "Exit";
+                Button interactBtn = mobileInteractButton.GetComponent<Button>();
+                if (interactBtn != null)
+                {
+                    interactBtn.onClick.RemoveAllListeners();
+                    interactBtn.onClick.AddListener(() =>
+                    {
+                        var hoop = FindObjectOfType<HoopInteraction>();
+                        if (hoop != null) hoop.OnInteract(gameObject);
+                    });
+                }
+            }
+
             mobilePickupButton.SetActive(isActive);
             var pickupBtnComp = mobilePickupButton.GetComponent<Button>();
             if (pickupBtnComp)
             {
                 var pickupText = mobilePickupButton.GetComponentInChildren<TMP_Text>();
-                pickupBtnComp.onClick.RemoveAllListeners(); 
+                pickupBtnComp.onClick.RemoveAllListeners();
 
                 if (isActive)
                 {
@@ -124,7 +143,10 @@ namespace Managers
                 {
                     if (pickupText) pickupText.text = "Pickup";
                     pickupBtnComp.onClick.AddListener(() => _interactionManager.OnMobilePickupPressed());
-                    
+
+                    var interactText = mobileInteractButton.GetComponentInChildren<TMP_Text>();
+                    if (interactText) interactText.text = "Interact";
+
                     mobileInteractButton.SetActive(false);
                     mobilePickupButton.SetActive(false);
                 }
@@ -138,7 +160,7 @@ namespace Managers
             {
                 return;
             }
-        
+
             if (mobileInteractButton != null)
             {
                 Button interactBtn = mobileInteractButton.GetComponent<Button>();
@@ -148,7 +170,7 @@ namespace Managers
                     interactBtn.onClick.AddListener(() => _interactionManager.OnMobileInteractPressed());
                 }
             }
-        
+
             if (mobilePickupButton != null)
             {
                 Button pickupBtn = mobilePickupButton.GetComponent<Button>();
@@ -257,6 +279,7 @@ namespace Managers
             {
                 CloseAllPanels();
             }
+
             if (newMode is GameManager.ControlMode.Menu or GameManager.ControlMode.Placement)
             {
                 ClearHint();
@@ -271,34 +294,44 @@ namespace Managers
             Color modeColor;
             switch (mode)
             {
-                case GameManager.ControlMode.Camera: modeName = "Camera Mode"; modeColor = cameraColor; break;
-                case GameManager.ControlMode.Menu: modeName = "Menu Mode"; modeColor = menuColor; break;
-                case GameManager.ControlMode.Placement: modeName = "Placement Mode"; modeColor = placementColor; break;
+                case GameManager.ControlMode.Camera:
+                    modeName = "Camera Mode";
+                    modeColor = cameraColor;
+                    break;
+                case GameManager.ControlMode.Menu:
+                    modeName = "Menu Mode";
+                    modeColor = menuColor;
+                    break;
+                case GameManager.ControlMode.Placement:
+                    modeName = "Placement Mode";
+                    modeColor = placementColor;
+                    break;
                 case GameManager.ControlMode.ObjectHolding:
                 default:
                     _activeModeIndicatorPanel.SetActive(false);
                     return;
             }
+
             _activeModeText.text = modeName;
             _activeModeIndicatorBackground.DOColor(modeColor, 0.3f);
         }
 
         public void ToggleRoomPanel() => TogglePanel(_activeRoomPanel);
         public void ToggleObjectPlacementMenu() => TogglePanel(_activePlacementPanel);
-        
+
         public void ToggleSettingsAndControlsPanels()
         {
             if (_gameManager.CurrentHeldObject != null)
             {
                 _gameManager.DropHeldObject();
             }
-            
+
             if (GameManager.IsMobilePlatform)
             {
                 TogglePanel(_activeSettings);
                 return;
             }
-            
+
             bool openPanels = !(_activeSettings.activeSelf || _activeControlsPanel.activeSelf);
 
             TogglePanelVisibility(_activeSettings, openPanels);
@@ -313,14 +346,15 @@ namespace Managers
                 _gameManager?.SetMode(GameManager.ControlMode.Camera);
             }
         }
-        
+
         private void TogglePanelVisibility(GameObject panel, bool open)
         {
             if (!panel || !_panelCanvasGroups.TryGetValue(panel, out var canvasGroup)) return;
 
             panel.SetActive(true);
             canvasGroup.gameObject.SetActive(true);
-            canvasGroup.DOFade(open ? 1 : 0, panelAnimationDuration).OnComplete(() => {
+            canvasGroup.DOFade(open ? 1 : 0, panelAnimationDuration).OnComplete(() =>
+            {
                 panel.SetActive(open);
                 canvasGroup.gameObject.SetActive(open);
             });
@@ -331,7 +365,7 @@ namespace Managers
         {
             if (!panelToToggle) return;
             var wasActive = panelToToggle.activeSelf;
-            
+
             if (!wasActive && _gameManager.CurrentHeldObject != null)
             {
                 _gameManager.DropHeldObject();

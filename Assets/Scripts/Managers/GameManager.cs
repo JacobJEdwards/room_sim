@@ -1,4 +1,5 @@
 // Scripts/Managers/GameManager.cs
+
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -13,14 +14,17 @@ namespace Managers
     {
         public enum ControlMode
         {
-            Camera, Menu, Placement, ObjectHolding,Basketball 
+            Camera,
+            Menu,
+            Placement,
+            ObjectHolding,
+            Basketball
         }
 
-        [Header("Mode Management")]
-        [SerializeField] private ControlMode currentMode = ControlMode.Camera;
+        [Header("Mode Management")] [SerializeField]
+        private ControlMode currentMode = ControlMode.Camera;
 
-        [Header("Player")]
-        [SerializeField] private GameObject player;
+        [Header("Player")] [SerializeField] private GameObject player;
         private PlayerMovement _playerMovement;
         private PlayerController _playerController;
         [SerializeField] private RoomManager roomManager;
@@ -38,8 +42,9 @@ namespace Managers
         public Room CurrentRoom => roomManager.CurrentRoom;
         public MoveableObject CurrentHeldObject { get; set; }
 
-        [FormerlySerializedAs("_mouseSensitivitySlider")]
-        [SerializeField] private Slider mouseSensitivitySliderDesktop;
+        [FormerlySerializedAs("_mouseSensitivitySlider")] [SerializeField]
+        private Slider mouseSensitivitySliderDesktop;
+
         [SerializeField] private Slider mouseSensitivitySliderMobile;
         [SerializeField] private Slider volumeSliderDesktop;
         [SerializeField] private Slider volumeSliderMobile;
@@ -55,18 +60,6 @@ namespace Managers
             {
                 Destroy(gameObject);
             }
-        }
-        private void EnableBasketballMode()
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-            if (_playerMovement)
-            {
-                _playerMovement.enabled = true;
-                _playerMovement.SetTouchLookEnabled(true);
-            }
-            if (_interactionManager) _interactionManager.enabled = false;
-            _inputManager.PlayerControls.Player.Enable();
         }
 
         private void Start()
@@ -92,15 +85,16 @@ namespace Managers
 
             if (IsMobilePlatform)
             {
-                if (mouseSensitivitySliderMobile) mouseSensitivitySliderMobile.onValueChanged.AddListener(SetMouseSensitivity);
+                if (mouseSensitivitySliderMobile)
+                    mouseSensitivitySliderMobile.onValueChanged.AddListener(SetMouseSensitivity);
                 if (volumeSliderMobile) volumeSliderMobile.onValueChanged.AddListener(SetVolume);
             }
             else
             {
-                if (mouseSensitivitySliderDesktop) mouseSensitivitySliderDesktop.onValueChanged.AddListener(SetMouseSensitivity);
+                if (mouseSensitivitySliderDesktop)
+                    mouseSensitivitySliderDesktop.onValueChanged.AddListener(SetMouseSensitivity);
                 if (volumeSliderDesktop) volumeSliderDesktop.onValueChanged.AddListener(SetVolume);
             }
-
         }
 
         public void PressEscape()
@@ -203,21 +197,37 @@ namespace Managers
             if (_inputManager) _inputManager.PlayerControls.UI.Cancel.performed -= OnEscapePressed;
         }
 
+// In GameManager.cs, update the SetMode method:
+
         public void SetMode(ControlMode mode)
         {
+            // If switching to a menu or placement mode from basketball mode, exit basketball.
+            if ((mode == ControlMode.Menu || mode == ControlMode.Placement) && currentMode == ControlMode.Basketball)
+            {
+                if (BasketballManager.Instance != null && BasketballManager.Instance.IsInBasketballMode())
+                {
+                    BasketballManager.Instance.ExitShootingMode();
+                }
+            }
+
             currentMode = mode;
             if (_uiManager) _uiManager.OnModeChanged(mode);
+
+            // Notify InteractionManager of mode change
+            if (_interactionManager) _interactionManager.OnModeChanged(mode);
+
             switch (mode)
             {
                 case ControlMode.Camera: EnableCameraMode(); break;
                 case ControlMode.Menu: EnableMenuMode(); break;
                 case ControlMode.Placement: EnablePlacementMode(); break;
                 case ControlMode.ObjectHolding: EnableObjectHoldingMode(); break;
-                case ControlMode.Basketball: EnableBasketballMode(); break; // Add this line
+                case ControlMode.Basketball: EnableBasketballMode(); break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(mode), mode, null);
             }
         }
+
         private void EnableCameraMode()
         {
             Cursor.lockState = CursorLockMode.Locked;
@@ -227,7 +237,8 @@ namespace Managers
                 _playerMovement.enabled = true;
                 _playerMovement.SetTouchLookEnabled(false);
             }
-            if (_interactionManager) _interactionManager.enabled = true;
+
+            // Remove this line: if (_interactionManager) _interactionManager.enabled = true;
             if (_uiManager) _uiManager.SetHoldingUI(false);
             _inputManager.PlayerControls.Player.Enable();
         }
@@ -237,7 +248,7 @@ namespace Managers
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
             if (_playerMovement) _playerMovement.enabled = false;
-            if (_interactionManager) _interactionManager.enabled = false;
+            // Remove this line: if (_interactionManager) _interactionManager.enabled = false;
             _inputManager.PlayerControls.Player.Enable();
         }
 
@@ -246,7 +257,20 @@ namespace Managers
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
             if (_playerMovement) _playerMovement.enabled = true;
-            if (_interactionManager) _interactionManager.enabled = false;
+            // Remove this line: if (_interactionManager) _interactionManager.enabled = false;
+            _inputManager.PlayerControls.Player.Enable();
+        }
+
+        private void EnableBasketballMode()
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+            if (_playerMovement)
+            {
+                _playerMovement.enabled = true;
+                _playerMovement.SetTouchLookEnabled(true);
+            }
+
             _inputManager.PlayerControls.Player.Enable();
         }
 

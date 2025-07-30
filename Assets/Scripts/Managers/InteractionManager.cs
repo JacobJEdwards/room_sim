@@ -52,7 +52,19 @@ namespace Managers
 
         private void Update()
         {
-            HandleInteractionRaycast();
+            // Only handle interactions when in Camera mode
+            if (_gameManager.CurrentMode == GameManager.ControlMode.Camera)
+            {
+                HandleInteractionRaycast();
+            }
+            else
+            {
+                // Clear any existing targets when not in Camera mode
+                if (_currentTargetObject)
+                {
+                    ClearCurrentTarget();
+                }
+            }
         }
 
         private void HandleInteractionRaycast()
@@ -92,12 +104,27 @@ namespace Managers
 
         public void OnInteractInput()
         {
+            // Block interactions when not in Camera mode (except Basketball mode which has its own interaction)
+            if (_gameManager.CurrentMode != GameManager.ControlMode.Camera && 
+                _gameManager.CurrentMode != GameManager.ControlMode.Basketball)
+            {
+                return;
+            }
+
             if (Time.time - _lastInteractionTime < Timeout)
             {
                 return;
             }
 
             _lastInteractionTime = Time.time;
+
+            // Special handling for Basketball mode
+            if (_gameManager.CurrentMode == GameManager.ControlMode.Basketball)
+            {
+                // In basketball mode, 'E' exits the mode
+                BasketballManager.Instance.ExitShootingMode();
+                return;
+            }
 
             if (_currentTargetInteractable != null && _currentTargetInteractable.CanInteract(gameObject))
             {
@@ -107,6 +134,13 @@ namespace Managers
         
         public void OnPickupInput()
         {
+            // Block pickup when not in Camera mode (except for dropping held objects)
+            if (_gameManager.CurrentMode != GameManager.ControlMode.Camera && 
+                _gameManager.CurrentMode != GameManager.ControlMode.ObjectHolding)
+            {
+                return;
+            }
+
             if (Time.time - _lastInteractionTime < Timeout)
             {
                 return;
@@ -114,9 +148,16 @@ namespace Managers
 
             _lastInteractionTime = Time.time;
 
+            // If holding an object, drop it
             if (_gameManager.CurrentHeldObject)
             {
                 _gameManager.CurrentHeldObject.Drop();
+                return;
+            }
+            
+            // Only allow pickup in Camera mode
+            if (_gameManager.CurrentMode != GameManager.ControlMode.Camera)
+            {
                 return;
             }
             
@@ -148,6 +189,13 @@ namespace Managers
         
         public void OnMobilePickupPressed()
         {
+            // Special handling for Basketball mode on mobile
+            if (_gameManager.CurrentMode == GameManager.ControlMode.Basketball)
+            {
+                BasketballManager.Instance.ShootWithFixedForce();
+                return;
+            }
+            
             OnPickupInput();
         }
         
@@ -261,6 +309,16 @@ namespace Managers
                 {
                     _inputManager.PlayerControls.Player.Attack.performed -= _ => OnPickupInput();
                 }
+            }
+        }
+
+        // Add this method to be called when switching modes
+        public void OnModeChanged(GameManager.ControlMode newMode)
+        {
+            // Clear any existing targets when mode changes
+            if (_currentTargetObject && newMode != GameManager.ControlMode.Camera)
+            {
+                ClearCurrentTarget();
             }
         }
     }
