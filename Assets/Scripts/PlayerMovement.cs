@@ -1,4 +1,3 @@
-// Scripts/PlayerMovement.cs
 using Managers;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -7,38 +6,41 @@ using Application = UnityEngine.Device.Application;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
 {
-    [Header("Input Settings")]
-    private InputSystem _inputActions;
+    [Header("Input Settings")] private InputSystem _inputActions;
     private InputAction _moveAction;
     private InputAction _jumpAction;
     private InputAction _lookAction;
     [SerializeField] private Transform head;
 
-    [Header("Movement Settings")]
-    [SerializeField] private float moveSpeed = 5.0f;
-    [SerializeField] private float sprintSpeed = 8.0f;
-    [Tooltip("The force applied to moveable objects when pushing them.")]
-    [SerializeField] private float pushPower = 2.0f;
+    [Header("Movement Settings")] [SerializeField]
+    private float moveSpeed = 5.0f;
 
-    [Header("Jump Settings")]
-    [SerializeField] private float jumpForce = 5.0f;
+    [SerializeField] private float sprintSpeed = 8.0f;
+
+    [Tooltip("The force applied to moveable objects when pushing them.")] [SerializeField]
+    private float pushPower = 2.0f;
+
+    [Header("Jump Settings")] [SerializeField]
+    private float jumpForce = 5.0f;
+
     [SerializeField] private float gravityMultiplier = 2.0f;
     private float _gravity;
 
-    [Header("Ground Check")]
-    [SerializeField] private Transform groundCheckTransform;
+    [Header("Ground Check")] [SerializeField]
+    private Transform groundCheckTransform;
+
     [SerializeField] private float groundDistance = 0.2f;
     [SerializeField] private LayerMask groundLayer;
 
     [SerializeField] private float lookSensitivity = 0.30f;
-    
+
     private CharacterController characterController;
     private InputManager _inputManager = null!;
     private Vector2 _moveInput;
     private bool _jumpRequested;
     private float _currentRotationX;
     private Vector3 _playerVelocity;
-    
+
     private bool _touchLookEnabled = false;
 
     private void Awake()
@@ -58,6 +60,7 @@ public class PlayerMovement : MonoBehaviour
             Debug.LogError("InputManager Instance not found!");
             return;
         }
+
         _inputActions = _inputManager.PlayerControls;
         _moveAction = _inputActions.Player.Move;
         _jumpAction = _inputActions.Player.Jump;
@@ -65,7 +68,7 @@ public class PlayerMovement : MonoBehaviour
 
         _jumpAction.performed += HandleJumpPerformed;
     }
-    
+
     public void SetTouchLookEnabled(bool isEnabled)
     {
         _touchLookEnabled = isEnabled;
@@ -89,7 +92,7 @@ public class PlayerMovement : MonoBehaviour
             var lookControl = _lookAction.activeControl;
             if (lookControl is { device: Touchscreen })
             {
-                return; 
+                return;
             }
         }
 
@@ -128,6 +131,7 @@ public class PlayerMovement : MonoBehaviour
             _playerVelocity.y = jumpForce;
             _jumpRequested = false;
         }
+
         _playerVelocity.y += _gravity * Time.fixedDeltaTime;
         characterController.Move(_playerVelocity * Time.fixedDeltaTime);
     }
@@ -137,34 +141,31 @@ public class PlayerMovement : MonoBehaviour
         _jumpRequested = true;
     }
 
-    // ==========================================================
-    // == MODIFIED: OnControllerColliderHit with Push Logic
-    // ==========================================================
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
-        // Find the Rigidbody on the object we hit
         Rigidbody body = hit.collider.attachedRigidbody;
 
-        // Ensure it's a valid Rigidbody that we can push (i.e., not kinematic)
         if (body == null || body.isKinematic)
         {
             return;
         }
 
-        // We don't want to push objects below us
+        var moveableObject = hit.collider.GetComponent<MoveableObject>();
+        if (moveableObject != null && !moveableObject.CanBePushed)
+        {
+            return;
+        }
+
         if (hit.moveDirection.y < -0.3f)
         {
             return;
         }
 
-        // Calculate the direction to push the object
         Vector3 pushDirection = new Vector3(hit.moveDirection.x, 0, hit.moveDirection.z);
 
-        // Apply the force. The Rigidbody's mass will affect how much it moves.
         body.AddForce(pushDirection * pushPower, ForceMode.VelocityChange);
     }
-    
-    #region Unchanged Helper Methods
+
     private void OnDrawGizmosSelected()
     {
         if (groundCheckTransform)
@@ -174,17 +175,20 @@ public class PlayerMovement : MonoBehaviour
         }
         else
         {
-             Gizmos.color = characterController.isGrounded ? Color.green : Color.red;
-             Gizmos.DrawWireSphere(transform.position + Vector3.down * (characterController.height / 2 - characterController.radius), characterController.radius);
+            Gizmos.color = characterController.isGrounded ? Color.green : Color.red;
+            Gizmos.DrawWireSphere(
+                transform.position + Vector3.down * (characterController.height / 2 - characterController.radius),
+                characterController.radius);
         }
     }
+
     private void OnEnable()
     {
         if (_jumpAction != null) _jumpAction.performed += HandleJumpPerformed;
     }
+
     private void OnDisable()
     {
         if (_jumpAction != null) _jumpAction.performed -= HandleJumpPerformed;
     }
-    #endregion
 }

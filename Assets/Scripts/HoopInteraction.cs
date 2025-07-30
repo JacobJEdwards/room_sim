@@ -56,6 +56,7 @@ public class HoopInteraction : MonoBehaviour, IInteractable, IHasName
         return !_moveableObject.IsHeld && (GameManager.Instance.CurrentMode == GameManager.ControlMode.Camera ||
                                            GameManager.Instance.CurrentMode == GameManager.ControlMode.Basketball);
     }
+    
 
     public string GetInteractionPromptDesktop(GameObject interactor)
     {

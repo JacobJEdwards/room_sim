@@ -1,5 +1,6 @@
 // Scripts/BasketballManager.cs
 
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -29,6 +30,9 @@ namespace Managers
 
         private bool _isCharging;
         private float _chargeStartTime;
+
+        // Track all spawned basketballs for cleanup
+        private readonly List<GameObject> _spawnedBasketballs = new List<GameObject>();
 
         public bool IsInBasketballMode()
         {
@@ -87,15 +91,43 @@ namespace Managers
                 _inputManager.PlayerControls.Player.Attack.canceled -= OnShootCanceled;
             }
 
-            if (_currentBall) Destroy(_currentBall);
+            // Clean up ALL basketballs, not just the current one
+            CleanupAllBasketballs();
 
             _uiManager.ClearHint();
             _gameManager.SetMode(GameManager.ControlMode.Camera);
             _uiManager.SetBasketballMode(false);
 
-
             // Re-enable the main interaction manager
             if (_interactionManager) _interactionManager.enabled = true;
+        }
+
+        private void CleanupAllBasketballs()
+        {
+            // Destroy the current ball if it exists
+            if (_currentBall) 
+            {
+                Destroy(_currentBall);
+                _currentBall = null;
+                _currentBallRb = null;
+            }
+
+            // Clean up the list and destroy any remaining basketballs
+            for (int i = _spawnedBasketballs.Count - 1; i >= 0; i--)
+            {
+                if (_spawnedBasketballs[i] != null)
+                {
+                    Destroy(_spawnedBasketballs[i]);
+                }
+            }
+            _spawnedBasketballs.Clear();
+
+            // Also find any remaining basketballs by tag and destroy them
+            GameObject[] remainingBalls = GameObject.FindGameObjectsWithTag("Basketball");
+            foreach (GameObject ball in remainingBalls)
+            {
+                Destroy(ball);
+            }
         }
 
         private void SpawnBall()
@@ -107,6 +139,9 @@ namespace Managers
             _currentBall = Instantiate(basketballPrefab, spawnPos, Quaternion.identity);
             _currentBallRb = _currentBall.GetComponent<Rigidbody>();
             _currentBallRb.isKinematic = true;
+
+            // Add to our tracking list
+            _spawnedBasketballs.Add(_currentBall);
         }
 
         private void OnShootStarted(InputAction.CallbackContext context)
@@ -134,6 +169,10 @@ namespace Managers
             _currentBallRb.isKinematic = false;
             _currentBallRb.AddForce(shootingOrigin.forward * force);
 
+            // Clear the current ball reference since it's now physics-based
+            _currentBall = null;
+            _currentBallRb = null;
+
             // Respawn a new ball after a short delay
             Invoke(nameof(SpawnBall), 2.5f);
         }
@@ -160,6 +199,15 @@ namespace Managers
             {
                 _currentBall.transform.position = shootingOrigin.position + shootingOrigin.forward * 1.5f;
                 _currentBall.transform.rotation = shootingOrigin.rotation;
+            }
+
+            // Clean up destroyed basketballs from our tracking list
+            for (int i = _spawnedBasketballs.Count - 1; i >= 0; i--)
+            {
+                if (_spawnedBasketballs[i] == null)
+                {
+                    _spawnedBasketballs.RemoveAt(i);
+                }
             }
         }
 

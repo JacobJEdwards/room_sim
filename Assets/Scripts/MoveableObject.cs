@@ -1,5 +1,3 @@
-// Scripts/MoveableObject.cs
-
 using System.Collections;
 using System.Linq;
 using Interfaces;
@@ -17,6 +15,11 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
     [SerializeField] private float moveStepAmount = 0.1f;
     [SerializeField] private float rotationStepAmount = 15f;
     [SerializeField] private bool useGravity = true;
+
+    [Header("Force Settings")]
+    [Tooltip("Whether this object can apply/receive forces from collisions")]
+    [SerializeField]
+    private bool useForce = true;
 
     [Header("Collision & Phasing")]
     [Tooltip("Force applied to other moveable objects when pushing them.")]
@@ -64,6 +67,9 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
     private GameManager GameManager => _gameManager ??= GameManager.Instance;
     private InputManager _inputManager;
     private InputManager InputManager => _inputManager ??= InputManager.Instance;
+
+    // Public property to check if this object can be pushed by others
+    public bool CanBePushed => useForce;
 
     private void Awake()
     {
@@ -155,15 +161,20 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         }
     }
 
-
     private void OnCollisionEnter(Collision collision)
     {
-        HandleCollisionWithMoveableObject(collision);
+        if (useForce)
+        {
+            HandleCollisionWithMoveableObject(collision);
+        }
     }
 
     private void OnCollisionStay(Collision collision)
     {
-        HandleCollisionWithMoveableObject(collision);
+        if (useForce)
+        {
+            HandleCollisionWithMoveableObject(collision);
+        }
     }
 
     private void HandleCollisionWithMoveableObject(Collision collision)
@@ -172,6 +183,9 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
 
         var otherMoveable = collision.gameObject.GetComponent<MoveableObject>();
         if (otherMoveable == null || otherMoveable._isHeld) return;
+
+        // Check if the other object can be pushed
+        if (!otherMoveable.CanBePushed) return;
 
         Vector3 pushDirection = Vector3.zero;
         foreach (ContactPoint contact in collision.contacts)

@@ -21,31 +21,27 @@ namespace Managers
 
         [SerializeField] [Tooltip("The layer(s) the object can be placed upon.")]
         private LayerMask placementLayerMask;
-        
+
         [SerializeField] [Tooltip("How far from the camera the object floats when not over a valid surface.")]
         private float defaultPlacementDistance = 3f;
 
-        [Header("Visuals")]
-        [SerializeField] [Tooltip("Color tint to apply while placing the object.")]
+        [Header("Visuals")] [SerializeField] [Tooltip("Color tint to apply while placing the object.")]
         private Color placementTint = new(1f, 0.5f, 0.5f, 0.75f);
-        
+
         private InputManager? _inputManager;
         private Camera? _mainCamera;
 
         private GameObject? _currentPlacingObject;
         private int _selectedPrefabIndex = -1;
         private bool _isPlacingNonMoveable;
-        
+
         private readonly List<Material> _cachedMaterials = new();
         private readonly List<Color> _originalColors = new();
 
-        [SerializeField]
-        private GameObject objectButtonPanelMobile = null!;
-        [SerializeField]
-        private GameObject objectButtonPanelDesktop = null!;
+        [SerializeField] private GameObject objectButtonPanelMobile = null!;
+        [SerializeField] private GameObject objectButtonPanelDesktop = null!;
 
-        [SerializeField]
-        private PanelButton objectButtonPrefab = null!;
+        [SerializeField] private PanelButton objectButtonPrefab = null!;
 
         private void Awake()
         {
@@ -90,18 +86,19 @@ namespace Managers
             HandlePlacementConfirmationInput();
             HandlePlacementCancellationInput();
         }
-        
+
         private float _lastSpawnTime;
         private const float SpawnCooldown = 0.5f;
-        
+
         public void SelectPrefabAndStartPlacing(int index)
         {
             if (Time.time - _lastSpawnTime < SpawnCooldown)
             {
                 return;
             }
+
             _lastSpawnTime = Time.time;
-            
+
             if (index < 0 || index >= placeablePrefabs.Count || !placeablePrefabs[index])
             {
                 return;
@@ -113,7 +110,7 @@ namespace Managers
             var spawnPos = _mainCamera!.transform.position + (_mainCamera.transform.forward * 2f);
             var newObject = Instantiate(prefabToPlace, spawnPos, Quaternion.identity, curRoom.transform);
             curRoom.AddPlacedObject(newObject);
-            
+
             // The check for Rigidbody and overriding its settings has been removed.
 
             if (newObject.TryGetComponent<MoveableObject>(out var moveable))
@@ -148,7 +145,7 @@ namespace Managers
             {
                 col.enabled = false;
             }
-            
+
             gameManager.SetMode(GameManager.ControlMode.Placement);
             ApplyPlacementTint(_currentPlacingObject);
             _uiManager.SetHint("Click to place / Right-click to cancel");
@@ -159,7 +156,7 @@ namespace Managers
             if (!_currentPlacingObject || !_mainCamera) return;
 
             var ray = _mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
-            
+
             if (Physics.Raycast(ray, out var hit, 100f, placementLayerMask))
             {
                 _currentPlacingObject.transform.position = hit.point + hit.normal * 0.01f;
@@ -197,21 +194,21 @@ namespace Managers
         private void ConfirmNonMoveablePlacement()
         {
             if (!_currentPlacingObject) return;
-            
+
             RemovePlacementTint();
 
             if (_currentPlacingObject.TryGetComponent<Collider>(out var col))
             {
                 col.enabled = true;
             }
-            
+
             gameManager.CurrentRoom.AddPlacedObject(_currentPlacingObject);
             _uiManager.ClearHint();
-            
+
             _currentPlacingObject = null;
             _isPlacingNonMoveable = false;
             _selectedPrefabIndex = -1;
-            
+
             gameManager.SetMode(GameManager.ControlMode.Camera);
         }
 
@@ -221,11 +218,11 @@ namespace Managers
 
             Destroy(_currentPlacingObject);
             _uiManager.ClearHint();
-            
+
             _currentPlacingObject = null;
             _isPlacingNonMoveable = false;
             _selectedPrefabIndex = -1;
-            
+
             gameManager.SetMode(GameManager.ControlMode.Camera);
         }
 
@@ -261,6 +258,7 @@ namespace Managers
                     _cachedMaterials[i].color = _originalColors[i];
                 }
             }
+
             _cachedMaterials.Clear();
             _originalColors.Clear();
         }
