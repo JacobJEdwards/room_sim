@@ -74,8 +74,13 @@ MonoBehaviour:
   penSize: 2
   moveSmoothTime: 0.05
   rotationSpeed: 100
+  wallDetectionDistance: 0.5
+  wallLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
   defaultPromptDesktop: Click to move, Press E to draw
   stopDrawingPromptDesktop: Press E to stop
+  movingPromptDesktop: Moving... (Click to place)
 --- !u!1 &3216012108995669590
 GameObject:
   m_ObjectHideFlags: 0

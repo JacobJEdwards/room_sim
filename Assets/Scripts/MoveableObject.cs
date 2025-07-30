@@ -1,4 +1,5 @@
 // Scripts/MoveableObject.cs
+
 using System.Collections;
 using System.Linq;
 using Interfaces;
@@ -9,24 +10,29 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class MoveableObject : MonoBehaviour, IResetable, IHasName
 {
-    [Header("Movement Settings")]
-    [SerializeField] private float moveSmoothTime = 0.05f;
+    [Header("Movement Settings")] [SerializeField]
+    private float moveSmoothTime = 0.05f;
+
     [SerializeField] private float rotationSpeed = 50f;
     [SerializeField] private float moveStepAmount = 0.1f;
     [SerializeField] private float rotationStepAmount = 15f;
+    [SerializeField] private bool useGravity = true;
 
     [Header("Collision & Phasing")]
     [Tooltip("Force applied to other moveable objects when pushing them.")]
-    [SerializeField] private float pushForce = 1.2f;
-    [Tooltip("Maximum velocity for pushed objects.")]
-    [SerializeField] private float maxPushVelocity = 2f;
+    [SerializeField]
+    private float pushForce = 1.2f;
+
+    [Tooltip("Maximum velocity for pushed objects.")] [SerializeField]
+    private float maxPushVelocity = 2f;
+
     [Tooltip("How long to push against a non-moveable object before phasing through.")]
     private float phaseDelay = 0.5f;
-    [Tooltip("How long the held object's collider is disabled during a phase.")]
-     private float phaseDuration = 0.5f;
 
-    [Header("Audio")]
-    [SerializeField] private AudioSource audioSource;
+    [Tooltip("How long the held object's collider is disabled during a phase.")]
+    private float phaseDuration = 0.5f;
+
+    [Header("Audio")] [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip pickupSound;
     [SerializeField] private AudioClip dropSound;
 
@@ -98,7 +104,8 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
 
         if (distance > 0.001f)
         {
-            RaycastHit[] hits = Physics.BoxCastAll(_rigidbody.position, _collider.bounds.extents, direction.normalized, transform.rotation, distance);
+            RaycastHit[] hits = Physics.BoxCastAll(_rigidbody.position, _collider.bounds.extents, direction.normalized,
+                transform.rotation, distance);
 
             if (hits.Length > 0)
             {
@@ -141,7 +148,7 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
                 _currentPhaseCandidate = null;
             }
         }
-        
+
         if (canMove)
         {
             _rigidbody.MovePosition(newPosition);
@@ -171,6 +178,7 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         {
             pushDirection += contact.normal;
         }
+
         pushDirection = -pushDirection.normalized;
         pushDirection.y = 0;
 
@@ -179,12 +187,12 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         {
             float forceMagnitude = pushForce;
             otherRb.AddForce(pushDirection * forceMagnitude, ForceMode.VelocityChange);
-            
+
             if (otherRb.linearVelocity.magnitude > maxPushVelocity)
             {
                 otherRb.linearVelocity = otherRb.linearVelocity.normalized * maxPushVelocity;
             }
-            
+
             otherRb.AddForce(Vector3.up * 0.05f, ForceMode.VelocityChange);
         }
     }
@@ -260,7 +268,8 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         {
             GameManager.SetMode(GameManager.ControlMode.Camera);
         }
-        _rigidbody.useGravity = true;
+
+        _rigidbody.useGravity = useGravity;
         _rigidbody.isKinematic = false;
         _rigidbody.linearDamping = 0f;
         _rigidbody.angularDamping = 0.05f;
@@ -268,6 +277,7 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
     }
 
     #region Unchanged Code
+
     public void ApplyRotationStep(float direction)
     {
         transform.Rotate(Vector3.right, direction * rotationStepAmount, Space.World);
@@ -314,5 +324,6 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
     public bool IsHeld => _isHeld;
     [SerializeField] private new string name;
     public string Name => name;
+
     #endregion
 }
