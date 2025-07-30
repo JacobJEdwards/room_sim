@@ -78,6 +78,12 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         _mainCamera = Camera.main;
         _initialPosition = transform.position;
         _initialRotation = transform.rotation;
+        
+        // If this object can't be pushed, make it kinematic by default
+        if (!useForce)
+        {
+            _rigidbody.isKinematic = true;
+        }
     }
 
     private void Update()
@@ -163,6 +169,23 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
 
     private void OnCollisionEnter(Collision collision)
     {
+        // Prevent any object from pushing objects that can't be pushed
+        var otherMoveable = collision.gameObject.GetComponent<MoveableObject>();
+        if (otherMoveable != null && !otherMoveable.CanBePushed)
+        {
+            // Cancel out any velocity that would push the unpushable object
+            if (_rigidbody && !_isHeld)
+            {
+                var relativeVelocity = _rigidbody.linearVelocity - (collision.rigidbody ? collision.rigidbody.linearVelocity : Vector3.zero);
+                var normalVelocity = Vector3.Dot(relativeVelocity, collision.contacts[0].normal);
+                if (normalVelocity < 0)
+                {
+                    _rigidbody.linearVelocity += collision.contacts[0].normal * normalVelocity;
+                }
+            }
+            return;
+        }
+
         if (useForce)
         {
             HandleCollisionWithMoveableObject(collision);
@@ -256,7 +279,7 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         GameManager.CurrentHeldObject = this;
         GameManager.SetMode(GameManager.ControlMode.ObjectHolding);
         _rigidbody.useGravity = false;
-        _rigidbody.isKinematic = false;
+        _rigidbody.isKinematic = false; // Always make non-kinematic when held
         _rigidbody.linearDamping = 8f;
         _rigidbody.angularDamping = 8f;
         _targetPosition = transform.position;
@@ -284,7 +307,8 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         }
 
         _rigidbody.useGravity = useGravity;
-        _rigidbody.isKinematic = false;
+        // If this object can't be pushed, make it kinematic when dropped
+        _rigidbody.isKinematic = !useForce;
         _rigidbody.linearDamping = 0f;
         _rigidbody.angularDamping = 0.05f;
         AudioManager.PlaySound(audioSource, dropSound);
