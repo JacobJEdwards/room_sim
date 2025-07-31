@@ -80,7 +80,7 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         _mainCamera = Camera.main;
         _initialPosition = transform.position;
         _initialRotation = transform.rotation;
-        
+
         // If this object can't be pushed, make it kinematic by default
         if (!useForce)
         {
@@ -100,6 +100,7 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
             HandleDesktopInput();
         }
     }
+
 
     private void FixedUpdate()
     {
@@ -124,24 +125,48 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
             if (hits.Length > 0)
             {
                 bool isHittingWall = hits.Any(h => h.collider.CompareTag("wall"));
+                bool isHittingFloor = hits.Any(h => h.collider.CompareTag("Floor"));
                 bool isHittingMoveable = hits.Any(h => h.collider.GetComponent<MoveableObject>() != null);
 
                 if (isHittingWall)
                 {
-                    // Highest priority: if we hit a wall, stop completely and don't phase.
+                    // Hitting a wall - stop completely, no phasing through walls
                     canMove = false;
                     ResetPhaseTimer();
                     _currentPhaseCandidate = hits.First(h => h.collider.CompareTag("wall")).collider;
                 }
+                else if (isHittingFloor)
+                {
+                    // Hitting floor - allow horizontal movement, but prevent sinking into floor
+                    Vector3 horizontalDirection = new Vector3(direction.x, 0, direction.z);
+
+                    // Only allow movement if it's mostly horizontal, or if moving upward
+                    if (direction.y >= -0.1f || horizontalDirection.magnitude > Mathf.Abs(direction.y))
+                    {
+                        canMove = true;
+
+                        // If trying to move down into floor, restrict to horizontal movement only
+                        if (direction.y < -0.1f)
+                        {
+                            newPosition = new Vector3(newPosition.x, _rigidbody.position.y, newPosition.z);
+                        }
+                    }
+                    else
+                    {
+                        canMove = false;
+                    }
+
+                    ResetPhaseTimer();
+                }
                 else if (isHittingMoveable)
                 {
-                    // Second priority: if we hit another moveable object, let physics push it.
+                    // Hitting another moveable object - allow physics to push it
                     canMove = true;
                     ResetPhaseTimer();
                 }
                 else
                 {
-                    // Lowest priority: hit a non-wall, non-moveable object. Start phase timer.
+                    // Hitting other objects (furniture, etc.) - use phasing system
                     _currentPhaseCandidate = hits[0].collider;
                     UpdatePhaseTimer();
 
@@ -157,7 +182,7 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
             }
             else
             {
-                // No obstacles, so reset phasing state.
+                // No obstacles
                 ResetPhaseTimer();
                 _currentPhaseCandidate = null;
             }
@@ -178,13 +203,15 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
             // Cancel out any velocity that would push the unpushable object
             if (_rigidbody && !_isHeld)
             {
-                var relativeVelocity = _rigidbody.linearVelocity - (collision.rigidbody ? collision.rigidbody.linearVelocity : Vector3.zero);
+                var relativeVelocity = _rigidbody.linearVelocity -
+                                       (collision.rigidbody ? collision.rigidbody.linearVelocity : Vector3.zero);
                 var normalVelocity = Vector3.Dot(relativeVelocity, collision.contacts[0].normal);
                 if (normalVelocity < 0)
                 {
                     _rigidbody.linearVelocity += collision.contacts[0].normal * normalVelocity;
                 }
             }
+
             return;
         }
 
@@ -316,7 +343,6 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         AudioManager.PlaySound(audioSource, dropSound);
     }
 
-    #region Unchanged Code
 
     public void ApplyRotationStep(float direction)
     {
@@ -373,6 +399,4 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
     public bool IsHeld => _isHeld;
     [SerializeField] private new string name;
     public string Name => name;
-
-    #endregion
 }
