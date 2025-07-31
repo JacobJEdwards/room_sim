@@ -1,3 +1,5 @@
+// Scripts/Managers/InteractionManager.cs
+
 #nullable enable
 
 using System.Collections.Generic;
@@ -23,6 +25,9 @@ namespace Managers
         private DrawablePostIt? _currentTargetPostIt;
         private PlaceablePoster? _currentTargetPoster;
         private GameObject? _currentTargetObject;
+        
+        // --- ADDED ---
+        private IInteractable? _lockedInteractable;
         
         private readonly List<Color> _oldColors = new();
         private readonly List<Material> _highlightedMaterials = new();
@@ -52,6 +57,17 @@ namespace Managers
 
         private void Update()
         {
+            // --- MODIFIED ---
+            // If an interactable is locked, don't search for new ones
+            if (_lockedInteractable != null)
+            {
+                if (_currentTargetObject)
+                {
+                    ClearCurrentTarget();
+                }
+                return;
+            }
+
             // Only handle interactions when in Camera mode
             if (_gameManager.CurrentMode == GameManager.ControlMode.Camera)
             {
@@ -104,19 +120,29 @@ namespace Managers
 
         public void OnInteractInput()
         {
+            if (Time.time - _lastInteractionTime < Timeout)
+            {
+                return;
+            }
+            _lastInteractionTime = Time.time;
+
+            // --- MODIFIED ---
+            // Prioritize the locked interactable, bypassing game mode checks
+            if (_lockedInteractable != null)
+            {
+                if (_lockedInteractable.CanInteract(gameObject))
+                {
+                    _lockedInteractable.OnInteract(gameObject);
+                }
+                return;
+            }
+            
             // Block interactions when not in Camera mode (except Basketball mode which has its own interaction)
             if (_gameManager.CurrentMode != GameManager.ControlMode.Camera && 
                 _gameManager.CurrentMode != GameManager.ControlMode.Basketball)
             {
                 return;
             }
-
-            if (Time.time - _lastInteractionTime < Timeout)
-            {
-                return;
-            }
-
-            _lastInteractionTime = Time.time;
 
             // Special handling for Basketball mode
             if (_gameManager.CurrentMode == GameManager.ControlMode.Basketball)
@@ -320,6 +346,17 @@ namespace Managers
             {
                 ClearCurrentTarget();
             }
+        }
+        
+        // --- ADDED ---
+        public void LockInteractable(IInteractable interactable)
+        {
+            _lockedInteractable = interactable;
+        }
+
+        public void UnlockInteractable()
+        {
+            _lockedInteractable = null;
         }
     }
 }

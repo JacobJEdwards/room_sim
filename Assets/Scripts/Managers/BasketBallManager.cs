@@ -74,11 +74,11 @@ namespace Managers
             // Set platform-specific hints
             if (GameManager.IsMobilePlatform)
             {
-                _uiManager.SetHint("Tap Throw to charge up shot. Press Exit to stop playing.");
+                _uiManager.SetHint("Tap to charge up shot. Press Exit to stop playing.");
             }
             else
             {
-                _uiManager.SetHint("Hold Click to charge shot. Press E to exit.");
+                _uiManager.SetHint("Hold Click to shoot. Press E to exit.");
             }
 
             SpawnBall();
@@ -284,11 +284,11 @@ namespace Managers
             {
                 if (GameManager.IsMobilePlatform)
                 {
-                    _uiManager.SetHint("Tap Throw to charge up shot. Press Exit to stop playing.");
+                    _uiManager.SetHint("Tap to shoot. Exit to stop playing.");
                 }
                 else
                 {
-                    _uiManager.SetHint("Hold Click to charge shot. Press E to exit.");
+                    _uiManager.SetHint("Hold Click to shoot. E to exit.");
                 }
             }
         }

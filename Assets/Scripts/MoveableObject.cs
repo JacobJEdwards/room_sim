@@ -1,3 +1,5 @@
+// Scripts/MoveableObject.cs
+
 using System.Collections;
 using System.Linq;
 using Interfaces;
@@ -321,19 +323,28 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         transform.Rotate(Vector3.right, direction * rotationStepAmount, Space.World);
     }
 
+    // --- MODIFIED ---
     public void AdjustDistanceStep(float direction)
     {
         if (!_isHeld) return;
-        _heldDistance += direction * moveStepAmount;
-        _heldDistance = Mathf.Clamp(_heldDistance, 1f, 10f);
+        // Move the object along the camera's forward vector
+        Vector3 forward = _mainCamera.transform.forward;
+        transform.position += forward * direction * moveStepAmount;
+        // Update the target position and held distance to prevent snapping back
+        _targetPosition = transform.position;
+        _heldDistance = Vector3.Distance(_mainCamera.transform.position, transform.position);
     }
 
+    // --- MODIFIED ---
     public void ApplyHorizontalMovementStep(float direction)
     {
         if (!_isHeld) return;
+        // Move the object along the camera's right vector
         Vector3 right = _mainCamera.transform.right;
-        right.y = 0;
-        _targetPosition += right.normalized * direction * moveStepAmount;
+        transform.position += right * direction * moveStepAmount;
+        // Update the target position and held distance to prevent snapping back
+        _targetPosition = transform.position;
+        _heldDistance = Vector3.Distance(_mainCamera.transform.position, transform.position);
     }
 
     private void HandleDesktopInput()

@@ -1,3 +1,5 @@
+// Scripts/PlaceablePostit.cs
+
 using UnityEngine;
 using Interfaces;
 using Managers;
@@ -41,6 +43,8 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
     // --- Managers ---
     private UIManager _uiManager;
     private GameManager _gameManager;
+    // --- ADDED ---
+    private InteractionManager _interactionManager;
 
     // --- State Control ---
     private bool _isDrawing = false;
@@ -72,6 +76,8 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
     {
         _uiManager = UIManager.Instance;
         _gameManager = GameManager.Instance;
+        // --- ADDED ---
+        _interactionManager = FindObjectOfType<InteractionManager>();
     }
 
     // --- CLICK TO TOGGLE MOVEMENT (Desktop only) ---
@@ -274,6 +280,8 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
         _isMouseDownForDrawing = false;
         _smoothingBuffer.Clear();
         if (_gameManager) _gameManager.SetMode(GameManager.ControlMode.Menu);
+        // --- ADDED ---
+        if (_interactionManager) _interactionManager.LockInteractable(this);
         
         // Only modify cursor on desktop
         if (!Managers.GameManager.IsMobilePlatform)
@@ -294,6 +302,8 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
     private void StopDrawing()
     {
         if (_gameManager) _gameManager.SetMode(GameManager.ControlMode.Camera);
+        // --- ADDED ---
+        if (_interactionManager) _interactionManager.UnlockInteractable();
         
         // Only modify cursor on desktop
         if (!Managers.GameManager.IsMobilePlatform)
