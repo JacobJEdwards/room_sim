@@ -32,10 +32,10 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
     private float maxPushVelocity = 2f;
 
     [Tooltip("How long to push against a non-moveable object before phasing through.")]
-    private float phaseDelay = 0.5f;
+    private float phaseDelay = 1f;
 
     [Tooltip("How long the held object's collider is disabled during a phase.")]
-    private float phaseDuration = 0.5f;
+    private float phaseDuration = 0.2f;
 
     [Header("Audio")] [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip pickupSound;
@@ -292,6 +292,10 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         _isHeld = true;
 
         _collider.enabled = true;
+        
+        // --- ADDED ---
+        // Give the object a slight nudge forward to prevent it from getting stuck on walls
+        transform.position += _mainCamera.transform.forward * 0.1f;
 
         IsNewlySpawned = isNewlySpawned;
 

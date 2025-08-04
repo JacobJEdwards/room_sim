@@ -14,22 +14,26 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
     [Tooltip("CRITICAL: Drag the MeshCollider from the CHILD object here.")]
     private Collider drawingCollider;
 
-    [Header("Drawing Settings")]
-    [SerializeField] private int textureSize = 512;
+    [Header("Drawing Settings")] [SerializeField]
+    private int textureSize = 512;
+
     [SerializeField] private Color paperColor = new Color(1f, 1f, 0.8f, 1f);
     [SerializeField] private Color penColor = Color.black;
     [SerializeField] private float penSize = 2f;
 
-    [Header("Movement Settings")]
-    [SerializeField] private float moveSmoothTime = 0.05f;
+    [Header("Movement Settings")] [SerializeField]
+    private float moveSmoothTime = 0.05f;
+
     [SerializeField] private float rotationSpeed = 100f;
 
-    [Header("Placement Settings")]
-    [SerializeField] private float wallDetectionDistance = 0.5f;
+    [Header("Placement Settings")] [SerializeField]
+    private float wallDetectionDistance = 0.5f;
+
     [SerializeField] private LayerMask wallLayerMask = -1;
 
-    [Header("Interaction Prompts")]
-    [SerializeField] private string defaultPromptDesktop = "Click to move, Press E to draw";
+    [Header("Interaction Prompts")] [SerializeField]
+    private string defaultPromptDesktop = "Click to move, Press E to draw";
+
     [SerializeField] private string stopDrawingPromptDesktop = "Drawing... (Press E to stop)";
     [SerializeField] private string movingPromptDesktop = "Moving... (Click to place)";
 
@@ -42,7 +46,9 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
 
     // --- Managers ---
     private UIManager _uiManager;
+
     private GameManager _gameManager;
+
     // --- ADDED ---
     private InteractionManager _interactionManager;
 
@@ -67,7 +73,8 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
         _physicsCollider = GetComponent<Collider>();
         _renderer = GetComponentInChildren<Renderer>();
         if (_renderer == null) Debug.LogError("DrawablePostIt requires a Renderer on a child object.");
-        if (drawingCollider == null) Debug.LogError("Please assign the child's MeshCollider to the 'Drawing Collider' field in the Inspector.");
+        if (drawingCollider == null)
+            Debug.LogError("Please assign the child's MeshCollider to the 'Drawing Collider' field in the Inspector.");
         _mainCamera = Camera.main;
         InitializeTextures();
     }
@@ -80,36 +87,35 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
         _interactionManager = FindObjectOfType<InteractionManager>();
     }
 
-    // --- CLICK TO TOGGLE MOVEMENT (Desktop only) ---
+
     private void OnMouseDown()
     {
-        // Only handle mouse clicks on desktop
         if (GameManager.IsMobilePlatform) return;
-        
-        // Ignore clicks if we are in drawing mode
+
         if (_isDrawing) return;
 
-        // Toggle the _isHeld state
         _isHeld = !_isHeld;
 
         if (_isHeld)
         {
-            // --- Just picked up ---
-            // Use a reasonable default distance if the object is far away or just spawned
+            if (_interactionManager) _interactionManager.LockInteractable(this);
+
             float distance = Vector3.Distance(_mainCamera.transform.position, transform.position);
             _heldDistance = (distance < 0.5f || distance > 10f) ? 2f : distance;
             _velocity = Vector3.zero;
-            if(_uiManager) _uiManager.SetHint(movingPromptDesktop);
+
+            if (_uiManager) _uiManager.SetHint(movingPromptDesktop);
         }
         else
         {
-            // --- Just placed down ---
             PlacePostIt();
-             if(_uiManager) _uiManager.ClearHint();
+
+            if (_interactionManager) _interactionManager.UnlockInteractable();
+
+            if (_uiManager) _uiManager.ClearHint();
         }
     }
 
-    // --- PUBLIC METHOD FOR MOBILE TOGGLE ---
     public void ToggleMovement()
     {
         // Ignore if we are in drawing mode
@@ -121,17 +127,35 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
         if (_isHeld)
         {
             // --- Just picked up ---
+            // Lock the interaction manager to this object
+            if (_interactionManager) _interactionManager.LockInteractable(this);
+
             // Use a reasonable default distance if the object is far away or just spawned
             float distance = Vector3.Distance(_mainCamera.transform.position, transform.position);
             _heldDistance = (distance < 0.5f || distance > 10f) ? 2f : distance;
             _velocity = Vector3.zero;
-            if(_uiManager) _uiManager.SetHint("Moving... (Tap Pickup button to place)");
+
+            if (_uiManager)
+            {
+                _uiManager.SetHint("Moving... (Tap Pickup button to place)");
+                // *** Directly tell the UI to show the 'Drop' button ***
+                _uiManager.SetHoldingUI(true);
+            }
         }
         else
         {
             // --- Just placed down ---
             PlacePostIt();
-            if(_uiManager) _uiManager.ClearHint();
+
+            // Unlock the interaction manager
+            if (_interactionManager) _interactionManager.UnlockInteractable();
+
+            if (_uiManager)
+            {
+                _uiManager.ClearHint();
+                // *** Directly tell the UI to hide the 'Drop' button ***
+                _uiManager.SetHoldingUI(false);
+            }
         }
     }
 
@@ -155,12 +179,13 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
         if (_isDrawing) StartDrawing();
         else StopDrawing();
     }
-    
+
     // --- MOVEMENT & PLACEMENT LOGIC ---
     private void PlacePostIt()
     {
         // This is called when we click to drop the object
-        if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, wallDetectionDistance, wallLayerMask))
+        if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, wallDetectionDistance,
+                wallLayerMask))
         {
             transform.position = hit.point + (hit.normal * 0.001f);
             transform.rotation = Quaternion.LookRotation(-hit.normal);
@@ -179,11 +204,12 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
         {
             ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
         }
-        
+
         Vector3 targetPosition = ray.GetPoint(_heldDistance);
         transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref _velocity, moveSmoothTime);
 
-        if (Physics.Raycast(transform.position, _mainCamera.transform.forward, out RaycastHit hit, wallDetectionDistance, wallLayerMask))
+        if (Physics.Raycast(transform.position, _mainCamera.transform.forward, out RaycastHit hit,
+                wallDetectionDistance, wallLayerMask))
         {
             var targetRotation = Quaternion.LookRotation(-hit.normal);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
@@ -198,7 +224,7 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
     {
         // Only handle rotation on desktop
         if (Managers.GameManager.IsMobilePlatform) return;
-        
+
         float scrollInput = Input.GetAxis("Mouse ScrollWheel");
         if (Mathf.Abs(scrollInput) > 0.01f)
         {
@@ -232,7 +258,8 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
 
         if (hit && hitInfo.collider == drawingCollider)
         {
-            var pixelPos = new Vector2(hitInfo.textureCoord.x * textureSize, (1f - hitInfo.textureCoord.y) * textureSize);
+            var pixelPos = new Vector2(hitInfo.textureCoord.x * textureSize,
+                (1f - hitInfo.textureCoord.y) * textureSize);
 
             _smoothingBuffer.Add(pixelPos);
             if (_smoothingBuffer.Count > SMOOTHING_SAMPLES) _smoothingBuffer.RemoveAt(0);
@@ -275,6 +302,7 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
     }
 
     #region Unchanged Code
+
     private void StartDrawing()
     {
         _isMouseDownForDrawing = false;
@@ -282,15 +310,15 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
         if (_gameManager) _gameManager.SetMode(GameManager.ControlMode.Menu);
         // --- ADDED ---
         if (_interactionManager) _interactionManager.LockInteractable(this);
-        
+
         // Only modify cursor on desktop
         if (!Managers.GameManager.IsMobilePlatform)
         {
             Cursor.lockState = CursorLockMode.Confined;
             Cursor.visible = true;
         }
-        
-        if (_uiManager) 
+
+        if (_uiManager)
         {
             if (Managers.GameManager.IsMobilePlatform)
                 _uiManager.SetHint("Touch to draw (Tap Interact to stop)");
@@ -304,14 +332,14 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
         if (_gameManager) _gameManager.SetMode(GameManager.ControlMode.Camera);
         // --- ADDED ---
         if (_interactionManager) _interactionManager.UnlockInteractable();
-        
+
         // Only modify cursor on desktop
         if (!Managers.GameManager.IsMobilePlatform)
         {
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
         }
-        
+
         if (_uiManager) _uiManager.ClearHint();
     }
 
@@ -361,6 +389,7 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
                 texture.SetPixel(x, y, new Color(penColor.r, penColor.g, penColor.b, alpha));
             }
         }
+
         texture.Apply();
         return texture;
     }
@@ -379,7 +408,9 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
         RenderTexture.active = _drawingTexture;
         GL.PushMatrix();
         GL.LoadPixelMatrix(0, textureSize, textureSize, 0);
-        Graphics.DrawTexture(new Rect(position.x - _penTexture.width * 0.5f, position.y - _penTexture.height * 0.5f, _penTexture.width, _penTexture.height), _penTexture);
+        Graphics.DrawTexture(
+            new Rect(position.x - _penTexture.width * 0.5f, position.y - _penTexture.height * 0.5f, _penTexture.width,
+                _penTexture.height), _penTexture);
         GL.PopMatrix();
         RenderTexture.active = null;
     }
@@ -398,7 +429,9 @@ public class DrawablePostIt : MonoBehaviour, IInteractable, IHasName
             _drawingTexture.Release();
             Destroy(_drawingTexture);
         }
+
         if (_penTexture) Destroy(_penTexture);
     }
+
     #endregion
 }

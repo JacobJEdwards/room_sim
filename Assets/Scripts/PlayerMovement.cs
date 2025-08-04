@@ -34,12 +34,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float groundDistance = 0.2f;
     [SerializeField] private LayerMask groundLayer;
     
-    // --- MODIFIED: Added look smoothing settings ---
     [Header("Look Settings")]
     [SerializeField] private float lookSensitivity = 0.30f;
-    [SerializeField] [Range(0.01f, 0.2f)] 
-    [Tooltip("How much to smooth camera movement. Lower values are smoother but add more latency.")]
-    private float lookSmoothing = 0.1f;
 
     private CharacterController characterController;
     private InputManager _inputManager = null!;
@@ -48,9 +44,7 @@ public class PlayerMovement : MonoBehaviour
     private float _currentRotationX;
     private Vector3 _playerVelocity;
     
-    // --- ADDED: Variables for smoothing look input ---
     private Vector2 _lookInput;
-    private Vector2 _smoothedLookInput;
 
     private bool _touchLookEnabled = false;
 
@@ -78,9 +72,6 @@ public class PlayerMovement : MonoBehaviour
         _lookAction = _inputActions.Player.Look;
 
         _jumpAction.performed += HandleJumpPerformed;
-        
-        // --- ADDED: Initialize smoothed look input ---
-        _smoothedLookInput = Vector2.zero;
     }
 
     public void SetTouchLookEnabled(bool isEnabled)
@@ -96,10 +87,7 @@ public class PlayerMovement : MonoBehaviour
     private void Update()
     {
         _moveInput = _moveAction.ReadValue<Vector2>();
-        
-        // --- MODIFIED: Read and smooth the look input before applying it ---
         _lookInput = _lookAction.ReadValue<Vector2>();
-        _smoothedLookInput = Vector2.Lerp(_smoothedLookInput, _lookInput, lookSmoothing);
         
         HandleRotation();
     }
@@ -114,9 +102,8 @@ public class PlayerMovement : MonoBehaviour
                 return;
             }
         }
-
-        // --- MODIFIED: Use the smoothed input vector ---
-        var pitchYaw = _smoothedLookInput;
+        
+        var pitchYaw = _lookInput;
 
         _currentRotationX -= pitchYaw.y * lookSensitivity;
         _currentRotationX = Mathf.Clamp(_currentRotationX, -90f, 90f);
@@ -184,22 +171,6 @@ public class PlayerMovement : MonoBehaviour
         Vector3 pushDirection = new Vector3(hit.moveDirection.x, 0, hit.moveDirection.z);
 
         body.AddForce(pushDirection * pushPower, ForceMode.VelocityChange);
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        if (groundCheckTransform)
-        {
-            Gizmos.color = characterController.isGrounded ? Color.green : Color.red;
-            Gizmos.DrawWireSphere(groundCheckTransform.position, groundDistance);
-        }
-        else
-        {
-            Gizmos.color = characterController.isGrounded ? Color.green : Color.red;
-            Gizmos.DrawWireSphere(
-                transform.position + Vector3.down * (characterController.height / 2 - characterController.radius),
-                characterController.radius);
-        }
     }
 
     private void OnEnable()

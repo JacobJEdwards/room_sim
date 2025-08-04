@@ -413,6 +413,7 @@ namespace Managers
                 buttonText.text = "Pickup";
         }
 
+
         public void SetHoldingUI(bool isHolding)
         {
             if (Application.isMobilePlatform)

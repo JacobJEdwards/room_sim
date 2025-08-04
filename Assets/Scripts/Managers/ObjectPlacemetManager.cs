@@ -1,3 +1,5 @@
+// Scripts/Managers/ObjectPlacemetManager.cs
+
 #nullable enable
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -89,6 +91,13 @@ namespace Managers
 
         private float _lastSpawnTime;
         private const float SpawnCooldown = 0.5f;
+
+        public void PlaceRandomPrefab()
+        {
+            if (placeablePrefabs.Count == 0) return;
+            var randomIndex = Random.Range(0, placeablePrefabs.Count);
+            SelectPrefabAndStartPlacing(randomIndex);
+        }
 
         public void SelectPrefabAndStartPlacing(int index)
         {

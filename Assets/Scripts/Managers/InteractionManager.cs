@@ -55,10 +55,8 @@ namespace Managers
             }
         }
 
-        private void Update()
+ private void Update()
         {
-            // --- MODIFIED ---
-            // If an interactable is locked, don't search for new ones
             if (_lockedInteractable != null)
             {
                 if (_currentTargetObject)
@@ -68,21 +66,18 @@ namespace Managers
                 return;
             }
 
-            // Only handle interactions when in Camera mode
             if (_gameManager.CurrentMode == GameManager.ControlMode.Camera)
             {
                 HandleInteractionRaycast();
             }
             else
             {
-                // Clear any existing targets when not in Camera mode
                 if (_currentTargetObject)
                 {
                     ClearCurrentTarget();
                 }
             }
         }
-
         private void HandleInteractionRaycast()
         {
             if (!_mainCamera || !_uiManager) return;
@@ -338,17 +333,14 @@ namespace Managers
             }
         }
 
-        // Add this method to be called when switching modes
         public void OnModeChanged(GameManager.ControlMode newMode)
         {
-            // Clear any existing targets when mode changes
             if (_currentTargetObject && newMode != GameManager.ControlMode.Camera)
             {
                 ClearCurrentTarget();
             }
         }
         
-        // --- ADDED ---
         public void LockInteractable(IInteractable interactable)
         {
             _lockedInteractable = interactable;
