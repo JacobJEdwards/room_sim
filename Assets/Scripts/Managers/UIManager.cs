@@ -110,11 +110,12 @@ namespace Managers
             CancellableButton interactBtn = mobileInteractButton.GetComponent<CancellableButton>();
             CancellableButton pickupBtn = mobilePickupButton.GetComponent<CancellableButton>();
         
-            if (interactBtn || pickupBtn)
+            if (interactBtn == null || pickupBtn == null)
             {
                 Debug.LogError("Mobile Interact or Pickup button is missing the CancellableButton script.", this);
                 return;
             }
+        
             interactBtn.onCancellableClick.RemoveAllListeners();
             pickupBtn.onCancellableClick.RemoveAllListeners();
         
@@ -127,7 +128,7 @@ namespace Managers
                 if (interactText) interactText.text = "Exit";
         
                 var hoop = FindObjectOfType<HoopInteraction>();
-                if (hoop)
+                if (hoop != null)
                 {
                     interactBtn.onCancellableClick.AddListener(() => hoop.OnInteract(gameObject));
                 }
@@ -139,6 +140,7 @@ namespace Managers
             else
             {
                 ConnectMobileButtons(); 
+
                 var interactText = mobileInteractButton.GetComponentInChildren<TMP_Text>();
                 if (interactText) interactText.text = "Interact";
                 mobileInteractButton.SetActive(false);
@@ -148,22 +150,22 @@ namespace Managers
 
         private void ConnectMobileButtons()
         {
-            if (_interactionManager) return;
+            if (_interactionManager == null) return;
         
-            if (mobileInteractButton)
+            if (mobileInteractButton != null)
             {
                 var cancellableBtn = mobileInteractButton.GetComponent<CancellableButton>();
-                if (cancellableBtn)
+                if (cancellableBtn != null)
                 {
                     cancellableBtn.onCancellableClick.RemoveAllListeners();
                     cancellableBtn.onCancellableClick.AddListener(_interactionManager.OnMobileInteractPressed);
                 }
             }
         
-            if (mobilePickupButton) 
+            if (mobilePickupButton != null)
             {
                 var cancellableBtn = mobilePickupButton.GetComponent<CancellableButton>();
-                if (cancellableBtn)
+                if (cancellableBtn != null)
                 {
                     cancellableBtn.onCancellableClick.RemoveAllListeners();
                     cancellableBtn.onCancellableClick.AddListener(_interactionManager.OnMobilePickupPressed);

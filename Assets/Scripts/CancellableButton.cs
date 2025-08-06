@@ -1,3 +1,5 @@
+// Scripts/CancellableButton.cs
+
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -20,13 +22,10 @@ public class CancellableButton : MonoBehaviour, IPointerDownHandler, IPointerUpH
 
     public void OnPointerUp(PointerEventData eventData)
     {
-        // When the user releases the pointer check if the flag is still True
-        // it will only be true if the pointer was released while still over the element.
         if (_isPointerDown)
         {
             onCancellableClick.Invoke();
         }
-
         _isPointerDown = false;
     }
 }
