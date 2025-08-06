@@ -1,9 +1,7 @@
-// Scripts/Poster.cs
 
 using Interfaces;
 using UnityEngine;
 
-// This ensures the ImageUploader is always on the same object
 [RequireComponent(typeof(ImageUploader))]
 public class Poster : MonoBehaviour, IInteractable
 {

@@ -1,11 +1,8 @@
-// Scripts/Managers/InteractionManager.cs
-
 #nullable enable
 
 using System.Collections.Generic;
 using Interfaces;
 using UnityEngine;
-using Application = UnityEngine.Device.Application;
 
 namespace Managers
 {

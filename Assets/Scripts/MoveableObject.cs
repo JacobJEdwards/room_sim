@@ -1,5 +1,3 @@
-// Scripts/MoveableObject.cs
-
 using System.Collections;
 using System.Linq;
 using Interfaces;
@@ -56,12 +54,10 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
     private Vector3 _initialPosition;
     private Quaternion _initialRotation;
 
-    // Phasing state
     private float _phaseTimer;
     private bool _isPhasing;
     private Collider _currentPhaseCandidate;
 
-    // --- Resilient Manager Properties ---
     private UIManager _uiManager;
     private UIManager UIManager => _uiManager ??= UIManager.Instance;
     private AudioManager _audioManager;
@@ -71,7 +67,6 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
     private InputManager _inputManager;
     private InputManager InputManager => _inputManager ??= InputManager.Instance;
 
-    // Public property to check if this object can be pushed by others
     public bool CanBePushed => useForce;
 
     private void Awake()
@@ -82,7 +77,7 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         _initialPosition = transform.position;
         _initialRotation = transform.rotation;
 
-        // If this object can't be pushed, make it kinematic by default
+        // if this object can't be pushed, make it kinematic by default
         if (!useForce)
         {
             _rigidbody.isKinematic = true;
@@ -131,7 +126,6 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
 
                 if (isHittingWall)
                 {
-                    // Hitting a wall - stop completely, no phasing through walls
                     canMove = false;
                     ResetPhaseTimer();
                     _currentPhaseCandidate = hits.First(h => h.collider.CompareTag("wall")).collider;
@@ -140,15 +134,10 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
                 }
                 else if (isHittingFloor)
                 {
-                    // Hitting floor - allow horizontal movement, but prevent sinking into floor
                     Vector3 horizontalDirection = new Vector3(direction.x, 0, direction.z);
-
-                    // Only allow movement if it's mostly horizontal, or if moving upward
                     if (direction.y >= -0.1f || horizontalDirection.magnitude > Mathf.Abs(direction.y))
                     {
                         canMove = true;
-
-                        // If trying to move down into floor, restrict to horizontal movement only
                         if (direction.y < -0.1f)
                         {
                             newPosition = new Vector3(newPosition.x, _rigidbody.position.y, newPosition.z);
@@ -163,13 +152,11 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
                 }
                 else if (isHittingMoveable)
                 {
-                    // Hitting another moveable object - allow physics to push it
                     canMove = true;
                     ResetPhaseTimer();
                 }
                 else
                 {
-                    // Hitting other objects (furniture, etc.) - use phasing system
                     _currentPhaseCandidate = hits[0].collider;
                     UpdatePhaseTimer();
 
@@ -185,7 +172,6 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
             }
             else
             {
-                // No obstacles
                 ResetPhaseTimer();
                 _currentPhaseCandidate = null;
             }
@@ -203,7 +189,6 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         var otherMoveable = collision.gameObject.GetComponent<MoveableObject>();
         if (otherMoveable != null && !otherMoveable.CanBePushed)
         {
-            // Cancel out any velocity that would push the unpushable object
             if (_rigidbody && !_isHeld)
             {
                 var relativeVelocity = _rigidbody.linearVelocity -
@@ -238,8 +223,6 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
 
         var otherMoveable = collision.gameObject.GetComponent<MoveableObject>();
         if (otherMoveable == null || otherMoveable._isHeld) return;
-
-        // Check if the other object can be pushed
         if (!otherMoveable.CanBePushed) return;
 
         Vector3 pushDirection = Vector3.zero;
@@ -295,8 +278,6 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         _isHeld = true;
 
         _collider.enabled = true;
-        
-        // --- ADDED ---
         // Give the object a slight nudge forward to prevent it from getting stuck on walls
         transform.position += _mainCamera.transform.forward * 0.1f;
 
@@ -356,26 +337,20 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
         transform.Rotate(Vector3.right, direction * rotationStepAmount, Space.World);
     }
 
-    // --- MODIFIED ---
     public void AdjustDistanceStep(float direction)
     {
         if (!_isHeld) return;
-        // Move the object along the camera's forward vector
         Vector3 forward = _mainCamera.transform.forward;
         transform.position += forward * direction * moveStepAmount;
-        // Update the target position and held distance to prevent snapping back
         _targetPosition = transform.position;
         _heldDistance = Vector3.Distance(_mainCamera.transform.position, transform.position);
     }
 
-    // --- MODIFIED ---
     public void ApplyHorizontalMovementStep(float direction)
     {
         if (!_isHeld) return;
-        // Move the object along the camera's right vector
         Vector3 right = _mainCamera.transform.right;
         transform.position += right * direction * moveStepAmount;
-        // Update the target position and held distance to prevent snapping back
         _targetPosition = transform.position;
         _heldDistance = Vector3.Distance(_mainCamera.transform.position, transform.position);
     }

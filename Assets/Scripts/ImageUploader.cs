@@ -6,11 +6,9 @@ using UnityEngine.Events;
 
 public class ImageUploader : MonoBehaviour
 {
-    // This event will be invoked when an image is successfully uploaded.
     public UnityEvent<Texture2D> OnImageUploaded;
 
 #if UNITY_EDITOR
-    // This field will only be visible in the Unity Editor
     [Header("Editor Testing")]
     [Tooltip("Assign a texture here to simulate an upload in the Editor.")]
     public Texture2D testTexture;
@@ -27,7 +25,6 @@ public class ImageUploader : MonoBehaviour
         Debug.Log("Calling JavaScript UploadImage function...");
         UploadImage(gameObject.name, "OnImageReceived");
 #else
-        // if in the Editor, use the test texture instead.
         if (testTexture)
         {
             Debug.Log("Using test texture in Editor");
@@ -40,7 +37,6 @@ public class ImageUploader : MonoBehaviour
 #endif
     }
 
-    // This overload is for the Editor test.
     public void OnImageReceived(Texture2D texture)
     {
         Debug.Log($"OnImageReceived called with texture: {texture.width}x{texture.height}");
@@ -49,7 +45,6 @@ public class ImageUploader : MonoBehaviour
         OnImageUploaded?.Invoke(texture);
     }
 
-    // This method is called from the browser with the image data.
     public void OnImageReceived(string base64Image)
     {
         Debug.Log($"OnImageReceived called from JavaScript. Base64 length: {base64Image.Length}");
@@ -67,7 +62,6 @@ public class ImageUploader : MonoBehaviour
                 Debug.Log($"Successfully loaded image: {texture.width}x{texture.height}");
                 texture.Apply();
                 
-                // invoke the event passing the new texture to any listeners.
                 OnImageUploaded?.Invoke(texture);
             }
             else

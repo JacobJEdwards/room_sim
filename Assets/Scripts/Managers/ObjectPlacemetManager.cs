@@ -1,5 +1,3 @@
-// Scripts/Managers/ObjectPlacemetManager.cs
-
 #nullable enable
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -119,8 +117,6 @@ namespace Managers
             var spawnPos = _mainCamera!.transform.position + (_mainCamera.transform.forward * 2f);
             var newObject = Instantiate(prefabToPlace, spawnPos, Quaternion.identity, curRoom.transform);
             curRoom.AddPlacedObject(newObject);
-
-            // The check for Rigidbody and overriding its settings has been removed.
 
             if (newObject.TryGetComponent<MoveableObject>(out var moveable))
             {

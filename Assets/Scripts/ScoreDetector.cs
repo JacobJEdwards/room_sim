@@ -10,13 +10,10 @@ public class ScoreDetector : MonoBehaviour
     [SerializeField] private AudioClip scoreSound;
     private void OnTriggerEnter(Collider other)
     {
-        // Check if the object that entered the trigger is a basketball
         if (other.CompareTag("Basketball"))
         {
-            // Tell the manager we scored!
             BasketballManager.Instance.OnScore();
 
-            // Play a satisfying sound
             if(audioSource && scoreSound)
             {
                 AudioManager.Instance.PlaySound(audioSource, scoreSound);

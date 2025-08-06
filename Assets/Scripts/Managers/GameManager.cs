@@ -24,7 +24,7 @@ namespace Managers
         [SerializeField] private ControlMode currentMode = ControlMode.Camera;
 
         [Header("Player")]
-        public GameObject player; // Made public for easier access
+        public GameObject player; 
         private PlayerMovement _playerMovement;
         [SerializeField] private RoomManager roomManager;
 
@@ -145,8 +145,6 @@ namespace Managers
             if (_playerMovement)
             {
                 _playerMovement.enabled = true;
-                // No longer need to call SetTouchLookEnabled
-                // _playerMovement.SetTouchLookEnabled(true);
             }
         }
 
@@ -230,8 +228,6 @@ namespace Managers
             if (_playerMovement)
             {
                 _playerMovement.enabled = true;
-                // No longer need to call SetTouchLookEnabled
-                // _playerMovement.SetTouchLookEnabled(false);
             }
             if (_uiManager) _uiManager.SetHoldingUI(false);
             _inputManager.PlayerControls.Player.Enable();
@@ -260,8 +256,6 @@ namespace Managers
             if (_playerMovement)
             {
                 _playerMovement.enabled = true;
-                 // No longer need to call SetTouchLookEnabled
-                // _playerMovement.SetTouchLookEnabled(true);
             }
             _inputManager.PlayerControls.Player.Enable();
         }

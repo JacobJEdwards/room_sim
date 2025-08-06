@@ -22,7 +22,6 @@ public class MusicObject : MonoBehaviour, IInteractable
     [Tooltip("The audio clip that will be played when the object is interacted with.")]
     private AudioClip musicClip;
 
-    // --- Private References ---
     private AudioSource _audioSource;
     private AudioManager _audioManager;
     private MoveableObject _moveableObject;
@@ -30,20 +29,17 @@ public class MusicObject : MonoBehaviour, IInteractable
 
     private void Awake()
     {
-        // This script requires these components to function, so we grab them here.
-        // The [RequireComponent] attributes ensure they are always present in the editor.
         _audioSource = GetComponent<AudioSource>();
         _moveableObject = GetComponent<MoveableObject>();
     }
 
     private void Start()
     {
-        // Get the singleton instance of the AudioManager to handle sound playback.
         _audioManager = AudioManager.Instance;
         if (!_audioManager)
         {
             Debug.LogError("MusicObject requires the AudioManager to be present in the scene.", this);
-            enabled = false; // Disable script if AudioManager is missing.
+            enabled = false; 
         }
     }
 

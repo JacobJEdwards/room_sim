@@ -1,5 +1,3 @@
-// Scripts/Managers/UIManager.cs
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -112,13 +110,11 @@ namespace Managers
             CancellableButton interactBtn = mobileInteractButton.GetComponent<CancellableButton>();
             CancellableButton pickupBtn = mobilePickupButton.GetComponent<CancellableButton>();
         
-            if (interactBtn == null || pickupBtn == null)
+            if (interactBtn || pickupBtn)
             {
                 Debug.LogError("Mobile Interact or Pickup button is missing the CancellableButton script.", this);
                 return;
             }
-        
-            // Always clear listeners before adding new ones.
             interactBtn.onCancellableClick.RemoveAllListeners();
             pickupBtn.onCancellableClick.RemoveAllListeners();
         
@@ -127,13 +123,11 @@ namespace Managers
         
             if (isActive)
             {
-                // --- Configure for BASKETBALL MODE ---
                 var interactText = mobileInteractButton.GetComponentInChildren<TMP_Text>();
                 if (interactText) interactText.text = "Exit";
         
-                // The "Exit" button should simply toggle the basketball mode by calling the hoop's interaction.
                 var hoop = FindObjectOfType<HoopInteraction>();
-                if (hoop != null)
+                if (hoop)
                 {
                     interactBtn.onCancellableClick.AddListener(() => hoop.OnInteract(gameObject));
                 }
@@ -144,14 +138,9 @@ namespace Managers
             }
             else
             {
-                // --- Reset to NORMAL MODE ---
-                ConnectMobileButtons(); // Re-wire the default listeners.
-
-                // This is the fix: Reset the button text.
+                ConnectMobileButtons(); 
                 var interactText = mobileInteractButton.GetComponentInChildren<TMP_Text>();
                 if (interactText) interactText.text = "Interact";
-                
-                // Hide buttons by default; InteractionManager will show them.
                 mobileInteractButton.SetActive(false);
                 mobilePickupButton.SetActive(false);
             }
@@ -159,22 +148,22 @@ namespace Managers
 
         private void ConnectMobileButtons()
         {
-            if (_interactionManager == null) return;
+            if (_interactionManager) return;
         
-            if (mobileInteractButton != null)
+            if (mobileInteractButton)
             {
                 var cancellableBtn = mobileInteractButton.GetComponent<CancellableButton>();
-                if (cancellableBtn != null)
+                if (cancellableBtn)
                 {
                     cancellableBtn.onCancellableClick.RemoveAllListeners();
                     cancellableBtn.onCancellableClick.AddListener(_interactionManager.OnMobileInteractPressed);
                 }
             }
         
-            if (mobilePickupButton != null)
+            if (mobilePickupButton) 
             {
                 var cancellableBtn = mobilePickupButton.GetComponent<CancellableButton>();
-                if (cancellableBtn != null)
+                if (cancellableBtn)
                 {
                     cancellableBtn.onCancellableClick.RemoveAllListeners();
                     cancellableBtn.onCancellableClick.AddListener(_interactionManager.OnMobilePickupPressed);
