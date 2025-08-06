@@ -1,7 +1,6 @@
 // Scripts/Managers/GameManager.cs
 
 using System;
-using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
@@ -21,12 +20,12 @@ namespace Managers
             Basketball
         }
 
-        [Header("Mode Management")] [SerializeField]
-        private ControlMode currentMode = ControlMode.Camera;
+        [Header("Mode Management")]
+        [SerializeField] private ControlMode currentMode = ControlMode.Camera;
 
-        [Header("Player")] [SerializeField] private GameObject player;
+        [Header("Player")]
+        public GameObject player; // Made public for easier access
         private PlayerMovement _playerMovement;
-        private PlayerController _playerController;
         [SerializeField] private RoomManager roomManager;
 
         private UIManager _uiManager;
@@ -42,9 +41,8 @@ namespace Managers
         public Room CurrentRoom => roomManager.CurrentRoom;
         public MoveableObject CurrentHeldObject { get; set; }
 
-        [FormerlySerializedAs("_mouseSensitivitySlider")] [SerializeField]
-        private Slider mouseSensitivitySliderDesktop;
-
+        [FormerlySerializedAs("_mouseSensitivitySlider")]
+        [SerializeField] private Slider mouseSensitivitySliderDesktop;
         [SerializeField] private Slider mouseSensitivitySliderMobile;
         [SerializeField] private Slider volumeSliderDesktop;
         [SerializeField] private Slider volumeSliderMobile;
@@ -70,10 +68,10 @@ namespace Managers
             _audioManager = AudioManager.Instance;
 
             _playerMovement = player.GetComponent<PlayerMovement>();
-            _playerController = player.GetComponent<PlayerController>();
 
-            if (!_playerMovement || !_playerController)
+            if (!_playerMovement)
             {
+                Debug.LogError("PlayerMovement component not found on the player object. Disabling GameManager.", this);
                 enabled = false;
                 return;
             }
@@ -87,13 +85,15 @@ namespace Managers
             {
                 if (mouseSensitivitySliderMobile)
                     mouseSensitivitySliderMobile.onValueChanged.AddListener(SetMouseSensitivity);
-                if (volumeSliderMobile) volumeSliderMobile.onValueChanged.AddListener(SetVolume);
+                if (volumeSliderMobile) 
+                    volumeSliderMobile.onValueChanged.AddListener(SetVolume);
             }
             else
             {
                 if (mouseSensitivitySliderDesktop)
                     mouseSensitivitySliderDesktop.onValueChanged.AddListener(SetMouseSensitivity);
-                if (volumeSliderDesktop) volumeSliderDesktop.onValueChanged.AddListener(SetVolume);
+                if (volumeSliderDesktop) 
+                    volumeSliderDesktop.onValueChanged.AddListener(SetVolume);
             }
         }
 
@@ -102,19 +102,15 @@ namespace Managers
             switch (currentMode)
             {
                 case ControlMode.Menu:
-                {
                     _uiManager.CloseAllPanels();
                     SetMode(ControlMode.Camera);
                     break;
-                }
                 case ControlMode.Camera:
                 case ControlMode.ObjectHolding:
                 case ControlMode.Placement:
                 default:
-                {
                     _uiManager.ToggleSettingsAndControlsPanels();
                     break;
-                }
             }
         }
 
@@ -123,19 +119,15 @@ namespace Managers
             switch (currentMode)
             {
                 case ControlMode.Menu:
-                {
                     _uiManager.CloseAllPanels();
                     SetMode(ControlMode.Camera);
                     break;
-                }
                 case ControlMode.Camera:
                 case ControlMode.ObjectHolding:
                 case ControlMode.Placement:
                 default:
-                {
                     _uiManager.ToggleSettingsAndControlsPanels();
                     break;
-                }
             }
         }
 
@@ -153,7 +145,8 @@ namespace Managers
             if (_playerMovement)
             {
                 _playerMovement.enabled = true;
-                _playerMovement.SetTouchLookEnabled(true);
+                // No longer need to call SetTouchLookEnabled
+                // _playerMovement.SetTouchLookEnabled(true);
             }
         }
 
@@ -179,29 +172,33 @@ namespace Managers
 
         public void SetVolume(float volume)
         {
-            if (_audioManager) _audioManager.SetMusicVolume(volume);
-            if (_audioManager) _audioManager.SetSoundVolume(volume);
+            if (_audioManager)
+            {
+                _audioManager.SetMusicVolume(volume);
+                _audioManager.SetSoundVolume(volume);
+            }
 
-            if (IsMobilePlatform && volumeSliderMobile) volumeSliderMobile.value = volume;
-            else if (volumeSliderDesktop) volumeSliderDesktop.value = volume;
+            if (IsMobilePlatform && volumeSliderMobile) 
+                volumeSliderMobile.value = volume;
+            else if (volumeSliderDesktop) 
+                volumeSliderDesktop.value = volume;
         }
 
         public void SetMouseSensitivity(float sensitivity)
         {
             PlayerPrefs.SetFloat("MouseSensitivity", sensitivity);
-            if (_playerMovement) _playerMovement.SetMouseSensitivity(sensitivity);
+            if (_playerMovement) 
+                _playerMovement.SetMouseSensitivity(sensitivity);
         }
 
         private void OnDestroy()
         {
-            if (_inputManager) _inputManager.PlayerControls.UI.Cancel.performed -= OnEscapePressed;
+            if (_inputManager) 
+                _inputManager.PlayerControls.UI.Cancel.performed -= OnEscapePressed;
         }
-
-// In GameManager.cs, update the SetMode method:
 
         public void SetMode(ControlMode mode)
         {
-            // If switching to a menu or placement mode from basketball mode, exit basketball.
             if ((mode == ControlMode.Menu || mode == ControlMode.Placement) && currentMode == ControlMode.Basketball)
             {
                 if (BasketballManager.Instance != null && BasketballManager.Instance.IsInBasketballMode())
@@ -212,8 +209,6 @@ namespace Managers
 
             currentMode = mode;
             if (_uiManager) _uiManager.OnModeChanged(mode);
-
-            // Notify InteractionManager of mode change
             if (_interactionManager) _interactionManager.OnModeChanged(mode);
 
             switch (mode)
@@ -235,10 +230,9 @@ namespace Managers
             if (_playerMovement)
             {
                 _playerMovement.enabled = true;
-                _playerMovement.SetTouchLookEnabled(false);
+                // No longer need to call SetTouchLookEnabled
+                // _playerMovement.SetTouchLookEnabled(false);
             }
-
-            // Remove this line: if (_interactionManager) _interactionManager.enabled = true;
             if (_uiManager) _uiManager.SetHoldingUI(false);
             _inputManager.PlayerControls.Player.Enable();
         }
@@ -248,7 +242,6 @@ namespace Managers
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
             if (_playerMovement) _playerMovement.enabled = false;
-            // Remove this line: if (_interactionManager) _interactionManager.enabled = false;
             _inputManager.PlayerControls.Player.Enable();
         }
 
@@ -257,7 +250,6 @@ namespace Managers
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
             if (_playerMovement) _playerMovement.enabled = true;
-            // Remove this line: if (_interactionManager) _interactionManager.enabled = false;
             _inputManager.PlayerControls.Player.Enable();
         }
 
@@ -268,9 +260,9 @@ namespace Managers
             if (_playerMovement)
             {
                 _playerMovement.enabled = true;
-                _playerMovement.SetTouchLookEnabled(true);
+                 // No longer need to call SetTouchLookEnabled
+                // _playerMovement.SetTouchLookEnabled(true);
             }
-
             _inputManager.PlayerControls.Player.Enable();
         }
 

@@ -26,7 +26,6 @@ namespace Managers
         private PlaceablePoster? _currentTargetPoster;
         private GameObject? _currentTargetObject;
         
-        // --- ADDED ---
         private IInteractable? _lockedInteractable;
         
         private readonly List<Color> _oldColors = new();
@@ -55,7 +54,7 @@ namespace Managers
             }
         }
 
- private void Update()
+        private void Update()
         {
             if (_lockedInteractable != null)
             {
@@ -78,6 +77,7 @@ namespace Managers
                 }
             }
         }
+        
         private void HandleInteractionRaycast()
         {
             if (!_mainCamera || !_uiManager) return;
@@ -120,31 +120,30 @@ namespace Managers
                 return;
             }
             _lastInteractionTime = Time.time;
-
-            // --- MODIFIED ---
-            // Prioritize the locked interactable, bypassing game mode checks
+            
             if (_lockedInteractable != null)
             {
-                if (_lockedInteractable.CanInteract(gameObject))
+                if (_lockedInteractable is DrawablePostIt postIt && postIt.IsDrawing)
+                {
+                    postIt.OnInteract(gameObject);
+                }
+                else if (_lockedInteractable.CanInteract(gameObject))
                 {
                     _lockedInteractable.OnInteract(gameObject);
                 }
                 return;
             }
             
-            // Block interactions when not in Camera mode (except Basketball mode which has its own interaction)
             if (_gameManager.CurrentMode != GameManager.ControlMode.Camera && 
                 _gameManager.CurrentMode != GameManager.ControlMode.Basketball)
             {
                 return;
             }
-
-            // Special handling for Basketball mode
+            
             if (_gameManager.CurrentMode == GameManager.ControlMode.Basketball)
             {
-                // In basketball mode, 'E' exits the mode
                 BasketballManager.Instance.ExitShootingMode();
-                return;
+                return; // <-- This is the added line
             }
 
             if (_currentTargetInteractable != null && _currentTargetInteractable.CanInteract(gameObject))
@@ -155,51 +154,38 @@ namespace Managers
         
         public void OnPickupInput()
         {
-            // Block pickup when not in Camera mode (except for dropping held objects)
-            if (_gameManager.CurrentMode != GameManager.ControlMode.Camera && 
-                _gameManager.CurrentMode != GameManager.ControlMode.ObjectHolding)
-            {
-                return;
-            }
-
-            if (Time.time - _lastInteractionTime < Timeout)
-            {
-                return;
-            }
-
+            if (Time.time - _lastInteractionTime < Timeout) return;
             _lastInteractionTime = Time.time;
-
-            // If holding an object, drop it
+        
             if (_gameManager.CurrentHeldObject)
             {
                 _gameManager.CurrentHeldObject.Drop();
                 return;
             }
-            
-            // Only allow pickup in Camera mode
-            if (_gameManager.CurrentMode != GameManager.ControlMode.Camera)
+        
+            if (_lockedInteractable is DrawablePostIt { IsHeld: true } heldPostIt)
             {
+                heldPostIt.ToggleMovement();
                 return;
             }
-            
-            // Handle special cases for mobile
-            if (GameManager.IsMobilePlatform)
-            {
-                if (_currentTargetPostIt != null)
-                {
-                    _currentTargetPostIt.ToggleMovement();
-                    return;
-                }
-                else if (_currentTargetPoster != null)
-                {
-                    _currentTargetPoster.ToggleMovement();
-                    return;
-                }
-            }
-            
+        
+            if (_gameManager.CurrentMode != GameManager.ControlMode.Camera) return;
+        
             if (_currentTargetMoveable)
             {
                 _currentTargetMoveable.Pickup();
+                return;
+            }
+            
+            if (_currentTargetPostIt)
+            {
+                _currentTargetPostIt.ToggleMovement();
+                return;
+            }
+            
+            if (_currentTargetPoster)
+            {
+                _currentTargetPoster.ToggleMovement();
             }
         }
 
@@ -210,7 +196,6 @@ namespace Managers
         
         public void OnMobilePickupPressed()
         {
-            // Special handling for Basketball mode on mobile
             if (_gameManager.CurrentMode == GameManager.ControlMode.Basketball)
             {
                 BasketballManager.Instance.ShootWithFixedForce();
@@ -218,6 +203,11 @@ namespace Managers
             }
             
             OnPickupInput();
+        }
+        
+        public void RefreshInteractionUI()
+        {
+            UpdateUIForTarget();
         }
         
         private void UpdateUIForTarget()
@@ -237,7 +227,6 @@ namespace Managers
             string hint = "";
             if (GameManager.IsMobilePlatform)
             {
-                // Mobile hints
                 var hints = new List<string>();
                 if (isInteractable && _currentTargetInteractable != null && _currentTargetInteractable.CanInteract(gameObject))
                 {
@@ -251,7 +240,6 @@ namespace Managers
             }
             else
             {
-                // Desktop hints  
                 var hints = new List<string>();
                 if (isInteractable && _currentTargetInteractable != null && _currentTargetInteractable.CanInteract(gameObject))
                 {
@@ -270,7 +258,6 @@ namespace Managers
             
             _uiManager.SetHint(hint);
             
-            // Show appropriate buttons on mobile
             if (GameManager.IsMobilePlatform)
             {
                 var showInteract = isInteractable && _currentTargetInteractable != null && _currentTargetInteractable.CanInteract(gameObject);

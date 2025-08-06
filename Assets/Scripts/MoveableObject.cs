@@ -33,6 +33,7 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
 
     [Tooltip("How long to push against a non-moveable object before phasing through.")]
     private float phaseDelay = 1f;
+    private float unstickForce = 3.0f;
 
     [Tooltip("How long the held object's collider is disabled during a phase.")]
     private float phaseDuration = 0.2f;
@@ -134,6 +135,8 @@ public class MoveableObject : MonoBehaviour, IResetable, IHasName
                     canMove = false;
                     ResetPhaseTimer();
                     _currentPhaseCandidate = hits.First(h => h.collider.CompareTag("wall")).collider;
+                    Vector3 directionToPlayer = (_mainCamera.transform.position - _rigidbody.position).normalized;
+                    _rigidbody.AddForce(directionToPlayer * unstickForce);
                 }
                 else if (isHittingFloor)
                 {

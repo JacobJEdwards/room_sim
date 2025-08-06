@@ -73,6 +73,8 @@ namespace Managers
         private GameObject _activeHintPanel;
         private TMP_Text _activeHintText;
         private GameObject _activeSettings;
+        
+        private bool _isHoldingForMobile;
 
         private void Awake()
         {
@@ -95,7 +97,7 @@ namespace Managers
         private void Start()
         {
             _gameManager = GameManager.Instance;
-            _interactionManager = FindFirstObjectByType<InteractionManager>();
+            _interactionManager = FindObjectOfType<InteractionManager>();
 
             if (GameManager.IsMobilePlatform)
             {
@@ -106,78 +108,76 @@ namespace Managers
         public void SetBasketballMode(bool isActive)
         {
             if (!GameManager.IsMobilePlatform) return;
-
-            if (leftThumbstick) leftThumbstick.SetActive(!isActive);
-            if (rightThumbstick) rightThumbstick.SetActive(!isActive);
-
+        
+            CancellableButton interactBtn = mobileInteractButton.GetComponent<CancellableButton>();
+            CancellableButton pickupBtn = mobilePickupButton.GetComponent<CancellableButton>();
+        
+            if (interactBtn == null || pickupBtn == null)
+            {
+                Debug.LogError("Mobile Interact or Pickup button is missing the CancellableButton script.", this);
+                return;
+            }
+        
+            // Always clear listeners before adding new ones.
+            interactBtn.onCancellableClick.RemoveAllListeners();
+            pickupBtn.onCancellableClick.RemoveAllListeners();
+        
             mobileInteractButton.SetActive(isActive);
+            mobilePickupButton.SetActive(isActive);
+        
             if (isActive)
             {
+                // --- Configure for BASKETBALL MODE ---
                 var interactText = mobileInteractButton.GetComponentInChildren<TMP_Text>();
                 if (interactText) interactText.text = "Exit";
-                Button interactBtn = mobileInteractButton.GetComponent<Button>();
-                if (interactBtn != null)
+        
+                // The "Exit" button should simply toggle the basketball mode by calling the hoop's interaction.
+                var hoop = FindObjectOfType<HoopInteraction>();
+                if (hoop != null)
                 {
-                    interactBtn.onClick.RemoveAllListeners();
-                    interactBtn.onClick.AddListener(() =>
-                    {
-                        var hoop = FindObjectOfType<HoopInteraction>();
-                        if (hoop != null) hoop.OnInteract(gameObject);
-                    });
+                    interactBtn.onCancellableClick.AddListener(() => hoop.OnInteract(gameObject));
                 }
-            }
-
-            mobilePickupButton.SetActive(isActive);
-            var pickupBtnComp = mobilePickupButton.GetComponent<Button>();
-            if (pickupBtnComp)
-            {
+        
                 var pickupText = mobilePickupButton.GetComponentInChildren<TMP_Text>();
-                pickupBtnComp.onClick.RemoveAllListeners();
+                if (pickupText) pickupText.text = "Throw";
+                pickupBtn.onCancellableClick.AddListener(() => BasketballManager.Instance.ShootWithFixedForce());
+            }
+            else
+            {
+                // --- Reset to NORMAL MODE ---
+                ConnectMobileButtons(); // Re-wire the default listeners.
 
-                if (isActive)
-                {
-                    if (pickupText) pickupText.text = "Throw";
-                    pickupBtnComp.onClick.AddListener(() => BasketballManager.Instance.ShootWithFixedForce());
-                }
-                else
-                {
-                    if (pickupText) pickupText.text = "Pickup";
-                    pickupBtnComp.onClick.AddListener(() => _interactionManager.OnMobilePickupPressed());
-
-                    var interactText = mobileInteractButton.GetComponentInChildren<TMP_Text>();
-                    if (interactText) interactText.text = "Interact";
-
-                    mobileInteractButton.SetActive(false);
-                    mobilePickupButton.SetActive(false);
-                }
+                // This is the fix: Reset the button text.
+                var interactText = mobileInteractButton.GetComponentInChildren<TMP_Text>();
+                if (interactText) interactText.text = "Interact";
+                
+                // Hide buttons by default; InteractionManager will show them.
+                mobileInteractButton.SetActive(false);
+                mobilePickupButton.SetActive(false);
             }
         }
 
-
         private void ConnectMobileButtons()
         {
-            if (_interactionManager == null)
-            {
-                return;
-            }
-
+            if (_interactionManager == null) return;
+        
             if (mobileInteractButton != null)
             {
-                Button interactBtn = mobileInteractButton.GetComponent<Button>();
-                if (interactBtn != null)
+                var cancellableBtn = mobileInteractButton.GetComponent<CancellableButton>();
+                if (cancellableBtn != null)
                 {
-                    interactBtn.onClick.RemoveAllListeners();
-                    interactBtn.onClick.AddListener(() => _interactionManager.OnMobileInteractPressed());
+                    cancellableBtn.onCancellableClick.RemoveAllListeners();
+                    cancellableBtn.onCancellableClick.AddListener(_interactionManager.OnMobileInteractPressed);
                 }
             }
-
+        
             if (mobilePickupButton != null)
             {
-                Button pickupBtn = mobilePickupButton.GetComponent<Button>();
-                if (pickupBtn != null)
+                var cancellableBtn = mobilePickupButton.GetComponent<CancellableButton>();
+                if (cancellableBtn != null)
                 {
-                    pickupBtn.onClick.RemoveAllListeners();
-                    pickupBtn.onClick.AddListener(() => _interactionManager.OnMobilePickupPressed());
+                    cancellableBtn.onCancellableClick.RemoveAllListeners();
+                    cancellableBtn.onCancellableClick.AddListener(_interactionManager.OnMobilePickupPressed);
                 }
             }
         }
@@ -204,6 +204,8 @@ namespace Managers
             {
                 if (mobileCanvas) mobileCanvas.SetActive(true);
                 if (desktopCanvas) desktopCanvas.SetActive(false);
+
+                if (rightThumbstick) rightThumbstick.SetActive(false);
 
                 _activeRoomPanel = mobileRoomPanel;
                 _activeControlsPanel = mobileControlsPanel;
@@ -405,6 +407,13 @@ namespace Managers
         public void ShowInteractionButtons(bool showInteract, bool showPickup)
         {
             if (!Application.isMobilePlatform) return;
+
+            if (_isHoldingForMobile)
+            {
+                mobileInteractButton.SetActive(false);
+                return;
+            }
+
             mobileInteractButton.SetActive(showInteract);
             mobilePickupButton.SetActive(showPickup);
 
@@ -416,18 +425,26 @@ namespace Managers
 
         public void SetHoldingUI(bool isHolding)
         {
+            _isHoldingForMobile = isHolding;
+
             if (Application.isMobilePlatform)
             {
-                mobileHoldingControlsPanel.SetActive(isHolding);
-                mobileInteractButton.SetActive(!isHolding);
-                leftThumbstick.SetActive(!isHolding);
-                rightThumbstick.SetActive(!isHolding);
-                if (!isHolding || !mobilePickupButton) return;
+                var isPostIt = isHolding && _gameManager.CurrentHeldObject == null;
 
-                mobilePickupButton.SetActive(true);
-                var buttonText = mobilePickupButton.GetComponentInChildren<TMP_Text>();
-                if (buttonText)
-                    buttonText.text = "Drop";
+                mobileHoldingControlsPanel.SetActive(isHolding && !isPostIt);
+                leftThumbstick.SetActive(!isHolding || isPostIt);
+
+                mobileInteractButton.SetActive(false);
+                mobilePickupButton.SetActive(isHolding);
+
+                if (isHolding)
+                {
+                    var buttonText = mobilePickupButton.GetComponentInChildren<TMP_Text>();
+                    if (buttonText)
+                    {
+                        buttonText.text = "Drop";
+                    }
+                }
             }
             else
             {
